@@ -447,8 +447,8 @@ class TestLearnedWeightPolicyIsConsistent:
     def test_the_readme_no_longer_claims_bundled_checkpoints(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text("utf-8")
 
-        assert "Nei bundle learned i checkpoint verificati vengono incorporati" not in readme
-        assert "I checkpoint non sono inclusi in nessun bundle" in readme
+        assert "learned bundles embed the verified checkpoints" not in readme
+        assert "Checkpoints are not included in any bundle" in readme
 
     def test_the_spec_states_it_does_not_require_the_checkpoints(self) -> None:
         spec = (REPO_ROOT / "packaging" / "qicom.spec").read_text("utf-8")

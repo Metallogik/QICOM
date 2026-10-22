@@ -1,654 +1,645 @@
 # QICOM — Quality Image Comparator
 
-Applicazione desktop con tre flussi separati per immagini mediche: analisi quantitativa,
-valutazione qualitativa e radiomica pairwise 2D/3D su DICOM/NIfTI; accanto, una raccolta di
-strumenti di utilità (segmentazione, maschere, conversione, header DICOM, anonimizzazione).
+Desktop application with three separate workflows for medical images: quantitative analysis,
+qualitative evaluation and pairwise 2D/3D radiomics on DICOM/NIfTI; alongside them, a collection
+of utility tools (segmentation, masks, conversion, DICOM headers, anonymization).
 
-> **Solo per uso di ricerca e controllo qualità.** QICOM non è un dispositivo medico e non è
-> destinato alla diagnosi clinica né ad alcuna decisione riguardante la cura di un paziente.
-> Questo avviso è mostrato anche nella finestra di avvio dell'applicazione
-> (`qicom/gui/widgets/launcher_dialog.py`) e in **Aiuto ▸ Informazioni su QICOM**.
+> **For research and quality-control use only.** QICOM is not a medical device and is not
+> intended for clinical diagnosis or for any decision concerning a patient's care.
+> This notice is also shown in the application's launch window
+> (`qicom/gui/widgets/launcher_dialog.py`) and in **Help ▸ About QICOM**.
 
 QICOM supports DICOM® medical images. DICOM® is the registered trademark of the National
 Electrical Manufacturers Association (NEMA) for its standards publications relating to digital
 communications of medical information. QICOM is an independent software project and is not
 affiliated with, sponsored by, or endorsed by NEMA or the DICOM Standards Committee.
 
-Ideato e sviluppato da Fabio Mattiussi a Lugano, Svizzera. Licenza [Apache-2.0](LICENSE).
+Conceived and developed by Fabio Mattiussi in Lugano, Switzerland. Licensed under
+[Apache-2.0](LICENSE).
 
-## Documentazione
+## Documentation
 
-| Per | Vai a |
+| For | Go to |
 | --- | --- |
-| Avviare e usare QICOM | [Avvio della GUI](#gui), [guida per i tester](packaging/LEGGIMI-TESTER.txt) |
-| Capire le analisi | [Metriche](#metriche-implementate), [metodologia qualitativa](QUALITATIVE_METHODOLOGY.md), [metodologia radiomica](RADIOMICS_METHODOLOGY.md) |
-| Condividere risultati e conoscere i limiti | [Export AI](#export-per-assistente-ai), [sicurezza e privacy](SECURITY.md), [uso previsto](#uso-previsto) |
-| Consultare le novità | [Changelog](CHANGELOG.md) |
-| Sviluppare QICOM | [Installazione](#installazione-sviluppo), [formati dei dati](OPERATIONS_SCHEMAS.md), [test](#test), [benchmark](benchmarks/README.md) |
+| Launching and using QICOM | [Starting the GUI](#gui), [tester guide (Italian)](packaging/LEGGIMI-TESTER.txt) |
+| Understanding the analyses | [Metrics](#implemented-metrics), [qualitative methodology](QUALITATIVE_METHODOLOGY.md), [radiomics methodology](RADIOMICS_METHODOLOGY.md) |
+| Sharing results and knowing the limits | [AI export](#ai-assistant-export), [security and privacy](SECURITY.md), [intended use](#intended-use) |
+| What's new | [Changelog](CHANGELOG.md) |
+| Developing QICOM | [Installation](#installation-development), [data formats](OPERATIONS_SCHEMAS.md), [tests](#tests), [benchmarks](benchmarks/README.md) |
 
-## Installazione (sviluppo)
+## Installation (development)
 
-Servono **Python >=3.11** e, per la GUI, **PySide6-Essentials >=6.6,<7 (Qt 6)**.
-La CI copre Python 3.11/3.12; i bundle usano 3.12 e includono l'interprete.
-I target dei bundle sono Windows x64, macOS 14 Apple Silicon e Linux x64.
-Windows 10 dal 1809/Windows 11 sono target attesi, non due ambienti desktop
-verificati separatamente dal runner Windows Server. Su Linux il bundle dipende
-anche dalla glibc e dalle librerie del sistema su cui viene costruito.
-Minimi delle dipendenze, piattaforme testate e limiti delle prove sono distinti in
-[Compatibilità e matrice di verifica](packaging/DISTRIBUTION.md#compatibility-boundary).
-I profili hardware non abbassano questi requisiti e non esiste un fallback Qt 5.
+Requires **Python >=3.11** and, for the GUI, **PySide6-Essentials >=6.6,<7 (Qt 6)**.
+CI covers Python 3.11/3.12; the bundles use 3.12 and include the interpreter.
+The bundle targets are Windows x64, macOS 14 Apple Silicon and Linux x64.
+Windows 10 from 1809 and Windows 11 are expected targets, not two desktop environments
+verified separately from the Windows Server runner. On Linux the bundle also depends on
+the glibc and system libraries of the machine it is built on.
+Dependency minimums, tested platforms and the limits of the evidence are set out separately in
+[Compatibility and verification matrix](packaging/DISTRIBUTION.md#compatibility-boundary).
+Hardware profiles do not lower these requirements and there is no Qt 5 fallback.
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
-# Prima di qualsiasi dipendenza: è pip a scaricare ed eseguire i build backend,
-# quindi è la prima cosa che deve essere affidabile. Fissare le versioni di ciò
-# che installa non serve se l'installer stesso è vulnerabile.
+# Before any dependency: pip is what downloads and runs the build backends,
+# so it is the first thing that has to be trustworthy. Pinning the versions of
+# what it installs is pointless if the installer itself is vulnerable.
 python -m pip install --upgrade "pip>=26.2"
 
-pip install -e ".[dev]"          # core + strumenti di sviluppo
-pip install -e ".[gui]"          # + interfaccia grafica
-pip install -e ".[radiomics]"   # + backend PyRadiomics del modulo dedicato
-pip install -e ".[radiomics,mirp]"  # + backend MIRP opzionale per IBSI 1 completo
-pip install -e ".[learned]"      # + metriche learned (LPIPS, DISTS, piq) — pesante, opzionale
+pip install -e ".[dev]"          # core + development tools
+pip install -e ".[gui]"          # + graphical interface
+pip install -e ".[radiomics]"   # + PyRadiomics backend for the dedicated module
+pip install -e ".[radiomics,mirp]"  # + optional MIRP backend for full IBSI 1
+pip install -e ".[learned]"      # + learned metrics (LPIPS, DISTS, piq) — heavy, optional
 ```
 
-`packaging/generate_constraints.py` registra il manifest esatto dell'ambiente
-installato che PyInstaller sta per congelare: versioni complete (inclusi tag
-locali come `+cpu`) e, per dipendenze VCS come PyRadiomics, repository e commit.
-Non esegue una seconda risoluzione che potrebbe usare un indice diverso da
-quello della build. Il file è evidenza della build, **non** un lock degli
-artefatti con hash e non va usato con `--require-hashes`; l'integrità dei file
-pubblicati è coperta separatamente da `SHA256SUMS`. Il workflow lo genera su
-ciascuna piattaforma e lo pubblica accanto al bundle.
+`packaging/generate_constraints.py` records the exact manifest of the installed environment
+that PyInstaller is about to freeze: full versions (including local tags such as `+cpu`) and,
+for VCS dependencies such as PyRadiomics, repository and commit. It does not run a second
+resolution that could use an index different from the build's. The file is build evidence,
+**not** a hash-pinned artifact lock, and must not be used with `--require-hashes`; the
+integrity of the published files is covered separately by `SHA256SUMS`. The workflow
+generates it on each platform and publishes it alongside the bundle.
 
-Per le metriche learned, su tutte le piattaforme è consigliata la build CPU-only di torch:
+For the learned metrics, the CPU-only build of torch is recommended on all platforms:
 
 ```bash
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 python packaging/prepare_learned_weights.py
 ```
 
-Il secondo comando è intenzionalmente esplicito: scarica AlexNet/VGG16/DISTS, verifica per
-ciascun file lo SHA-256 atteso e lo installa nella cache Torch. QICOM non scarica mai modelli
-durante un'analisi; se un checkpoint manca o è alterato, la metrica viene omessa senza accesso
-alla rete.
+The second command is intentionally explicit: it downloads AlexNet/VGG16/DISTS, checks each
+file against its expected SHA-256 and installs it in the Torch cache. QICOM never downloads
+models during an analysis; if a checkpoint is missing or altered, the metric is omitted without
+any network access.
 
-**I checkpoint non sono inclusi in nessun bundle**, learned compresi: pesano circa 760 MB, più
-del resto dell'applicazione, e la policy è "su richiesta, con consenso esplicito". Un bundle
-learned contiene le librerie (torch, torchvision, lpips, piq) e quindi le cinque metriche che non
-usano pesi (MS-SSIM, FSIM, GMSD, VIF, HaarPSI) funzionano subito; LPIPS e DISTS restano
-indisponibili finché l'utente non prepara i pesi, dal pulsante di download nella finestra
-"Seleziona metriche" oppure con `python packaging/prepare_learned_weights.py`. Al primo avvio,
-con la cache vuota, LPIPS e DISTS vengono quindi omesse con una causa dichiarata e senza alcun
-accesso di rete: il workflow di packaging verifica esattamente questo comportamento sul bundle
-congelato (`--smoke-test`, campo `learned_policy`).
+**Checkpoints are not included in any bundle**, learned bundles included: they weigh about
+760 MB, more than the rest of the application, and the policy is "on request, with explicit
+consent". A learned bundle contains the libraries (torch, torchvision, lpips, piq), so the five
+metrics that use no weights (MS-SSIM, FSIM, GMSD, VIF, HaarPSI) work straight away; LPIPS and
+DISTS stay unavailable until the user prepares the weights, from the download button in the
+"Select Metrics" window or with `python packaging/prepare_learned_weights.py`. On first launch,
+with an empty cache, LPIPS and DISTS are therefore omitted with a stated cause and without any
+network access: the packaging workflow verifies exactly this behavior on the frozen bundle
+(`--smoke-test`, field `learned_policy`).
 
-In alternativa agli `extras` di `pyproject.toml`, sono disponibili file equivalenti in
+As an alternative to the `extras` in `pyproject.toml`, equivalent files are available in
 `requirements/` (`base.txt`, `gui.txt`, `radiomics.txt`, `learned.txt`, `dev.txt`,
-`packaging-base.txt` e `packaging.txt` per il profilo full).
+`packaging-base.txt` and `packaging.txt` for the full profile).
 
-### Requisiti hardware pratici
+### Practical hardware requirements
 
-- Minimo pratico: 8 GB di RAM e 4 core logici per immagini 2D e stack moderati.
-- Consigliato: 16 GB di RAM e 6–8 core logici per stack DICOM, confronti multipli e radiomica.
-- Carichi pesanti: 32 GB di RAM per grandi volumi 3D, molte ROI o metriche learned. Le metriche
-  learned restano opzionali e scaricano i checkpoint solo su richiesta esplicita.
+- Practical minimum: 8 GB of RAM and 4 cores for 2D images and moderate stacks.
+- Recommended: 16 GB of RAM and 6–8 cores for DICOM stacks, multiple comparisons and radiomics.
+- Heavy workloads: 32 GB of RAM for large 3D volumes, many ROIs or learned metrics. The learned
+  metrics remain optional and download their checkpoints only on explicit request.
 
-Le metriche learned usano: `lpips` (ufficiale, backbone AlexNet) per LPIPS; `piq` per
-MS-SSIM/FSIM/GMSD/VIF/DISTS. Tutte le funzioni in `reference_structural.py` importano
-queste librerie in modo lazy: il modulo resta importabile (e SSIM resta utilizzabile)
-anche senza l'extra `learned` installato; le singole funzioni che ne hanno bisogno
-sollevano `ImportError` solo se effettivamente chiamate senza la libreria disponibile.
+Core counts are logical cores.
 
-NSS feature distance e NSS patch-distribution distance (in `no_reference.py`) **non** fanno parte dell'extra `learned`: sono una
-reimplementazione propria di QICOM delle statistiche di scena naturale (NSS) di Mittal et
-al., scritta da zero con solo numpy/scipy (dipendenze base), senza dipendere da `pyiqa`.
-Non includendo alcun modello pre-addestrato o dataset di terze
-parti, il modello di riferimento "immagine naturale" usato di default è adattato su
-immagini generate sinteticamente con spettro 1/f (`qicom/metrics/nss_reference.py`); per un
-uso calibrato su un proprio corpus di riferimento, passare un `reference_model` ottenuto da
-`fit_reference_model()`. I valori restituiti sono quindi un indice relativo, non
-confrontabili con la scala BRISQUE/NIQE originale.
+The learned metrics use `lpips` (official, AlexNet backbone) for LPIPS and `piq` for
+MS-SSIM/FSIM/GMSD/VIF/DISTS. Every function in `reference_structural.py` imports these
+libraries lazily: the module stays importable (and SSIM stays usable) even without the
+`learned` extra installed; the individual functions that need them raise `ImportError` only
+when actually called without the library available.
 
-Sono disponibili anche **BRISQUE e NIQE canonici**, come metriche aggiuntive con ID
-`brisque_canonical` e `niqe_canonical`. BRISQUE usa PIQ 0.8.0; NIQE è implementato
-in QICOM a partire dall'articolo originale. I modelli ufficiali si scaricano solo
-su richiesta da Seleziona metriche, con dimensione e SHA-256 verificati. In loro
-assenza l'outcome è `unavailable-backend`: l'analisi non accede alla rete.
-Si riportano due punteggi assoluti, uno per immagine, con valori inferiori migliori.
-Queste metriche valutano l'immagine intera anche con esclusione dello sfondo attiva.
-Definizioni, normalizzazione e verifiche sono in
-[NO_REFERENCE_METHODOLOGY.md](NO_REFERENCE_METHODOLOGY.md); l'inventario corrente è
-[metric_inventory.csv](metric_inventory.csv), distinto dall'inventario congelato dell'articolo
-che descrive QICOM.
+NSS feature distance and NSS patch-distribution distance (in `no_reference.py`) are **not**
+part of the `learned` extra: they are QICOM's own reimplementation of the natural scene
+statistics (NSS) of Mittal et al., written from scratch with numpy/scipy only (base
+dependencies), without depending on `pyiqa`. Since no pre-trained model or third-party dataset
+is included, the default "natural image" reference model is fitted on synthetically generated
+images with a 1/f spectrum (`qicom/metrics/nss_reference.py`); for use calibrated on your own
+reference corpus, pass a `reference_model` obtained from `fit_reference_model()`. The values
+returned are therefore a relative index, not comparable with the original BRISQUE/NIQE scale.
 
-NIQE è stimato su fotografie e su immagini TC può classificare come più "naturale"
-un'immagine più rumorosa. Per la TC è disponibile **RIQE** (`riqe`, Radiology Image
-Quality Evaluator, modello `riqe-v1.0`,
-[doi:10.5281/zenodo.23055559](https://doi.org/10.5281/zenodo.23055559)): la stessa
-costruzione di NIQE con una mappatura HU fissa, maschere di campo di vista e corpo e un
-modello stimato su TC a dose piena. Il modello (CC BY 4.0) è incluso nel pacchetto e
-verificato con SHA-256: nessun download. RIQE valuta solo immagini dichiarate in unità
-Hounsfield (in GUI: DICOM con Modality CT o NIfTI; in CLI `--hounsfield-units`) e rifiuta
-slice senza aria (meno dell'1% del campo di vista ≤ −900 HU), quindi RM, bitmap o un NIfTI
-non TC non ricevono punteggio. Come
-nella sua validazione, valuta l'immagine di confronto sulle maschere del riferimento.
-Serve a classificare un'immagine degradata rispetto alla sua sorgente entro lo stesso
-protocollo; non va usato da solo per scegliere, confrontare o regolare un denoiser.
+**Canonical BRISQUE and NIQE** are also available, as additional metrics with IDs
+`brisque_canonical` and `niqe_canonical`. BRISQUE uses PIQ 0.8.0; NIQE is implemented in QICOM
+from the original paper. The official models are downloaded only on request from Select
+Metrics, with size and SHA-256 verified. Without them the outcome is `unavailable-backend`: the
+analysis does not access the network. Two absolute scores are reported, one per image, with
+lower values better. These metrics evaluate the whole image even when background exclusion is
+active. Definitions, normalization and checks are in
+[NO_REFERENCE_METHODOLOGY.md](NO_REFERENCE_METHODOLOGY.md); the current inventory is
+[metric_inventory.csv](metric_inventory.csv), distinct from the frozen inventory of the paper
+that describes QICOM.
 
-## Metriche implementate
+NIQE is fitted on photographs and, on CT images, can rank a noisier image as more "natural".
+For CT, **RIQE** is available (`riqe`, Radiology Image Quality Evaluator, model `riqe-v1.0`,
+[doi:10.5281/zenodo.23055559](https://doi.org/10.5281/zenodo.23055559)): the same construction
+as NIQE with a fixed HU mapping, field-of-view and body masks, and a model fitted on full-dose
+CT. The model (CC BY 4.0) ships with the package and is verified with SHA-256: no download.
+RIQE scores only images declared in Hounsfield units (in the GUI: DICOM with Modality CT, or
+NIfTI; in the CLI `--hounsfield-units`) and rejects slices without air (less than 1% of the
+field of view ≤ −900 HU), so MR, bitmaps or a non-CT NIfTI receive no score. As in its
+validation, it evaluates the comparison image on the reference's masks. It is meant to rank a
+degraded image against its source within the same protocol; it must not be used on its own to
+choose, compare or tune a denoiser.
 
-| Modulo | Metriche | Note dimensionali |
+## Implemented metrics
+
+| Module | Metrics | Dimensional notes |
 |---|---|---|
-| `reference_error` | MSE, MAE, RMSE, NMSE, PSNR, bias (`comparison - reference`), SD residua, mediana/P5/P95 dell'errore e dell'errore assoluto | native 3D; i riepiloghi voxel-wise sono descrittivi |
-| `reference_statistical` | NMI, PCC, Wasserstein-1 | native 3D; Wasserstein-1 ignora la posizione spaziale |
+| `reference_error` | MSE, MAE, RMSE, NMSE, PSNR, bias (`comparison - reference`), residual SD, median/P5/P95 of the error and of the absolute error | native 3D; the voxel-wise summaries are descriptive |
+| `reference_statistical` | NMI, PCC, Wasserstein-1 | native 3D; Wasserstein-1 ignores spatial position |
 | `edge_detail` | EPI, HFEN | native 3D |
-| `reference_structural` | SSIM (native 3D) · MS-SSIM, FSIM, GMSD, VIF, HaarPSI, LPIPS, DISTS (slice-wise su 3D) | vedi vincoli di dimensione minima nelle schede (SSIM ≥7 per asse, MS-SSIM ≥161×161, HaarPSI ≥16×16) |
-| `no_reference` | NSS feature distance, NSS patch-distribution distance (slice-wise su 3D, reimplementazione propria numpy/scipy) · Blur/VoL (native 3D, solo scipy) | La distanza NSS per patch richiede immagini ≥96×96; nessuna dipendenza dall'extra `learned` |
-| `brisque_canonical`, `niqe_canonical` | BRISQUE (PIQ), NIQE (QICOM con MVG pristine LIVE) | slice-wise su 3D; BRISQUE ≥14×14 non costante, NIQE almeno due patch valide 96×96; modelli scaricati esplicitamente |
-| `riqe` | RIQE (modello TC `riqe-v1.0`, incluso) | slice-wise su 3D; solo TC in HU dichiarate; almeno 72 patch 24×24 valide nel corpo; il confronto usa le maschere del riferimento |
-| `roi_based` | SNR, CNR, Noise SD, Noise Var, CV, Mean, Min, Max | maschere ROI passate esplicitamente |
+| `reference_structural` | SSIM (native 3D) · MS-SSIM, FSIM, GMSD, VIF, HaarPSI, LPIPS, DISTS (slice-wise on 3D) | see the minimum-size constraints in the metric descriptors (SSIM ≥7 per axis, MS-SSIM ≥161×161, HaarPSI ≥16×16) |
+| `no_reference` | NSS feature distance, NSS patch-distribution distance (slice-wise on 3D, QICOM's own numpy/scipy reimplementation) · Blur/VoL (native 3D, scipy only) | The NSS patch distance requires images ≥96×96; no dependency on the `learned` extra |
+| `brisque_canonical`, `niqe_canonical` | BRISQUE (PIQ), NIQE (QICOM with the LIVE pristine MVG) | slice-wise on 3D; BRISQUE ≥14×14 and non-constant, NIQE at least two valid 96×96 patches; models downloaded explicitly |
+| `riqe` | RIQE (CT model `riqe-v1.0`, included) | slice-wise on 3D; CT in declared HU only; at least 72 valid 24×24 patches inside the body; the comparison uses the reference's masks |
+| `roi_based` | SNR, CNR, Noise SD, Noise Var, CV, Mean, Min, Max | ROI masks passed explicitly |
 
 `run_all_metrics(img1, img2, roi_masks=None, config=None)` in `qicom/metrics/runner.py`
-calcola tutte le metriche applicabili e restituisce un `pandas.DataFrame` con colonne
+computes every applicable metric and returns a `pandas.DataFrame` with columns
 `metric_id, metric_name, category, image, scope, value, std, n_slices, better_direction,
-target_value` — `scope` distingue sempre "per-slice" da "stack-aggregate".
+target_value` — `scope` always distinguishes "per-slice" from "stack-aggregate".
 
-Gli input numerici non finiti vengono rifiutati prima del calcolo. Le metriche non definite su
-input degeneri (per esempio PCC/EPI su immagini costanti) vengono omesse, senza produrre NaN nel
-report; gli errori di programmazione non sono invece nascosti come semplici metriche mancanti.
+Non-finite numeric inputs are rejected before computation. Metrics that are undefined on
+degenerate inputs (for example PCC/EPI on constant images) are omitted, without producing NaN in
+the report; programming errors, on the other hand, are not disguised as merely missing metrics.
 
-### Esclusione dell'aria di sfondo
+### Background air exclusion
 
-In una slice tipica la maggior parte dei pixel è l'aria attorno al paziente: mediarla dentro una
-metrica sull'immagine intera significa misurare in buona parte lo sfondo (l'errore risulta
-diluito, SSIM/PSNR spinti verso "identiche" perché aria coincide con aria). `qicom/metrics/
-background.py` costruisce la maschera dei tessuti (`build_tissue_mask`); l'aria *interna* al corpo
-(polmone, gas intestinale) resta inclusa, perché a essere esclusa è solo l'aria attorno al
-paziente.
+In a typical slice most pixels are the air around the patient: averaging it into a whole-image
+metric means largely measuring the background (the error looks diluted, SSIM/PSNR are pushed
+towards "identical" because air matches air). `qicom/metrics/background.py` builds the tissue
+mask (`build_tissue_mask`); air *inside* the body (lung, bowel gas) stays included, because only
+the air around the patient is excluded.
 
-Nella GUI il flusso è guidato in tre passi ed è semi-automatico più manuale: si crea un unico
-**cerchio verde** (`DualImageView.add_air_roi`) e lo si posiziona su una zona di solo sfondo — è
-l'unico punto da cui viene letto il livello dell'aria, mai una ROI di misura disegnata prima (una
-ROI di rumore sta nell'aria di proposito, una di segnale mai); `Rileva aria` trasforma quel
-campione in una soglia e colora subito sulle immagini tutto ciò che verrebbe escluso, con
-tolleranza e soglia esatta modificabili; una **gomma** in stile paint rimette nella misura ciò che
-la soglia ha preso per errore (tessuto scuro quanto l'aria), con `Annulla correzioni` per tornare
-al risultato rilevato.
+In the GUI the flow is guided in three steps and is semi-automatic plus manual: you create a
+single **green circle** (`DualImageView.add_air_roi`) and place it on a background-only area —
+it is the only place the air level is read from, never a measurement ROI drawn earlier (a noise
+ROI sits in the air on purpose, a signal ROI never does); `Detect air` turns that sample into a
+threshold and immediately colors on the images everything that would be excluded, with
+adjustable tolerance and exact threshold; a paint-style **eraser** puts back into the
+measurement whatever the threshold took by mistake (tissue as dark as air), with
+`Undo corrections` to return to the detected result.
 
-`run_all_metrics(..., tissue_mask=...)` la applica secondo cosa ciascuna metrica è davvero:
+`run_all_metrics(..., tissue_mask=...)` applies it according to what each metric actually is:
 
-- metriche pixel-indipendenti (`reference_error`, `reference_statistical`): ricalcolate
-  esattamente sui soli pixel selezionati, slice per slice (media/std/intervallo restano quelli
-  della pila);
-- SSIM/EPI/HFEN: solo i pixel il cui intero supporto del kernel cade dentro la maschera, come già
-  avviene per le righe ROI;
-- tutte le altre (VIF, FSIM, GMSD, MS-SSIM, HaarPSI, DISTS, LPIPS, NSS feature distance, NSS patch-distribution distance): non hanno una
-  decomposizione per pixel da restringere, quindi ricevono la coppia con lo *sfondo soppresso*
-  (stessa costante fuori maschera, ritaglio al bounding box del tessuto) — garanzia più debole,
-  dichiarata come tale nell'interfaccia e nel resoconto di export.
+- pixel-independent metrics (`reference_error`, `reference_statistical`): recomputed exactly on
+  the selected pixels only, slice by slice (mean/std/range remain those of the stack);
+- SSIM/EPI/HFEN: only the pixels whose entire kernel support falls inside the mask, as already
+  happens for ROI rows;
+- all the others (VIF, FSIM, GMSD, MS-SSIM, HaarPSI, DISTS, LPIPS, NSS feature distance, NSS
+  patch-distribution distance): they have no per-pixel decomposition to restrict, so they receive
+  the pair with the *background suppressed* (the same constant outside the mask, cropped to the
+  tissue bounding box) — a weaker guarantee, declared as such in the interface and in the export
+  summary.
 
-Misure su ROI e metriche `roi_based` (SNR/CNR) non sono mai toccate: una ROI disegnata a mano dice
-già quali pixel interessano, e la ROI di rumore/fondo è spesso posizionata nell'aria di proposito.
+ROI measurements and `roi_based` metrics (SNR/CNR) are never touched: a hand-drawn ROI already
+says which pixels matter, and the noise/background ROI is often placed in the air on purpose.
 
-### Profili quantitativi, diagnostica e riproducibilità
+### Quantitative profiles, diagnostics and reproducibility
 
-Il workbench quantitativo usa per default il profilo versionato **Core rapido** invece di
-selezionare ogni metrica. Restano disponibili Strutturale, Percettivo sperimentale,
-Rumore/ROI QC, Completo, Fantoccio/task-based e Personalizzato. La selezione manuale non elimina
-alcuna metrica: produce un profilo Personalizzato esplicito. L'Indice QICOM mostra profilo,
-versione e composizione, è marcato sperimentale/non clinicamente validato e non è confrontabile
-fra profili o versioni differenti; un indice con componenti obbligatorie mancanti è dichiarato
-parziale.
+The quantitative workbench defaults to the versioned **Fast Core** profile instead of selecting
+every metric. Structural, Experimental Perceptual, Noise/ROI QC, Complete, Phantom/task-based and
+Custom remain available. Manual selection does not drop any metric: it produces an explicit
+Custom profile. The QICOM Index shows profile, version and composition, is marked
+experimental/not clinically validated and is not comparable across different profiles or
+versions; an index with missing mandatory components is declared partial.
 
-Ogni calcolo produce inoltre:
+Each computation also produces:
 
-- un registro degli esiti per tutte le metriche (`requested-and-computed`, `not-requested`,
+- an outcome register for every metric (`requested-and-computed`, `not-requested`,
   `not-applicable`, `failed`, `unavailable-backend`, `invalid/degenerate-input`, `cancelled`),
-  visibile nel workbench e incluso nell'export;
-- una ricevuta di riproducibilità versionata con hash di immagini, maschere, configurazione e
-  risultati, versioni QICOM/backend, profilo/formule, warning preflight e unità statistica;
-- una diagnostica preflight translation-only tramite phase cross-correlation 2D/3D, con shift in
-  pixel e in mm quando lo spacing è noto. Non applica trasformazioni e non modifica i pixel;
-- per stack, mediana, IQR, MAD, P5/P95, outlier Tukey 1,5×IQR e collegamento alla slice peggiore.
-  I CI storici restano per compatibilità ma sono descritti come ottimistici, poiché slice e ROI
-  dello stesso caso non sono unità indipendenti.
+  visible in the workbench and included in the export;
+- a versioned reproducibility receipt with hashes of images, masks, configuration and results,
+  QICOM/backend versions, profile/formulas, preflight warnings and statistical unit;
+- translation-only preflight diagnostics using 2D/3D phase cross-correlation, with the shift in
+  pixels and in mm when the spacing is known. It applies no transformation and does not modify
+  the pixels;
+- for stacks, median, IQR, MAD, P5/P95, Tukey 1.5×IQR outliers and a link to the worst slice.
+  The historical CIs are kept for compatibility but are described as optimistic, since slices
+  and ROIs of the same case are not independent units.
 
-La mappa del bias usa `comparison - reference`, LUT blu-bianco-rosso centrata su zero, range
-simmetrico e maschere tissue/ROI; l'export PNG salva a fianco il JSON della scala. La NPS usa
-esclusivamente ROI dedicate `noise_texture_roi`, detrending e windowing dichiarati, correzione
-dell'energia della finestra, PixelSpacing e frequenze mm⁻¹, più ROI/slice, curva radiale,
-anisotropia, potenza integrata, fP, fA e conteggio dei campioni. I parametri completi sono
-esportabili in JSON/CSV/Excel e lo strumento appartiene al profilo Rumore/ROI QC, non al Core.
+The bias map uses `comparison - reference`, a blue-white-red LUT centered on zero, a symmetric
+range and tissue/ROI masks; the PNG export saves the scale's JSON alongside. The NPS uses only
+dedicated `noise_texture_roi` ROIs, declared detrending and windowing, window energy correction,
+PixelSpacing and frequencies in mm⁻¹, multiple ROIs/slices, radial curve, anisotropy, integrated
+power, fP, fA and sample count. The full parameters can be exported to JSON/CSV/Excel, and the
+tool belongs to the Noise/ROI QC profile, not to the Core.
 
-I profili di accettazione sono file YAML/JSON dell'utente con hash, versione, applicabilità,
-baseline e regole higher/lower/target/range; QICOM non distribuisce soglie cliniche. Le due distanze NSS
-possono usare da Impostazioni un modello NSS locale adattato su immagini QA approvate, con nome,
-versione, data, hash del corpus e parametri di fitting; punteggi ottenuti con modelli differenti
-non sono confrontabili. Rise distance 10–90%, edge MTF/TTF/MTF50 e d′ PW/NPW/NPWE sono API
-esperte del profilo Fantoccio/task-based. Richiedono rispettivamente un profilo, un bordo idoneo
-esplicitamente dichiarato e task function/TTF/NPS configurate. Il bordo deve essere parallelo
-all'asse delle righe, con transizione lungo le colonne: angoli diversi da zero sono rifiutati,
-poiché non è implementata la proiezione slanted-edge. Il flag PASS controlla solo il CNR.
+Acceptance profiles are user YAML/JSON files with hash, version, applicability, baseline and
+higher/lower/target/range rules; QICOM does not distribute clinical thresholds. From Settings,
+the two NSS distances can use a local NSS model fitted on approved QA images, with name,
+version, date, corpus hash and fitting parameters; scores obtained with different models are not
+comparable. 10–90% rise distance, edge MTF/TTF/MTF50 and d′ PW/NPW/NPWE are expert APIs of the
+Phantom/task-based profile. They require, respectively, a profile, an explicitly declared
+suitable edge, and a configured task function/TTF/NPS. The edge must be parallel to the row
+axis, with the transition along the columns: non-zero angles are rejected, since slanted-edge
+projection is not implemented. The PASS flag checks the CNR only.
 
-**Solo API Python.** La NPS (`qicom.metrics.nps`), i profili di accettazione
-(`qicom.metrics.acceptance`), gli strumenti Fantoccio/task-based (`qicom.metrics.task_based`), il
-trending (`qicom.metrics.trending`) e il robustness check radiomico
-(`qicom.radiomics.robustness`) non sono raggiungibili dall'applicazione desktop: si usano da
-script. Nell'app il profilo Rumore/ROI QC calcola le sole metriche ROI, e il profilo
-Fantoccio/task-based non seleziona metriche; il workbench radiomico mostra e salva le tabelle di
-robustness già prodotte, ma non le calcola.
+**Python API only.** The NPS (`qicom.metrics.nps`), the acceptance profiles
+(`qicom.metrics.acceptance`), the Phantom/task-based tools (`qicom.metrics.task_based`),
+trending (`qicom.metrics.trending`) and the radiomics robustness check
+(`qicom.radiomics.robustness`) are not reachable from the desktop application: they are used
+from scripts. In the app the Noise/ROI QC profile computes only the ROI metrics, and the
+Phantom/task-based profile selects no metrics; the radiomics workbench shows and saves
+robustness tables that already exist, but does not compute them.
 
-La formula d′ v2 distingue PW (`sqrt(∫S/NPS df)`), NPW (`∫S df / sqrt(∫S·NPS df)`) e NPWE
-(`∫S·E² df / sqrt(∫S·E⁴·NPS df)`), con `S = |task·TTF|²`. NPWE richiede `eye_filter`
-esplicito, campionato sullo stesso asse: QICOM non assume geometria di visione o rumore interno.
-L'integrazione è 1D sull'intervallo fornito, senza fattore radiale `2πf` o moltiplicatore per
-frequenze negative; una NPS radiale 2D non va interpretata automaticamente come una NPS 1D.
-Queste formule derivano dai modelli descritti da
-[Solomon e Samei (2016)](https://doi.org/10.1117/1.JMI.3.3.035506), limitati qui al dominio 1D.
-I vecchi risultati senza versione usavano la formula PW sotto entrambe le etichette NPW/NPWE:
-`DetectabilityResult.from_dict()` conserva valore ed etichetta, assegna `formula_version=1`
-e segnala `effective_observer="PW"`; i nuovi risultati hanno versione 2. Per riprodurre il
-calcolo storico usare `observer="PW"`. Il profilo Fantoccio/task-based passa alla versione 2.0.
+The d′ v2 formula distinguishes PW (`sqrt(∫S/NPS df)`), NPW (`∫S df / sqrt(∫S·NPS df)`) and NPWE
+(`∫S·E² df / sqrt(∫S·E⁴·NPS df)`), with `S = |task·TTF|²`. NPWE requires an explicit
+`eye_filter`, sampled on the same axis: QICOM assumes no viewing geometry or internal noise.
+Integration is 1D over the interval supplied, with no `2πf` radial factor or multiplier for
+negative frequencies; a 2D radial NPS must not be read automatically as a 1D NPS.
+These formulas derive from the models described by
+[Solomon and Samei (2016)](https://doi.org/10.1117/1.JMI.3.3.035506), restricted here to the 1D
+domain. Old unversioned results used the PW formula under both the NPW and NPWE labels:
+`DetectabilityResult.from_dict()` preserves value and label, assigns `formula_version=1`
+and reports `effective_observer="PW"`; new results have version 2. To reproduce the historical
+computation use `observer="PW"`. The Phantom/task-based profile moves to version 2.0.
 
-`qicom.provenance.StatisticalUnit` rappresenta `subject_id`, `case_id`, `acquisition_id`,
-`timepoint`, `lesion_id`/`roi_id` e `reader_id`. In assenza di almeno tre unità indipendenti
-identificate, le API statistiche restituiscono solo descrittive e una motivazione, senza
-promuovere slice o ROI a osservazioni indipendenti.
+`qicom.provenance.StatisticalUnit` represents `subject_id`, `case_id`, `acquisition_id`,
+`timepoint`, `lesion_id`/`roi_id` and `reader_id`. Without at least three identified
+independent units, the statistical APIs return descriptive statistics only, with a reason,
+without promoting slices or ROIs to independent observations.
 
 ## CLI
 
 ```bash
-qicom-cli confronta riferimento.dcm confronto.dcm [--data-range 4095] [--output risultati.xlsx]
+qicom-cli confronta reference.dcm comparison.dcm [--data-range 4095] [--output results.xlsx]
 ```
 
-Carica le due immagini/volumi (DICOM, NIfTI, JPG/PNG/BMP tramite `qicom/io/`), calcola tutte
-le metriche applicabili con `run_all_metrics` e stampa la tabella a schermo; `--output`
-esporta anche in CSV, Excel o — con suffisso `.md` — nel report Markdown descritto in
-[Export per assistente AI](#export-per-assistente-ai). Se `--data-range` non è indicato, viene
-dedotto dal dtype/range dell'immagine di riferimento e sempre stampato esplicitamente (mai
-assunto in silenzio).
+(`confronta` is Italian for "compare".) Loads the two images/volumes (DICOM, NIfTI,
+JPG/PNG/BMP through `qicom/io/`), computes every applicable metric with `run_all_metrics` and
+prints the table; `--output` also exports to CSV, Excel or — with an `.md` suffix — the Markdown
+report described in [AI assistant export](#ai-assistant-export). If `--data-range` is not given,
+it is inferred from the dtype/range of the reference image and always printed explicitly (never
+silently assumed).
 
-## Export per assistente AI
+## AI assistant export
 
-QICOM può esportare i risultati come un singolo file Markdown autoconsistente
-(`*_ai_assistant.md` dalla GUI, `--output report.md` dalla CLI) pensato per essere incollato in
-una chat con un assistente AI e farsi spiegare i numeri. Accanto a ogni valore il file riporta la
-definizione della metrica presa dalle schede `qicom/metrics/descriptors/*.yaml` — la stessa fonte
-di verità del tooltip in interfaccia — così che il modello non debba indovinare il significato di
-una metrica omonima ma diversa, e segue la lingua selezionata nell'applicazione.
+QICOM can export the results as a single self-contained Markdown file (`*_ai_assistant.md` from
+the GUI, `--output report.md` from the CLI) meant to be pasted into a chat with an AI assistant
+that can then explain the numbers. Next to each value the file gives the metric definition taken
+from the `qicom/metrics/descriptors/*.yaml` cards — the same source of truth as the interface
+tooltip — so the model does not have to guess the meaning of a metric that shares a name with a
+different one, and it follows the language selected in the application.
 
-**L'export Markdown non contatta un assistente generativo** e non usa chiavi API.
-Le metriche learned opzionali usano invece modelli locali per misurare le immagini.
-L'export si limita a scrivere un file sul disco; se, dove e a chi caricarlo è
-una decisione — e una responsabilità — interamente dell'utente. Per questo il contenuto è deciso da
-una whitelist esplicita (`qicom/reporting/llm_export.py`): entrano solo id/nome/categoria della
-metrica, valore, intervalli di confidenza, unità, il testo del descrittore e la configurazione non
-derivata dall'immagine (data range, 2D/3D, forma e dimensione delle ROI). Nomi e percorsi dei file,
-header DICOM/NIfTI, identificativi di paziente/studio/serie, date e istituzione, nomi di operatore
-o medico, hostname e utente non hanno alcuna via d'accesso al file, e i nomi delle ROI — testo
-libero scritto dall'utente — sono contati, non riprodotti. Il file è Markdown leggibile: va aperto
-e letto prima di inviarlo altrove.
+**The Markdown export does not contact a generative assistant** and uses no API keys.
+The optional learned metrics, by contrast, use local models to measure the images.
+The export only writes a file to disk; whether, where and to whom to upload it is a decision —
+and a responsibility — that is entirely the user's. That is why the content is decided by an
+explicit whitelist (`qicom/reporting/llm_export.py`): only metric id/name/category, value,
+confidence intervals, units, the descriptor text and the configuration not derived from the
+image (data range, 2D/3D, ROI shape and size) go in. File names and paths, DICOM/NIfTI headers,
+patient/study/series identifiers, dates and institution, operator or physician names, hostname
+and user have no way into the file, and ROI names — free text typed by the user — are counted,
+not reproduced. The file is readable Markdown: open it and read it before sending it anywhere.
 
-Una sezione **Citazione** chiede al modello che un articolo, un report o una presentazione scritti
-a partire dal file citino QICOM con il riferimento di **Aiuto ▸ Informazioni su QICOM ▸
-Citazione**; quando fra i risultati c'è RIQE, anche lo studio (arXiv:2610.00384), la release del
-modello (doi:10.5281/zenodo.23055559) e le attribuzioni che la sua licenza CC BY 4.0 richiede. I
-riferimenti restano in inglese in ogni lingua.
+A **Citation** section asks the model to make any article, report or presentation written from
+the file cite QICOM with the reference in **Help ▸ About QICOM ▸ Citation**; when RIQE is among
+the results, also the study (arXiv:2610.00384), the model release (doi:10.5281/zenodo.23055559)
+and the attributions its CC BY 4.0 license requires. The references stay in English in every
+language.
 
-Il file resta abbastanza piccolo da incollare in una chat: al massimo 200 righe di risultati e un
-budget di byte esplicito. Quando l'analisi ne produce di più, le righe mostrate sono scelte in modo
-deterministico, una per metrica a rotazione, così che ogni metrica compaia almeno una volta; il file
-dichiara quante righe esistono, quante ne mostra e quante ne omette, e il digest di provenienza in
-fondo copre **l'intero** insieme dei risultati, non l'estratto. Il file viene scritto in modo
-atomico: un errore lascia il file precedente intatto, mai un report a metà che sembra completo.
+The file stays small enough to paste into a chat: at most 200 result rows and an explicit byte
+budget. When the analysis produces more, the rows shown are chosen deterministically, one per
+metric in rotation, so that every metric appears at least once; the file states how many rows
+exist, how many it shows and how many it omits, and the provenance digest at the bottom covers
+**the entire** result set, not the excerpt. The file is written atomically: an error leaves the
+previous file intact, never a half-written report that looks complete.
 
-## Sicurezza e privacy
+## Security and privacy
 
-- Tutta l'elaborazione delle immagini avviene localmente, sulla macchina su cui QICOM gira:
-  nessun dato di immagine viene trasmesso, non esiste telemetria e nessuna analisi apre
-  connessioni di rete. I download espliciti riguardano i checkpoint opzionali delle metriche
-  learned e le risorse per la verifica IBSI; entrambi usano checksum fissati.
-- I progetti portabili e i pacchetti di valutazione anonimizzano i DICOM per impostazione
-  predefinita, rimuovono tag privati/identificativi e rigenerano coerentemente gli UID.
-- Il riconoscimento è fail-closed: viene anonimizzato anche un dataset DICOM salvato senza
-  preambolo PS3.10 (frequente negli export PACS e negli archivi più vecchi), e un file
-  riconoscibile come DICOM ma non interpretabile blocca l'export invece di essere copiato
-  tale e quale. Negli ZIP quantitativi i file non DICOM vengono copiati invariati e i nomi
-  originali sono conservati: questi ZIP non garantiscono la rimozione di dati identificativi
-  dagli header NIfTI o dai nomi dei file. La sanificazione NIfTI dei pacchetti qualitativi
-  non si estende attualmente agli ZIP quantitativi.
-- Il risultato viene verificato, non dato per buono: nessun valore con cui il file originale
-  identificava una persona può sopravvivere in nessun punto della copia (sequenze annidate
-  incluse). Un file che non supera questa verifica — per esempio un DICOMDIR, i cui record di
-  directory non sono coperti dalle regole di attributo — viene bloccato in export invece di
-  essere dichiarato anonimo.
-- Un DICOM clinico con pixel ma senza `BurnedInAnnotation=NO` viene bloccato in export. È ammessa
-  soltanto l'eccezione stretta per immagini Secondary Capture minimali (tipicamente JPG convertiti
-  in DICOM) prive di attributi identificativi diretti; il file viene marcato esplicitamente come
-  non verificato rispetto alle annotazioni nei pixel. QICOM non esegue OCR né rimozione del testo
-  incorporato nei pixel.
-- Se l'export viene bloccato da questi controlli, QICOM mostra il motivo e chiede se esportare
-  comunque. Solo con un consenso esplicito i file rifiutati vengono inclusi, anonimizzati al meglio
-  e marcati `PatientIdentityRemoved=NO` (non verificati); l'elenco resta nel registro errori.
-- Gli errori si possono selezionare nella finestra Errori e salvare in un report di testo (versione,
-  piattaforma, log recente con traceback) da allegare a una segnalazione. QICOM non invia nulla.
-- Gli ZIP importati sono controllati prima dell'estrazione (path traversal, link simbolici,
-  numero/dimensione file e rapporto di compressione); manifest e risposte sono limitati e
-  validati prima dell'uso.
-- File locali sensibili e log usano permessi owner-only sui sistemi POSIX. I log oscurano campi
-  sensibili e il percorso home dell'utente.
-- I testi esportati in Excel sono neutralizzati quando iniziano come formule; i nomi dei fogli
-  sono validati e resi univoci.
-- L'export Markdown per assistente AI è costruito su whitelist, non su blacklist: scrive solo i
-  campi esplicitamente ammessi (valori, descrittori delle metriche, configurazione non derivata
-  dall'immagine) e nessun dato proveniente da un header di immagine. Una suite di test lo verifica
-  a partire dalla whitelist stessa. QICOM non carica nulla: l'invio del file, se avviene, è un
-  gesto dell'utente.
+- All image processing happens locally, on the machine QICOM runs on: no image data is
+  transmitted, there is no telemetry and no analysis opens network connections. The explicit
+  downloads are the optional learned-metric checkpoints and the IBSI verification resources;
+  both use pinned checksums.
+- Portable projects and evaluation packages anonymize DICOM by default, remove
+  private/identifying tags and regenerate UIDs consistently.
+- Detection is fail-closed: a DICOM dataset saved without the PS3.10 preamble (common in PACS
+  exports and older archives) is anonymized too, and a file recognizable as DICOM but not
+  parseable blocks the export instead of being copied as is. In quantitative ZIPs non-DICOM
+  files are copied unchanged and the original names are kept: these ZIPs do not guarantee the
+  removal of identifying data from NIfTI headers or file names. The NIfTI sanitization of
+  qualitative packages does not currently extend to quantitative ZIPs.
+- The result is verified, not taken on trust: no value with which the original file identified a
+  person can survive anywhere in the copy (nested sequences included). A file that fails this
+  check — for example a DICOMDIR, whose directory records are not covered by the attribute
+  rules — is blocked at export instead of being declared anonymous.
+- A clinical DICOM with pixels but without `BurnedInAnnotation=NO` is blocked at export. The only
+  exception allowed is a narrow one for minimal Secondary Capture images (typically JPGs
+  converted to DICOM) with no direct identifying attributes; the file is explicitly marked as not
+  verified for annotations burned into the pixels. QICOM performs no OCR and does not remove text
+  embedded in the pixels.
+- If the export is blocked by these checks, QICOM shows the reason and asks whether to export
+  anyway. Only with explicit consent are the rejected files included, anonymized as far as
+  possible and marked `PatientIdentityRemoved=NO` (not verified); the list stays in the error log.
+- Errors can be selected in the Errors window and saved to a text report (version, platform,
+  recent log with traceback) to attach to a bug report. QICOM sends nothing.
+- Imported ZIPs are checked before extraction (path traversal, symbolic links, file count/size
+  and compression ratio); manifests and answers are bounded and validated before use.
+- Sensitive local files and logs use owner-only permissions on POSIX systems. Logs redact
+  sensitive fields and the user's home path.
+- Text exported to Excel is neutralized when it starts like a formula; sheet names are validated
+  and made unique.
+- The Markdown AI assistant export is built on a whitelist, not a blacklist: it writes only
+  explicitly allowed fields (values, metric descriptors, configuration not derived from the
+  image) and no data coming from an image header. A test suite verifies this starting from the
+  whitelist itself. QICOM uploads nothing: sending the file, if it happens, is the user's act.
 
-Vedi anche [SECURITY.md](SECURITY.md) per il modello di minaccia e i limiti operativi.
+See also [SECURITY.md](SECURITY.md) for the threat model and operational limits.
 
-## Livello dati/sessione
+## Data/session layer
 
-`qicom/session/` (nessuna dipendenza GUI) fornisce:
-- **`models.py`**: `Project`, `Analysis`, `RoiDefinition`, `Annotation` (dataclass immutabili).
-- **`storage.py`**: `SessionStorage`, persistenza SQLite locale (default via `platformdirs`,
-  cross-platform) con CRUD completo; `save_analysis(analysis, results)` salva atomicamente
-  analisi, risultati, ROI e annotazioni in una sola transazione SQLite.
-- **`history.py`**: `AnalysisHistory`/`AnalysisBundle`, facciata di sola lettura per
-  recuperare/riaprire analisi passate (data/ora, immagini, metriche, ROI, annotazioni).
-- **`commands.py`**: `Command`/`CommandHistory`, motore undo/redo in memoria (Ctrl+Z/Ctrl+Y),
-  pronto per i comandi concreti della GUI.
-- **`app_logging.py`**: log applicativo JSON-lines su file rotante (+ console), rileggibile
-  dalla GUI o esportabile. Vengono registrati avvio/chiusura della sessione, ogni operazione
-  in background (nome, durata e — in caso di errore — l'eccezione con il traceback) e ogni
-  calcolo/salvataggio/caricamento/export, con forme e conteggi ma senza percorsi file né
-  testo derivato dal paziente.
+`qicom/session/` (no GUI dependency) provides:
+- **`models.py`**: `Project`, `Analysis`, `RoiDefinition`, `Annotation` (immutable dataclasses).
+- **`storage.py`**: `SessionStorage`, local SQLite persistence (default location via
+  `platformdirs`, cross-platform) with full CRUD; `save_analysis(analysis, results)` atomically
+  saves analysis, results, ROIs and annotations in a single SQLite transaction.
+- **`history.py`**: `AnalysisHistory`/`AnalysisBundle`, a read-only facade to retrieve/reopen
+  past analyses (date/time, images, metrics, ROIs, annotations).
+- **`commands.py`**: `Command`/`CommandHistory`, an in-memory undo/redo engine (Ctrl+Z/Ctrl+Y),
+  ready for the GUI's concrete commands.
+- **`app_logging.py`**: JSON-lines application log on a rotating file (+ console), readable from
+  the GUI or exportable. It records session start/end, every background operation (name,
+  duration and — on error — the exception with its traceback) and every
+  computation/save/load/export, with shapes and counts but no file paths or patient-derived
+  text.
 
 ## GUI
 
 ```bash
 qicom-gui
-# oppure, senza installare lo script:
+# or, without installing the script:
 python -m qicom.gui.app
 ```
 
-`qicom/gui/` (PySide6 + pyqtgraph) contiene solo presentazione/orchestrazione - nessuna logica
-di calcolo propria. Le tre finestre condividono un workbench orientato alle attività: una barra
-laterale espone una fase alla volta e lascia il viewer libero dai pannelli non pertinenti.
+`qicom/gui/` (PySide6 + pyqtgraph) contains only presentation/orchestration - no computation
+logic of its own. The three windows share a task-oriented workbench: a navigation bar exposes one
+step at a time and keeps the viewer free of panels that do not apply.
 
-- **Quantitativo**: `Importa → Ispeziona → Misura → Analizza → Risultati → Mappe di calore →
-  Esporta`. ROI/linee/annotazioni, calcolo e grafici non competono più contemporaneamente per lo
-  spazio; al termine del calcolo si passa automaticamente ai risultati. `Importa` offre sia il
-  caricamento immagini sia l'import di un progetto salvato; `Risultati` ed `Esporta` nascondono
-  del tutto il canvas (numeri, grafici e resoconto scritto sono l'unico contenuto utile lì),
-  mentre `Mappe di calore` fa l'opposto: immagini a piena dimensione e la sola tabella delle
-  metriche mappabili; le heatmap si colorano con LUT standard dell'imaging medicale (Inferno,
-  Magma, Viridis percettivamente uniformi, Hot Iron della palette DICOM, più scala di grigi). Il
-  verso della scala segue la metrica: per le mappe di differenza (MSE/MAE/NMSE) lo zero è
-  trasparente, per SSIM — che vale 1.0 dove le immagini coincidono — la LUT viene applicata al
-  contrario, così a risaltare sono comunque le zone compromesse (legenda inclusa).
-  `Analizza` ospita anche l'esclusione dell'aria di sfondo (vedi sopra). `Esporta` elenca per
-  iscritto cosa è stato analizzato, cosa è stato
-  generato e quali file verranno scritti, con due opzioni di esclusione (immagini delle heatmap e
-  immagini chiave con le ROI, entrambe attive per default). Cronologia, log ed errori non sono
-  più una fase: stanno in `Visualizza → Pannelli`, e gli errori non letti restano segnalati da un
-  indicatore nella status bar.
-- **Qualitativo**: il ruolo autore usa
-  `Immagini → Domande → Tutte le pagine → Anteprima → Salva`. I primi due passi sono una
-  passata guidata su **una** pagina — carichi le sue immagini, poi scrivi le domande che
-  riguardano quelle immagini — e ogni passo termina con un pulsante `Avanti` che porta al
-  successivo, così il percorso non va scoperto cliccando sulle linguette. `Tutte le pagine` è la
-  vista d'insieme: una riga per pagina con quante immagini e quante domande ha, da cui si apre,
-  duplica, rinomina o elimina una coppia già creata, o se ne inizia un'altra (che riporta al
-  passo `Immagini`, sempre lo stesso, non una sezione in più). Il valutatore vede soltanto
-  `Valuta → Completa`, senza strumenti di authoring.
-- **Radiomica**: `Immagini → ROI/VOI → Pre-processing → Estrazione → Risultati → Esporta`, con
-  configurazione e segmentazione mostrate come pannelli contestuali separati.
-- Menu e barra applicazione sono uniformi (`File`, `Modifica` dove applicabile, `Visualizza`,
-  `Strumenti`, `Aiuto`); tema, lingua e formato numerico non occupano azioni operative.
-- La tabella quantitativa usa intestazioni tradotte e leggibili e include un filtro testuale su
-  tutte le colonne; le chiavi tecniche originali restano inalterate nei DataFrame e negli export.
+- **Quantitative**: `Import → Inspect → Measure → Analyze → Results → Heatmaps → Export`.
+  ROIs/lines/annotations, computation and charts no longer compete for space at the same time;
+  when the computation finishes the window moves to the results automatically. `Import` offers
+  both image loading and import of a saved project; `Results` and `Export` hide the canvas
+  entirely (numbers, charts and the written summary are the only useful content there), while
+  `Heatmaps` does the opposite: full-size images and only the table of mappable metrics. Heatmaps
+  are colored with standard medical-imaging LUTs (the perceptually uniform Inferno, Magma and
+  Viridis, Hot Iron from the DICOM palette, plus grayscale). The direction of the scale follows
+  the metric: for difference maps (MSE/MAE/NMSE) zero is transparent, while for SSIM — which is
+  1.0 where the images match — the LUT is applied in reverse, so it is still the degraded areas
+  that stand out (legend included). `Analyze` also hosts background air exclusion (see above).
+  `Export` lists in writing what was analyzed, what was generated and which files will be
+  written, with two exclusion options (heatmap images and key images with ROIs, both on by
+  default). History, log and errors are no longer a step: they live in `View → Panels`, and
+  unread errors stay flagged by an indicator in the status bar.
+- **Qualitative**: the author role uses
+  `Images → Questions → All pages → Preview → Save`. The first two steps are a guided pass over
+  **one** page — you load its images, then write the questions about those images — and each
+  step ends with a `Next` button that leads to the following one, so the path does not have to be
+  discovered by clicking on the tabs. `All pages` is the overview: one row per page with how many
+  images and questions it has, from which an existing pair can be opened, duplicated, renamed or
+  deleted, or a new one started (which leads back to the `Images` step, always the same one, not
+  an extra section). The evaluator sees only `Evaluate → Complete & save`, with no authoring
+  tools.
+- **Radiomics**: `Images → ROI/VOI → Pre-process → Extract → Results → Export`, with
+  configuration and segmentation shown as separate contextual panels.
+- Menus and the application bar are uniform (`File`, `Edit` where applicable, `View`, `Tools`,
+  `Help`); theme, language and number format do not take up operational actions.
+- The quantitative table uses translated, readable headers and includes a text filter across all
+  columns; the original technical keys remain unchanged in the DataFrames and exports.
 
-Componenti principali:
-- **`app.py`**: bootstrap `QApplication` + `configure_logging()`.
-- **`main_window.py`**: chrome del workbench quantitativo (menu, navigazione, dock contestuali,
-  status bar); costruisce un `AppController` e resta un guscio sottile sulla business logic.
-- **`controller.py`** (`AppController`): orchestra caricamento immagini, calcolo metriche
-  (in background thread, `workers.py`), `CommandHistory` (undo/redo, Ctrl+Z/Ctrl+Y),
-  `SessionStorage`/`AnalysisHistory` (salva/riapri analisi passate).
-- **`commands.py`**: sottoclassi concrete di `qicom.session.commands.Command` per ogni azione
-  annullabile (ROI, window/level, annotazioni).
-- **`widgets/dual_image_view.py`**: due pannelli `pg.ImageView` sincronizzati (slice, ROI
-  cerchio/rettangolo/poligono duplicate su entrambi i pannelli, annotazioni testuali).
-- **`widgets/background_panel.py`**: esclusione dell'aria nella fase `Analizza`, in tre passi
-  (cerchio verde di campionamento → `Rileva aria` → gomma per le correzioni a mano), con
-  tolleranza/soglia modificabili e resoconto della percentuale esclusa. Il passo è dichiarato
-  facoltativo da un avviso fisso in cima alla colonna e si attiva da un interruttore a tutta
-  larghezza, non da una casella di spunta: saltarlo è una scelta legittima (le metriche fanno
-  allora la media su tutta l'immagine, aria compresa), ma va fatta consapevolmente. Il campione
-  d'aria è **uno solo** — posato il cerchio, il pulsante che lo crea si disattiva.
-- **`widgets/evaluation_setup_panel.py`**: il primo passo del compositore qualitativo — anonimato
-  delle risposte, istruzioni generali, randomizzazione e cecità, ripetizioni nascoste, statistiche
-  e tempi. Nulla qui riguarda una singola pagina o domanda: è il comportamento dell'intera
-  valutazione, deciso prima che esista qualcosa a cui applicarlo.
-- **`widgets/page_overview_panel.py`**: la vista d'insieme del compositore di form qualitativi —
-  una riga per pagina con il numero di immagini e di domande, e le azioni per aprirla,
-  duplicarla, rinominarla o eliminarla.
-- **`widgets/wizard_step_bar.py`**: la barra `Indietro`/`Avanti` in fondo a ogni passo di
-  costruzione, con l'indicazione della pagina su cui si sta lavorando.
+Main components:
+- **`app.py`**: `QApplication` bootstrap + `configure_logging()`.
+- **`main_window.py`**: chrome of the quantitative workbench (menus, navigation, contextual docks,
+  status bar); builds an `AppController` and stays a thin shell over the business logic.
+- **`controller.py`** (`AppController`): orchestrates image loading, metric computation
+  (in a background thread, `workers.py`), `CommandHistory` (undo/redo, Ctrl+Z/Ctrl+Y),
+  `SessionStorage`/`AnalysisHistory` (save/reopen past analyses).
+- **`commands.py`**: concrete subclasses of `qicom.session.commands.Command` for every undoable
+  action (ROI, window/level, annotations).
+- **`widgets/dual_image_view.py`**: two synchronized `pg.ImageView` panels (slice;
+  circle/rectangle/polygon ROIs duplicated on both panels; text annotations).
+- **`widgets/background_panel.py`**: air exclusion in the `Analyze` step, in three steps (green
+  sampling circle → `Detect air` → eraser for manual corrections), with adjustable
+  tolerance/threshold and a summary of the excluded percentage. The step is declared optional by
+  a fixed notice at the top of the column and is switched on from a full-width toggle, not a
+  checkbox: skipping it is a legitimate choice (the metrics then average over the whole image,
+  air included), but it should be a conscious one. There is **only one** air sample — once the
+  circle is placed, the button that creates it is disabled.
+- **`widgets/evaluation_setup_panel.py`**: the first step of the qualitative composer — answer
+  anonymity, general instructions, randomization and blinding, hidden repeats, statistics and
+  timing. Nothing here concerns a single page or question: it is the behavior of the whole
+  evaluation, decided before anything exists to apply it to.
+- **`widgets/page_overview_panel.py`**: the overview of the qualitative form composer — one row
+  per page with the number of images and questions, and the actions to open, duplicate, rename
+  or delete it.
+- **`widgets/wizard_step_bar.py`**: the `Back`/`Next` bar at the bottom of every build step,
+  showing which page is being worked on.
 - **`widgets/roi_manager.py`**, **`widgets/annotation_manager.py`**, **`widgets/history_panel.py`**,
   **`widgets/log_panel.py`**, **`widgets/results_table.py`**, **`widgets/concat_dialog.py`**,
   **`widgets/import_panel.py`**, **`widgets/export_summary_panel.py`**,
-  **`widgets/toolbar.py`**: pannelli dock/dialoghi, ciascuno presentazione pura.
-- **`widgets/workflow_rail.py`**: navigazione condivisa e traducibile; segnala la fase selezionata
-  alla finestra proprietaria senza conoscere controller o dati scientifici. È una striscia di
-  linguette orizzontali in stile browser, disegnata a mano (`QPainterPath`: le spalle curve non
-  sono esprimibili in QSS) e ospitata in una barra strumenti in cima alla finestra: la linguetta
-  attiva è riempita del colore della superficie sottostante e vi si salda, le altre restano
-  staccate sullo sfondo arretrato. Una sola fase è visibile alla volta — sono i passi di un unico
-  flusso, non documenti aperti in parallelo.
-- **`i18n/`**: traduzione runtime via dizionari JSON (`locales/{en,it,fr,de,es,pt,zh-Hans,ja}.json`), non
-  `.ts`/`.qm` Qt (nessun passo di build); cambio lingua a caldo, senza riavvio.
-- **`theming.py`**: QSS chiaro/grigio/scuro (`themes/{light,gray,dark}.qss`) applicati sia alla chrome Qt
-  sia (esplicitamente, via `pg.setConfigOption` + refresh dei canvas già costruiti) ai
-  pannelli pyqtgraph, che QSS da solo non raggiunge.
+  **`widgets/toolbar.py`**: dock panels/dialogs, each one pure presentation.
+- **`widgets/workflow_rail.py`**: shared, translatable navigation; it reports the selected step
+  to the owning window without knowing anything about the controller or the scientific data. It
+  is a strip of browser-style horizontal tabs, hand-drawn (`QPainterPath`: curved shoulders
+  cannot be expressed in QSS) and hosted in a toolbar at the top of the window: the active tab is
+  filled with the color of the surface beneath it and merges into it, while the others stay
+  detached on the recessed background. Only one step is visible at a time — they are the steps
+  of a single flow, not documents open side by side.
+- **`i18n/`**: runtime translation through JSON dictionaries
+  (`locales/{en,it,fr,de,es,pt,zh-Hans,ja}.json`), not Qt `.ts`/`.qm` files (no build step);
+  the language switches live, without a restart.
+- **`theming.py`**: light/gray/dark QSS (`themes/{light,gray,dark}.qss`) applied both to the Qt
+  chrome and (explicitly, via `pg.setConfigOption` + a refresh of the canvases already built) to
+  the pyqtgraph panels, which QSS alone does not reach.
 
-Prima di ogni calcolo QICOM confronta i metadati fisici delle immagini caricate e
-segnala — nel pannello Errori e nel log, senza mai bloccare il calcolo — interpretazione
-fotometrica, pixel spacing, orientamento o passo fra slice discordanti, e serie con slice
-non equispaziate. Un'immagine MONOCHROME1 (visualizzata invertita rispetto a un PACS) è
-inoltre marcata come tale nell'overlay del pannello. I pixel restano sempre quelli
-memorizzati: QICOM non inverte e non ricampiona nulla per conto proprio.
+Before every computation QICOM compares the physical metadata of the loaded images and reports
+— in the Errors panel and in the log, without ever blocking the computation — mismatched
+photometric interpretation, pixel spacing, orientation or slice spacing, and series with
+unevenly spaced slices. A MONOCHROME1 image (displayed inverted compared with a PACS) is also
+marked as such in the panel overlay. The pixels are always the stored ones: QICOM does not
+invert or resample anything on its own initiative.
 
-I caricamenti e i calcoli asincroni hanno un identificatore di generazione: un risultato vecchio
-non può sovrascrivere immagini o risultati richiesti più recentemente. In chiusura, l'opzione
-“Salva” persiste il progetto portatile modificabile, non la sola fotografia dei risultati.
+Asynchronous loads and computations carry a generation identifier: a stale result cannot
+overwrite images or results requested more recently. On closing, the "Save" option persists the
+editable portable project, not just a snapshot of the results.
 
-## Valutazioni qualitative e statistica
+## Qualitative evaluations and statistics
 
-L'autore, nel primo passo **Impostazioni**, può marcare la valutazione come **a risposte anonime**: agli
-valutatori non viene chiesto alcun nome, nessun nome viene registrato, e ogni consegna è
-identificata solo dal proprio **id di consegna** — un timestamp UTC più un suffisso casuale,
-generato una volta per set di risposte inviato. È una chiave diversa dall'identità del computer
-(`load_or_create_evaluator_identity`, che serve solo a ritrovare una valutazione interrotta su
-quella macchina): più persone che rispondono dalla stessa postazione producono consegne distinte,
-e la stessa persona che ne invia due ne produce comunque due. Chi aggrega vede quante ne sono
-arrivate e decide: se ne attendeva 10 e ne riceve 20, qualcuno ha risposto più volte.
+In the first **Setup** step, the author can mark the evaluation as **anonymous-response**:
+evaluators are not asked for a name, no name is recorded, and each submission is identified only
+by its own **submission id** — a UTC timestamp plus a random suffix, generated once per submitted
+answer set. It is a different key from the computer's identity
+(`load_or_create_evaluator_identity`, which only serves to find an interrupted evaluation on that
+machine): several people answering from the same workstation produce separate submissions, and
+the same person submitting twice still produces two. Whoever aggregates sees how many arrived and
+decides: if 10 were expected and 20 arrive, someone answered more than once.
 
-Il file che un valutatore salva a fine valutazione contiene **solo le sue risposte** (un unico
-foglio `Raw Answers`). Le statistiche non stanno lì: su un singolo valutatore sarebbero degeneri
-— una "media" su un solo giudice è il suo stesso punteggio, e concordanza inter-valutatore e ICC
-non sono definite — e sono compito del passo di aggregazione, che le calcola fra valutatori. Quel
-foglio è anche esattamente ciò che il modulo di aggregazione rilegge quando carichi l'`.xlsx`
-invece del `.json`.
+The file an evaluator saves at the end of the evaluation contains **only their answers** (a
+single `Raw Answers` sheet). The statistics are not there: for a single evaluator they would be
+degenerate — a "mean" over a single judge is that judge's own score, and inter-rater agreement
+and ICC are undefined — and they are the job of the aggregation step, which computes them across
+evaluators. That sheet is also exactly what the aggregation module reads back when you load the
+`.xlsx` instead of the `.json`.
 
-Dal launcher, **Aggregate Results** apre uno spazio di lavoro a quattro passi (le stesse
-`WorkflowRail` delle finestre principali): si carica il pacchetto con le domande inviate, poi i
-file di risposte ricevuti — `.json` di QICOM, il report Excel che ogni valutatore salva a fine
-valutazione, o un CSV degli stessi record. Ogni riga dell'elenco è una valutazione con una
-bandierina verde o rossa: la verifica è strutturale (pagine, domande, testo delle domande e
-immagini di confronto realmente definiti nel pacchetto, oltre al test id quando il file lo
-dichiara), così un report che risponde a un questionario diverso viene mostrato con il motivo
-dell'incongruenza ed escluso dall'analisi invece di far fallire l'aggregazione. I passi
-successivi calcolano e mostrano in QICOM le statistiche e il grafico dei punteggi medi, e
-esportano tutto in Excel (con grafici nativi) o in una cartella di CSV.
+From the launcher, **Aggregate Results** opens a four-step workspace (the same `WorkflowRail` as
+the main windows): you load the package with the questions that were sent out, then the answer
+files received — QICOM `.json`, the Excel report each evaluator saves at the end of the
+evaluation, or a CSV of the same records. Each row of the list is an evaluation with a green or
+red flag: the check is structural (pages, questions, question text and comparison images
+actually defined in the package, plus the test id when the file declares one), so a report that
+answers a different questionnaire is shown with the reason for the mismatch and excluded from the
+analysis instead of making the aggregation fail. The following steps compute and display the
+statistics and the mean-score chart in QICOM, and export everything to Excel (with native charts)
+or to a folder of CSVs.
 
-Le risposte aggregate devono riferirsi a pagine, domande, pannelli, slice e intervalli di
-punteggio realmente definiti nel pacchetto; record ed evaluator duplicati non vengono aggregati.
-Il report include media/deviazione, Cohen/Fleiss kappa, ICC(2,1) e confronti appaiati. Per questi ultimi QICOM media prima le slice per valutatore, abbina i confronti sullo
-stesso valutatore, calcola la probabilità di superiorità e usa il Wilcoxon signed-rank. Non tratta
-le slice spazialmente correlate come soggetti indipendenti. Il foglio `Methodology` del report
-documenta unità statistica e limiti degli intervalli bootstrap.
+The aggregated answers must refer to pages, questions, panels, slices and score ranges actually
+defined in the package; duplicate records and evaluators are not aggregated. The report includes
+mean/deviation, Cohen/Fleiss kappa, ICC(2,1) and paired comparisons. For the latter QICOM first
+averages slices per evaluator, pairs the comparisons within the same evaluator, computes the
+probability of superiority and uses the Wilcoxon signed-rank test. It does not treat spatially
+correlated slices as independent subjects. The report's `Methodology` sheet documents the
+statistical unit and the limits of the bootstrap intervals.
 
-### Disegno qualitativo v4
+### Qualitative design v4
 
-Il primo passo **Impostazioni** configura istruzioni generali, randomizzazione di
-casi/domande/pannelli, controbilanciamento, seed, etichette A/B/C, pagine di calibrazione,
-ripetizioni nascoste e raccolta opzionale dei tempi. Sono scelte che valgono per l'intera
-valutazione e che cambiano ciò che ogni valutatore vede, quindi si fanno prima di costruire le
-pagine, non mentre si scrivono le domande. **Crea consegna in cieco**
-produce un ZIP pubblico con nomi generici e una mappa JSON di decodifica separata, riservata
-all'autore. Seed e ordine sono salvati nella consegna e nelle risposte: la ripresa non cambia
-mai ciò che il valutatore vede.
+The first **Setup** step configures general instructions, randomization of
+cases/questions/panels, counterbalancing, seed, A/B/C labels, calibration pages, hidden repeats
+and optional timing collection. These choices apply to the whole evaluation and change what each
+evaluator sees, so they are made before building the pages, not while writing the questions.
+**Create Blinded Delivery** produces a public ZIP with generic names and a separate JSON decoding
+map, reserved for the author. Seed and order are saved in the delivery and in the answers:
+resuming never changes what the evaluator sees.
 
-Chi valuta accede con un proprio utente locale (ID e password) per poter sospendere e riprendere:
-le sue valutazioni, in sospeso e concluse, sono cifrate su quel computer e visibili solo a lui.
-Senza accesso si valuta in una sola sessione e nulla viene conservato. L'autore può inoltre
-proteggere con un codice di accesso la copia da inviare e la consegna in cieco: senza il codice non
-si aprono, non si modificano e non se ne aggregano le risposte, che tornano cifrate con lo stesso
-codice. Limiti in `SECURITY.md`.
+Evaluators sign in with their own local user (ID and password) so that they can pause and
+resume: their evaluations, pending and completed, are encrypted on that computer and visible only
+to them. Without signing in, the evaluation takes place in a single session and nothing is kept.
+The author can also protect the copy to be sent and the blinded delivery with an access code:
+without the code they cannot be opened or modified and their answers cannot be aggregated; the
+answers come back encrypted with the same code. Limits in `SECURITY.md`.
 
-Le scale numeriche supportano ancore testuali e commenti obbligatori sotto soglia. Sono distinti
-assenza, salto esplicito e **Non valutabile**. Sono disponibili anche 2-AFC forzata A/B,
-preferenza appaiata A/B/nessuna differenza, categorie, ranking e testo aperto.
+Numeric scales support text anchors and mandatory comments below a threshold. Missing answers,
+explicit skips and **Not assessable** are kept distinct. Forced-choice A/B 2-AFC, paired
+preference A/B/no difference, categories, ranking and open text are also available.
 
-Il report usa mediana/IQR, distribuzioni, top/bottom box, risposte divergenti e tassi di risposta.
-La concordanza primaria è l'alpha ordinale di Krippendorff; Gwet AC2 è dichiarata avanzata.
-I confronti mediano prima le slice nella cella valutatore×caso, applicano bootstrap indipendente
-dei cluster valutatore e caso e riportano anche Wilcoxon con correzione di Holm. Ripetizioni, QC
-descrittivo, completezza e precisione hanno fogli separati; nessun flag esclude o ricentra
-automaticamente un valutatore. Dettagli in
+The report uses median/IQR, distributions, top/bottom box, divergent answers and response rates.
+The primary agreement measure is Krippendorff's ordinal alpha; Gwet's AC2 is declared advanced.
+Comparisons first take the median over slices in each evaluator×case cell, apply an independent
+bootstrap over evaluator and case clusters and also report Wilcoxon with Holm correction.
+Repeats, descriptive QC, completeness and precision have separate sheets; no flag excludes or
+re-centers an evaluator automatically. Details in
 [QUALITATIVE_METHODOLOGY.md](QUALITATIVE_METHODOLOGY.md).
 
-## Radiomica pairwise
+## Pairwise radiomics
 
-Dal launcher, **Radiomica** apre una finestra e un formato progetto indipendenti dai moduli
-quantitativo e qualitativo. Accetta esclusivamente un’immagine/serie DICOM o un file NIfTI per
-ciascuno dei due ruoli (riferimento e confronto); JPG/PNG/BMP sono rifiutati perché privi della
-geometria fisica necessaria.
+From the launcher, **Radiomics** opens a window and a project format independent of the
+quantitative and qualitative modules. It accepts only a DICOM image/series or a NIfTI file for
+each of the two roles (reference and comparison); JPG/PNG/BMP are rejected because they lack the
+necessary physical geometry.
 
-Il flusso dedicato comprende:
+The dedicated workflow includes:
 
-- resampling centrato in coordinate fisiche a voxel isotropici configurabili, con B-spline di
-  default per l’immagine e nearest-neighbour per la maschera;
-- discretizzazione IBSI a numero di bin o ampiezza fissa. Nel secondo caso QICOM sostituisce
-  durante l’estrazione l’ancoraggio a zero predefinito di PyRadiomics con l’ancoraggio al minimo
-  della ROI richiesto dal profilo IBSI;
-- normalizzazione, clipping e resegmentation espliciti e inclusi nell’hash del profilo; il default
-  resta `none`, senza modifiche silenziose ai valori;
-- ROI/VOI manuali sincronizzate, thresholding e region growing senza deep learning;
-- import NIfTI multi-label con controllo rigoroso di size/spacing/origin/direction, conferma
-  esplicita prima del resampling nearest-neighbour, ed export originale/preprocessato con sidecar;
-- shape 2D/3D, first-order, GLCM, GLRLM, GLSZM, GLDM e NGTDM su Original, Wavelet e/o LoG;
-- delta assoluto, percentuale classica e simmetrica per ogni feature; la simmetrica è primaria
-  nel profilo 2.0, mentre `delta_percent` conserva il valore classico per compatibilità;
-- accordo pairwise esclusivamente descrittivo: nessuna ROI/lesione dello stesso soggetto viene
-  trattata come unità indipendente e l’ICC/CCC formale è riservato all’aggregatore di coorte;
-- QC separato delle maschere (Dice, Jaccard, RVD, centroid shift, HD95, ASSD, overlap fisico,
-  bordi, voxel e hash) e delle feature;
-- robustness check con perturbazioni fisiche per famiglia e sweep configurabile del
-  preprocessing, senza ICC sul singolo caso e senza selezione clinica automatica (solo API);
-- aggregatore multi-progetto che legge le sole tabelle, verifica gli hash dei profili e calcola
-  ICC/CCC soltanto con almeno tre unità indipendenti dichiarate; include Pearson/Spearman,
-  effective N, associazioni col volume e cluster di ridondanza esplorativi;
-- progetto ZIP portabile con copie NIfTI derivate, maschere, configurazione e risultati; export
-  Excel/CSV/HTML con sezioni separate per feature, delta, ricevuta, registro esiti, QC,
-  robustness, sweep, validazione e metodologia.
+- resampling centered in physical coordinates to configurable isotropic voxels, with B-spline by
+  default for the image and nearest-neighbor for the mask;
+- IBSI discretization by bin count or fixed bin width. In the latter case, during extraction,
+  QICOM replaces PyRadiomics's default anchoring at zero with the anchoring at the ROI minimum
+  required by the IBSI profile;
+- explicit normalization, clipping and resegmentation, included in the profile hash; the default
+  remains `none`, with no silent changes to the values;
+- synchronized manual ROIs/VOIs, thresholding and region growing without deep learning;
+- multi-label NIfTI import with strict size/spacing/origin/direction checks, explicit
+  confirmation before nearest-neighbor resampling, and original/preprocessed export with a
+  sidecar;
+- 2D/3D shape, first-order, GLCM, GLRLM, GLSZM, GLDM and NGTDM on Original, Wavelet and/or LoG;
+- absolute, classic percentage and symmetric percentage delta for every feature; the symmetric
+  one is primary in profile 2.0, while `delta_percent` keeps the classic value for compatibility;
+- strictly descriptive pairwise agreement: no ROI/lesion of the same subject is treated as an
+  independent unit, and formal ICC/CCC is reserved for the cohort aggregator;
+- separate QC of the masks (Dice, Jaccard, RVD, centroid shift, HD95, ASSD, physical overlap,
+  borders, voxels and hashes) and of the features;
+- a robustness check with physical perturbations per family and a configurable preprocessing
+  sweep, with no ICC on the single case and no automatic clinical selection (API only);
+- a multi-project aggregator that reads only the tables, verifies the profile hashes and computes
+  ICC/CCC only with at least three declared independent units; it includes Pearson/Spearman,
+  effective N, associations with volume and exploratory redundancy clusters;
+- a portable ZIP project with derived NIfTI copies, masks, configuration and results;
+  Excel/CSV/HTML export with separate sections for features, deltas, receipt, outcome register,
+  QC, robustness, sweep, validation and methodology.
 
-Nella pagina Immagini, **Verifica QICOM con fantoccio IBSI** apre la quarta modalità dedicata. Il
-manifest condiviso con la CI scarica solo dopo consenso immagine, maschera e workbook ufficiali,
-ne verifica gli SHA-256 fissati e li riusa offline. La verifica attuale confronta 104 feature del
-digital phantom IBSI-1 ed è circoscritta a formule, aggregazione 3D, caricamento/geometria NIfTI,
-label, discretizzazione ed estrazione dichiarate: non è una verifica full-pipeline DICOM e non è
-una certificazione. PASS richiede che tutte le feature obbligatorie siano confrontabili e dentro
-tolleranza; una feature mancante produce INCOMPLETE. Una copia modificabile diventa
-`derived-experiment` e perde il verdetto di riferimento.
+On the Images page, **Verify QICOM with an IBSI phantom** opens the dedicated fourth mode. The
+manifest shared with CI downloads the official image, mask and workbook only after consent,
+checks them against their pinned SHA-256 and reuses them offline. The current verification
+compares 104 features of the IBSI-1 digital phantom and is limited to the declared formulas, 3D
+aggregation, NIfTI loading/geometry, labels, discretization and extraction: it is not a
+full-pipeline DICOM verification and it is not a certification. PASS requires every mandatory
+feature to be comparable and within tolerance; a missing feature produces INCOMPLETE. An editable
+copy becomes `derived-experiment` and loses the reference verdict.
 
-Ogni riga riporta backend, hash del profilo e stato di copertura. La ricevuta comune salva versioni,
-hash di input/maschere/configurazione/risultati, warning, esiti e unità statistica. Sono fuori scope
-LASSO, Rad-Score, ROC/AUC, modelli predittivi, registrazione automatica e soglie cliniche.
-Metodologia completa in [RADIOMICS_METHODOLOGY.md](RADIOMICS_METHODOLOGY.md); schemi, batch,
-trending, HTML e demo in [OPERATIONS_SCHEMAS.md](OPERATIONS_SCHEMAS.md).
+Every row reports backend, profile hash and coverage status. The shared receipt saves versions,
+hashes of inputs/masks/configuration/results, warnings, outcomes and statistical unit. LASSO,
+Rad-Score, ROC/AUC, predictive models, automatic registration and clinical thresholds are out of
+scope. Full methodology in [RADIOMICS_METHODOLOGY.md](RADIOMICS_METHODOLOGY.md); schemas, batch,
+trending, HTML and demo in [OPERATIONS_SCHEMAS.md](OPERATIONS_SCHEMAS.md).
 
-**Limiti noti di questo prototipo** (segnalati esplicitamente, non nascosti): il freehand ROI
-è un poligono a vertici (`pg.PolyLineROI`), non un tratto continuo; la concatenazione stack è
-solo manuale (indice di partenza per ciascuna immagine + `numpy.concatenate` — l'ordinamento
-automatico via metadati DICOM/NIfTI richiederebbe un'estensione del core). DICOM SEG e RTSTRUCT
-non sono inclusi in questa iterazione.
+**Known limitations of this prototype** (stated explicitly, not hidden): the freehand ROI is a
+vertex polygon (`pg.PolyLineROI`), not a continuous stroke; stack concatenation is manual only
+(a start index for each image + `numpy.concatenate` — automatic ordering from DICOM/NIfTI
+metadata would require an extension of the core). DICOM SEG and RTSTRUCT are not included in
+this iteration.
 
-## Strumenti di utilità
+## Utility tools
 
-Dal launcher, **Strumenti di utilità** apre una finestra con il catalogo a sinistra e lo strumento
-a destra; lo stesso catalogo è nel menu `Strumenti` di ogni finestra di lavoro. Gli strumenti
-leggono le sorgenti senza modificarle: ogni risultato è una copia, e un insieme di file compare
-nella cartella di destinazione (nuova o vuota) tutto insieme o per niente. Il NIfTI scritto da
-uno strumento è posizionato dalla geometria della sorgente (`qicom/io/geometry.py`) e non copia
-alcun campo dell'header. Ogni elaborazione e ogni salvataggio mostra la percentuale di
-avanzamento in una finestra propria; nell'area dell'immagine la rotella scorre le slice
-(Ctrl+rotella ingrandisce), il trascinamento con il tasto sinistro regola finestra e livello, il
-tasto centrale sposta l'immagine e il destro la ingrandisce, e un clic, o un file trascinato,
-carica l'immagine; un pulsante colorato indica a ogni momento il passo successivo.
+From the launcher, **Utility Tools** opens a window with the catalog on the left and the tool on
+the right; the same catalog is in the `Tools` menu of every working window. The tools read their
+sources without modifying them: every result is a copy, and a set of files appears in the (new or
+empty) destination folder all at once or not at all. A NIfTI written by a tool is positioned from
+the source geometry (`qicom/io/geometry.py`) and copies no header field. Every processing and
+saving operation shows its progress percentage in a window of its own; in the image area the
+wheel scrolls through the slices (Ctrl+wheel zooms), dragging with the left button adjusts window
+and level, the middle button pans the image and the right button zooms it, and a click, or a
+dropped file, loads the image; a colored button always shows the next step.
 
-| Strumento | Cosa fa |
+| Tool | What it does |
 | --- | --- |
-| Segmentazione semi-automatica | pagine guidate a schede (immagine, etichetta, campione, selezione, applica, salva) ripetute per ogni regione: ROI campionata, intervallo di intensità, anteprima, poi «togli», «mantieni solo» o «assegna»; preset con intervalli HU indicativi per la CT; annulla/ripeti; salva NIfTI + tabella JSON delle etichette |
-| Operazioni e confronto tra maschere | unione, intersezione, differenza, XOR, riempimento delle slice vuote, Dice/Jaccard/volumi/Hausdorff in mm |
-| Converti immagini | DICOM, NIfTI o pile di bitmap in NIfTI, slice PNG a 8 o 16 bit (finestra a schermo) o TIFF (valori reali), in una cartella nuova `<nome>_<formato>` dentro quella scelta |
-| Ricampiona | a una spaziatura o sulla griglia di un riferimento, per coordinate paziente (non registra) |
-| Aritmetica tra immagini | differenza, differenza assoluta, somma, media, rapporto |
-| Degradazione controllata | un effetto alla volta (rumore, sfocatura, perdita di risoluzione, JPEG) con elenco degli effetti rimovibili, da un seed, con provenance riproducibile |
-| Ispeziona e modifica tag DICOM | header completo con sequenze e tag privati, ricerca ed export CSV; copie modificate in una cartella nuova, tag dei pixel bloccati, tag delle misure con conferma |
-| Confronta header DICOM | due header elemento per elemento, interi; filtri «solo differenze» e «nascondi UID» |
-| Controlla e organizza cartelle DICOM | studi e serie, istanze mancanti, spaziatura irregolare; copia ordinata senza nomi identificativi |
-| Decomprimi DICOM | un DICOM compresso (JPEG lossless, JPEG-LS, JPEG 2000, RLE…) riscritto non compresso, un file per frame, nella cartella nuova `<nome>` dentro quella scelta; i multi-frame ricevono UID di istanza e di serie nuovi, gli Enhanced restano Enhanced |
-| Anonimizza immagini | stesse regole fail-closed degli export; albero dei file prima di scrivere; copia in `<cartella>_anonymized` con le stesse sottocartelle e gli stessi nomi (i nomi non sono de-identificati), oppure, come opzione, con nomi generici in `anonymized` |
+| Semi-automatic segmentation | guided tabbed pages (image, label, sample, selection, apply, save) repeated for each region: sampled ROI, intensity range, preview, then "Remove from image", "Keep only this" or "Assign to label"; presets with indicative HU ranges for CT; undo/redo; saves NIfTI + a JSON label table |
+| Mask operations and comparison | union, intersection, difference, XOR, filling empty slices, Dice/Jaccard/volumes/Hausdorff in mm |
+| Convert images | DICOM, NIfTI or bitmap stacks to NIfTI, 8- or 16-bit PNG slices (on-screen window) or TIFF (real values), in a new `<name>_<format>` folder inside the chosen one |
+| Resample | to a given spacing or onto a reference's grid, by patient coordinates (no registration) |
+| Image arithmetic | difference, absolute difference, sum, mean, ratio |
+| Controlled degradation | one effect at a time (noise, blur, resolution loss, JPEG) with a list of removable effects, from a seed, with reproducible provenance |
+| Inspect and edit DICOM tags | full header with sequences and private tags, search and CSV export; modified copies in a new folder, pixel tags locked, measurement tags only after confirmation |
+| Compare DICOM headers | two headers element by element, in full; "Only differences" and "Hide UIDs" filters |
+| Check and organize DICOM folders | studies and series, missing instances, irregular spacing; sorted copy without identifying names |
+| Decompress DICOM | a compressed DICOM (JPEG lossless, JPEG-LS, JPEG 2000, RLE…) rewritten uncompressed, one file per frame, in the new `<name>` folder inside the chosen one; multi-frame images receive new instance and series UIDs, Enhanced images stay Enhanced |
+| Anonymize images | the same fail-closed rules as the exports; file tree shown before writing; copy to `<folder>_anonymized` with the same subfolders and the same names (the names are not de-identified) or, optionally, with generic names in `anonymized` |
 
-La segmentazione separa classi di intensità, non organi; gli intervalli HU dei preset sono punti
-di partenza da regolare, non soglie cliniche. I limiti di privacy di ciascuno strumento sono in
-[SECURITY.md](SECURITY.md), i formati scritti in [OPERATIONS_SCHEMAS.md](OPERATIONS_SCHEMAS.md).
+Segmentation separates intensity classes, not organs; the preset HU ranges are starting points to
+adjust, not clinical thresholds. The privacy limits of each tool are in [SECURITY.md](SECURITY.md),
+the formats written in [OPERATIONS_SCHEMAS.md](OPERATIONS_SCHEMAS.md).
 
-## Operazioni locali e headless
+## Local and headless operations
 
-`qicom-cli` offre `batch-quantitative`, `aggregate-qualitative` e
-`batch-radiomics-cohort` da configurazione JSON, con progress, log, exit code, isolamento degli
-errori, tidy CSV/JSON e ricevute. Il menu Strumenti della radiomica espone anche l’aggregazione
-multi-progetto. `TrendStore` mantiene baseline versionate, variazioni, Shewhart, EWMA opzionale e
-limiti utente distinti dai limiti statistici.
+`qicom-cli` offers `batch-quantitative`, `aggregate-qualitative` and
+`batch-radiomics-cohort` driven by a JSON configuration, with progress, logging, exit codes, error
+isolation, tidy CSV/JSON and receipts. The radiomics Tools menu also exposes multi-project
+aggregation. `TrendStore` keeps versioned baselines, variations, Shewhart, optional EWMA and user
+limits kept distinct from statistical limits.
 
-### Bundle sintetico (demo e riproduzione bug)
+### Synthetic bundle (demo and bug reproduction)
 
-QICOM genera una cartella autonoma di dati di esempio deterministici che copre i tre moduli, con
-risultati, ricevute di riproducibilità e report HTML locale. Tutto deriva dal seed fisso `20260517`:
-la stessa build produce sempre gli stessi file, e `qicom_demo.json` elenca versione QICOM,
-piattaforma e uno SHA-256 per file.
+QICOM generates a self-contained folder of deterministic sample data covering the three modules,
+with results, reproducibility receipts and a local HTML report. Everything derives from the fixed
+seed `20260517`: the same build always produces the same files, and `qicom_demo.json` lists the
+QICOM version, the platform and a SHA-256 per file.
 
 ```bash
 qicom-cli demo ./QICOM-synthetic-demo
 ```
 
-Nell'app: **Impostazioni → Diagnostica**, oppure **Aiuto → Segnala un Bug**, che è il punto in cui
-serve davvero — allegando il bundle a una segnalazione, chi la riceve lo rigenera e confronta gli
-hash, senza che nessun dato di paziente debba viaggiare. Non contiene PHI e non è una validazione
-clinica o IBSI. La cartella di destinazione non viene mai sovrascritta (dalla GUI il nome libero
-successivo, `-2`, `-3`, … , viene scelto automaticamente).
+In the app: **Settings → Diagnostics**, or **Help → Report a Bug**, which is where it is really
+needed — with the bundle attached to a report, the recipient regenerates it and compares the
+hashes, without any patient data having to travel. It contains no PHI and is not a clinical or
+IBSI validation. The destination folder is never overwritten (from the GUI the next free name,
+`-2`, `-3`, …, is chosen automatically).
 
-## Test
+## Tests
 
-Per preparare un ambiente di sviluppo completo e verificare prima del push gli stessi
-controlli usati da GitHub:
+To set up a complete development environment and run, before pushing, the same checks that
+GitHub uses:
 
 ```bash
 python -m venv .venv
@@ -658,129 +649,128 @@ python -m pip install -e ".[gui,learned,radiomics,dev]"
 python packaging/check_ci.py
 ```
 
-Il bootstrap aggiorna prima `pip`, poi `setuptools` usando il requisito dichiarato in
-`[build-system]`. Il solo `pip install -e .` prepara gli strumenti di compilazione in un
-ambiente isolato e può lasciare un `setuptools` obsoleto nell'ambiente poi sottoposto ad
-audit. `wheel` resta nell'ambiente di compilazione isolato, per evitare che PyInstaller
-lo raccolga nell'eseguibile. Anche i job GitHub creano un venv dedicato: i pacchetti
-preinstallati sul runner non entrano nell'ambiente verificato o distribuito.
+The bootstrap first upgrades `pip`, then `setuptools` using the requirement declared in
+`[build-system]`. A plain `pip install -e .` prepares the build tools in an isolated environment
+and can leave an outdated `setuptools` in the environment that is then audited. `wheel` stays in
+the isolated build environment, so that PyInstaller does not collect it into the executable. The
+GitHub jobs also create a dedicated venv: packages preinstalled on the runner do not enter the
+verified or distributed environment.
 
-Il comando di verifica controlla versioni e compatibilità delle dipendenze, esegue
-`pip-audit`, lint, formattazione, mypy, i gate del repository e la suite con coverage.
-Prepara inoltre i checkpoint learned verificati e abilita il confronto con i riferimenti
-IBSI ufficiali. Richiede rete per l'audit e per le risorse non ancora in cache; questi
-accessi appartengono alla verifica di sviluppo. I rapporti finiscono in `build/audit/`,
-`build/coverage.json` e `build/ibsi-ci/`. Un errore interrompe il comando con esito non zero.
+The check command verifies dependency versions and compatibility, and runs `pip-audit`, lint,
+formatting, mypy, the repository gates and the suite with coverage. It also prepares the verified
+learned checkpoints and enables the comparison with the official IBSI references. It needs
+network access for the audit and for resources not yet cached; these accesses belong to
+development verification. The reports end up in `build/audit/`, `build/coverage.json` and
+`build/ibsi-ci/`. Any error stops the command with a non-zero exit status.
 
-Per il profilo di test senza learned, usare un **venv separato**, installare
-`.[gui,radiomics,dev]` dopo il bootstrap ed eseguire
-`python packaging/check_ci.py --profile base`. Questo profilo esegue la suite e controlla
-anche la raccolta con `python -m pytest`; la coverage completa resta nel profilo full.
-Su Linux servono anche le librerie Qt elencate nel passo `Install Qt runtime dependencies`
-di `.github/workflows/ci.yml`.
+For the test profile without learned metrics, use a **separate venv**, install
+`.[gui,radiomics,dev]` after the bootstrap and run
+`python packaging/check_ci.py --profile base`. This profile runs the suite and also checks
+collection with `python -m pytest`; full coverage stays in the full profile.
+On Linux you also need the Qt libraries listed in the `Install Qt runtime dependencies` step of
+`.github/workflows/ci.yml`.
 
-Le fasi `--phase audit`, `--phase static` e `--phase test --profile full|base` sono
-richiamate direttamente dalla CI. Il controllo pre-push verifica l'interprete corrente:
-la matrice 3.11/3.12 resta necessaria. Non installa hook Git e non esegue commit o push.
+The phases `--phase audit`, `--phase static` and `--phase test --profile full|base` are invoked
+directly by CI. The pre-push check verifies the current interpreter only: the 3.11/3.12 matrix is
+still needed. It installs no Git hooks and makes no commits or pushes.
 
-La CI è configurata per eseguire la suite su **Linux, Python 3.11 e 3.12**: il job base
-include GUI e radiomica ma omette learned; il job completo include anche torch e gira su 3.12.
-Windows e macOS hanno build native con smoke test, non la stessa suite completa.
-La CI gira anche ogni lunedì per rilevare
-nuove vulnerabilità senza attendere un commit. L'audit precede i test e il rapporto JSON
-viene conservato come artifact per sette giorni anche in caso di vulnerabilità.
-I singoli gate restano eseguibili separatamente:
+CI is configured to run the suite on **Linux, Python 3.11 and 3.12**: the base job includes GUI
+and radiomics but omits learned; the full job also includes torch and runs on 3.12.
+Windows and macOS have native builds with smoke tests, not the same full suite.
+CI also runs every Monday to catch new vulnerabilities without waiting for a commit. The audit
+runs before the tests, and its JSON report is kept as an artifact for seven days even when
+vulnerabilities are found. The individual gates can still be run separately:
 
 ```bash
-python packaging/check_complexity.py           # nessuna nuova funzione oltre C901 20 (ruff)
-python packaging/check_release_consistency.py  # versione coerente e changelog che la descrive
+python packaging/check_complexity.py           # no new function above C901 20 (ruff)
+python packaging/check_release_consistency.py  # consistent version and a changelog that describes it
 python packaging/check_coverage.py --coverage-json build/coverage.json
-pytest -q tests/radiomics/test_ibsi_validation.py   # riferimento IBSI, obbligatorio sui tag
+pytest -q tests/radiomics/test_ibsi_validation.py   # IBSI reference, mandatory on tags
 ```
 
-Le dipendenze dichiarate hanno limiti superiori per evitare aggiornamenti major impliciti.
-Il congelamento per sistema operativo non è più solo un'intenzione: il workflow di packaging
-esegue `packaging/generate_constraints.py` nello stesso ambiente della build e pubblica il
-manifest di versioni e origini VCS installate accanto al bundle (vedi la sezione Installazione).
+Declared dependencies have upper bounds to avoid implicit major upgrades.
+Per-OS freezing is no longer just an intention: the packaging workflow runs
+`packaging/generate_constraints.py` in the same environment as the build and publishes the
+manifest of installed versions and VCS origins alongside the bundle (see the Installation
+section).
 
-## Packaging cross-platform
+## Cross-platform packaging
 
-Eseguibile standalone via [PyInstaller](https://pyinstaller.org/), spec in
+Standalone executable via [PyInstaller](https://pyinstaller.org/), spec in
 `packaging/qicom.spec`:
 
 ```bash
-# Profilo base: GUI quantitativa + qualitativa
+# Base profile: quantitative + qualitative GUI
 pip install -e ".[gui,packaging]"
 QICOM_PACKAGE_PROFILE=base pyinstaller packaging/qicom.spec
 
-# Profilo full: aggiunge il workflow radiomico
+# Full profile: adds the radiomics workflow
 pip install -e ".[gui,radiomics,packaging]"
 QICOM_PACKAGE_PROFILE=full pyinstaller packaging/qicom.spec
 
-# Smoke test del bundle (aggiungere .exe su Windows)
+# Bundle smoke test (add .exe on Windows)
 dist/qicom-full/qicom --smoke-test
 ```
 
-Note:
-- **PyInstaller non compila incrociato**: va eseguito su ciascun sistema operativo target
-  (Windows, macOS, Linux) per produrne il build - un build Linux gira solo su Linux, ecc.
-- Il profilo `base` esclude PyRadiomics/SimpleITK; il profilo `full`, predefinito, li include.
-  Gli output sono rispettivamente `dist/qicom-base/` e `dist/qicom-full/`.
-- Entrambi i profili usano `PySide6-Essentials`: QICOM non richiede il wheel Addons
-  (WebEngine, Multimedia, Qt 3D e altri moduli non usati).
-- Per impostazione predefinita lo spec **esclude** i backend delle metriche learned (`torch`,
-  `torchvision`, `lpips`, `piq`) — build più leggero e veloce, corrisponde all'extra
-  `gui,radiomics` (non `learned`) di `pyproject.toml`. Ogni altra metrica (incluse le distanze NSS, che non
-  ne hanno più bisogno), il caricamento immagini, ROI, sessione/cronologia ed export restano
-  perfettamente funzionanti; chiamare una metrica learned esclusa solleva `ImportError` con il
-  nome della libreria mancante, esattamente come in un'installazione di sviluppo senza
-  l'extra `learned`.
-- Per includere anche le metriche learned nel build: `pip install -e ".[gui,radiomics,learned,packaging]"`
-  poi `python packaging/prepare_learned_weights.py` e
+Notes:
+- **PyInstaller does not cross-compile**: it has to run on each target operating system
+  (Windows, macOS, Linux) to produce that system's build - a Linux build runs only on Linux, and
+  so on.
+- The `base` profile excludes PyRadiomics/SimpleITK; the `full` profile, the default, includes
+  them. The outputs are `dist/qicom-base/` and `dist/qicom-full/` respectively.
+- Both profiles use `PySide6-Essentials`: QICOM does not need the Addons wheel
+  (WebEngine, Multimedia, Qt 3D and other unused modules).
+- By default the spec **excludes** the learned-metric backends (`torch`, `torchvision`, `lpips`,
+  `piq`) — a lighter and faster build, matching the `gui,radiomics` extras (not `learned`) of
+  `pyproject.toml`. Every other metric (including the NSS distances, which no longer need them),
+  image loading, ROIs, session/history and export remain fully functional; calling an excluded
+  learned metric raises `ImportError` naming the missing library, exactly as in a development
+  install without the `learned` extra.
+- To include the learned metrics in the build as well:
+  `pip install -e ".[gui,radiomics,learned,packaging]"`, then
+  `python packaging/prepare_learned_weights.py` and
   `QICOM_PACKAGE_PROFILE=full QICOM_INCLUDE_LEARNED_METRICS=1 pyinstaller packaging/qicom.spec`
-  — build molto più
-  grande (`torch` domina sia le dimensioni sia il tempo di build) e più lento da produrre.
-- Lo spec usa raccolte mirate e include i file dati necessari (`gui/i18n/locales/*.json`, `gui/themes/*.qss`,
-  `metrics/descriptors/*.yaml`, icone e il `THIRD_PARTY_LICENSES.txt` generato per quel profilo),
-  quindi risolti correttamente sia in un checkout sia nel bundle PyInstaller. Inventario e SBOM
-  includono anche PyInstaller: il suo bootloader/runtime viene redistribuito nell'app congelata,
-  anche se le altre dipendenze di packaging restano strumenti di build.
-- Il workflow `.github/workflows/package.yml` configura build native per Linux x64, Windows
-  x64 e macOS 14 arm64 ed esegue `--smoke-test` sul frozen prima di caricare gli artefatti.
-  Le piattaforme effettivamente prodotte dipendono dalla selezione e dall'esito del singolo run;
-  la [matrice di verifica](packaging/DISTRIBUTION.md#build-and-verification-matrix) ne precisa
-  la copertura. L'eseguibile Windows
-  incorpora nome del prodotto, descrizione, autore,
-  copyright e versione; ogni bundle contiene `SHA256SUMS` e ogni archivio viene pubblicato con
-  un sidecar `.sha256`, utili per verificare e autorizzare esattamente la build ricevuta. I
-  checksum non autenticano però il publisher. Gli artefatti restano non firmati: firma Windows
-  Authenticode e firma/notarizzazione Apple richiedono certificati e credenziali del
-  distributore.
+  — a much larger build (`torch` dominates both size and build time) that is slower to produce.
+- The spec uses targeted collections and includes the data files it needs
+  (`gui/i18n/locales/*.json`, `gui/themes/*.qss`, `metrics/descriptors/*.yaml`, icons and the
+  `THIRD_PARTY_LICENSES.txt` generated for that profile), so they resolve correctly both in a
+  checkout and in the PyInstaller bundle. Inventory and SBOM also include PyInstaller: its
+  bootloader/runtime is redistributed in the frozen app, even though the other packaging
+  dependencies remain build tools.
+- The `.github/workflows/package.yml` workflow configures native builds for Linux x64, Windows
+  x64 and macOS 14 arm64 and runs `--smoke-test` on the frozen app before uploading the
+  artifacts. The platforms actually produced depend on the selection and outcome of each run;
+  the [verification matrix](packaging/DISTRIBUTION.md#build-and-verification-matrix) details
+  their coverage. The Windows executable embeds product name, description, author, copyright and
+  version; every bundle contains `SHA256SUMS` and every archive is published with a `.sha256`
+  sidecar, useful for verifying and authorizing exactly the build received. Checksums do not,
+  however, authenticate the publisher. The artifacts remain unsigned: Windows Authenticode
+  signing and Apple signing/notarization require the distributor's certificates and credentials.
 
-## Uso previsto, attribuzione e licenza
+## Intended use, attribution and license
 
-### Uso previsto
+### Intended use
 
-QICOM è destinato esclusivamente a uso di ricerca e controllo di qualità. Non è un dispositivo
-medico. I numeri che produce descrivono immagini, non pazienti: stabilire se un confronto sia
-significativo, e interpretarne il risultato, resta responsabilità dell'utente qualificato che lo
-ha impostato.
+QICOM is intended exclusively for research and quality-control use. It is not a medical device.
+The numbers it produces describe images, not patients: deciding whether a comparison is
+meaningful, and interpreting its result, remains the responsibility of the qualified user who
+set it up.
 
-Due limiti da dichiarare sempre insieme alle metriche:
+Two limitations that must always be stated together with the metrics:
 
-- **Nessuna registrazione.** QICOM confronta le immagini elemento per elemento e non le registra
-  mai. Ogni metrica full-reference (MSE, MAE, RMSE, PSNR, SSIM e le altre) presuppone quindi che i
-  due input corrispondano già spazialmente. `qicom/io/consistency.py` segnala le discordanze
-  leggibili dagli header DICOM — interpretazione fotometrica, pixel spacing, orientamento, passo
-  fra slice — ma non può rilevare un disallineamento che gli header non descrivono.
-- **IBSI: aligned, non certificato.** Il modulo di radiomica segue le definizioni di riferimento
-  IBSI e applica la convenzione IBSI dove PyRadiomics se ne discosta, ma non è certificato IBSI:
-  IBSI non gestisce alcuno schema di certificazione.
+- **No registration.** QICOM compares images element by element and never registers them. Every
+  full-reference metric (MSE, MAE, RMSE, PSNR, SSIM and the others) therefore assumes that the
+  two inputs already correspond spatially. `qicom/io/consistency.py` flags the mismatches that
+  can be read from the DICOM headers — photometric interpretation, pixel spacing, orientation,
+  slice spacing — but cannot detect a misalignment the headers do not describe.
+- **IBSI: aligned, not certified.** The radiomics module follows the IBSI reference definitions
+  and applies the IBSI convention where PyRadiomics departs from it, but it is not IBSI
+  certified: IBSI does not run any certification scheme.
 
-### Attribuzione DICOM
+### DICOM attribution
 
-Le frasi seguenti sono riportate testualmente, in inglese, in [NOTICE](NOTICE), in
-`qicom/about.py` e nella scheda **Note legali e DICOM** della finestra Informazioni:
+The following sentences are reproduced verbatim in [NOTICE](NOTICE), in `qicom/about.py` and in
+the **Legal & DICOM** tab of the About window:
 
 > QICOM supports DICOM® medical images.
 >
@@ -793,71 +783,71 @@ Le frasi seguenti sono riportate testualmente, in inglese, in [NOTICE](NOTICE), 
 > QICOM reads DICOM files; it implements no DICOM network or storage service, claims no
 > conformance to the DICOM Standard, and publishes no DICOM Conformance Statement.
 
-### Licenza
+### License
 
-Apache-2.0: vedi [LICENSE](LICENSE) e [NOTICE](NOTICE). I componenti di terze parti distribuiti
-con l'applicazione restano soggetti alle rispettive licenze. La build genera l'inventario per il
-profilo effettivo e riproduce nel proprio `THIRD_PARTY_LICENSES.txt` i testi dichiarati dalle
-distribuzioni installate; [packaging/THIRD_PARTY_LICENSES.txt](packaging/THIRD_PARTY_LICENSES.txt)
-resta la copia di riferimento del repository.
+Apache-2.0: see [LICENSE](LICENSE) and [NOTICE](NOTICE). Third-party components distributed with
+the application remain subject to their respective licenses. The build generates the inventory
+for the actual profile and reproduces in its own `THIRD_PARTY_LICENSES.txt` the texts declared by
+the installed distributions; [packaging/THIRD_PARTY_LICENSES.txt](packaging/THIRD_PARTY_LICENSES.txt)
+remains the repository's reference copy.
 
-### Come citare QICOM
+### How to cite QICOM
 
 ```
 Mattiussi, F. (2026). QICOM — Quality Image COMparator (Version 1.1.0.dev0)
 [Computer software]. https://github.com/Metallogik/QICOM
 ```
 
-Il repository contiene [CITATION.cff](CITATION.cff); la voce BibTeX equivalente si copia da
-**Aiuto ▸ Informazioni su QICOM ▸ Citazione**. Un DOI verrà aggiunto in entrambi i posti quando la
-prima release sarà archiviata.
+The repository contains [CITATION.cff](CITATION.cff); the equivalent BibTeX entry can be copied
+from **Help ▸ About QICOM ▸ Citation**. A DOI will be added in both places once the first release
+is archived.
 
-### Versioning e changelog
+### Versioning and changelog
 
-QICOM segue il [Semantic Versioning](https://semver.org/). [CHANGELOG.md](CHANGELOG.md) dedica una
-sezione a sé — *Changes affecting numerical results* — a ogni modifica per cui **gli stessi input
-producono numeri diversi**: formule, preprocessing, discretizzazione radiomica, maschere,
-resampling o default che entrano in un calcolo. Non finiscono mai in un generico "bug fixes".
-Le API Python obsolete, le sostituzioni e la finestra minima di rimozione sono registrate in
-[DEPRECATIONS.md](DEPRECATIONS.md); nessuna API pubblica 1.x viene rimossa prima della 2.0.
+QICOM follows [Semantic Versioning](https://semver.org/). [CHANGELOG.md](CHANGELOG.md) gives a
+section of its own — *Changes affecting numerical results* — to every change for which **the same
+inputs produce different numbers**: formulas, preprocessing, radiomics discretization, masks,
+resampling or defaults that enter a computation. These never end up under a generic "bug fixes".
+Deprecated Python APIs, their replacements and the minimum removal window are recorded in
+[DEPRECATIONS.md](DEPRECATIONS.md); no public 1.x API is removed before 2.0.
 
-Una versione nomina una release; **non** identifica il codice che ha prodotto un risultato. Fra due
-build che portano lo stesso numero può esserci un numero qualsiasi di commit. Per questo la ricevuta
-di riproducibilità registra anche `build_revision` — il commit esatto — e `source_dirty`, e il
-bundle sa dichiararli senza avere un `.git` a disposizione. La strategia completa (una versione,
-quattro file, chi la fa rispettare, e perché `main` porta una versione `.dev`) è in
-[VERSIONING.md](VERSIONING.md). I requisiti di distribuzione, firma e notarizzazione inclusi, sono in
-[packaging/DISTRIBUTION.md](packaging/DISTRIBUTION.md).
+A version names a release; it does **not** identify the code that produced a result. Any number
+of commits can lie between two builds that carry the same number. That is why the
+reproducibility receipt also records `build_revision` — the exact commit — and `source_dirty`,
+and the bundle can state them without a `.git` directory at hand. The full strategy (one
+version, four files, who enforces it, and why `main` carries a `.dev` version) is in
+[VERSIONING.md](VERSIONING.md). The distribution requirements, signing and notarization included,
+are in [packaging/DISTRIBUTION.md](packaging/DISTRIBUTION.md).
 
-### Informazioni nell'applicazione
+### In-app information
 
-**Aiuto ▸ Informazioni su QICOM** — presente in tutte e tre le finestre principali e raggiungibile
-dal pulsante ⓘ del launcher — raccoglie versione e build, autore e luogo, licenza, repository e
-contatto di supporto, uso previsto (cosa fa e cosa non fa QICOM), attribuzione DICOM, dichiarazione
-di privacy e citazione copiabile. Tutti i dati provengono da `qicom/about.py`, unica fonte condivisa
-con `pyproject.toml`, `CITATION.cff` e questo README: la coerenza fra loro è verificata da
+**Help ▸ About QICOM** — present in all three main windows and reachable from the launcher's ⓘ
+button — gathers version and build, author and location, license, repository and support contact,
+intended use (what QICOM does and does not do), DICOM attribution, privacy statement and a
+copyable citation. All of this comes from `qicom/about.py`, the single source shared with
+`pyproject.toml`, `CITATION.cff` and this README: their consistency is verified by
 `tests/test_about.py`.
 
-### Backend MIRP e riferimenti IBSI 1
+### MIRP backend and IBSI 1 references
 
-Il backend predefinito resta PyRadiomics. Il backend opzionale MIRP 2.7.0 aggiunge
-local intensity, intensity histogram, intensity-volume histogram, GLDZM e le aggregazioni
-2D/2.5D/3D. Si seleziona nel pannello di configurazione radiomica e supporta immagini Original.
-I risultati registrano backend, versione e configurazione; i profili PyRadiomics esistenti
-mantengono la loro serializzazione e il loro hash.
+The default backend remains PyRadiomics. The optional MIRP 2.7.0 backend adds local intensity,
+intensity histogram, intensity-volume histogram, GLDZM and the 2D/2.5D/3D aggregations. It is
+selected in the radiomics configuration panel and supports Original images. Results record
+backend, version and configuration; existing PyRadiomics profiles keep their serialization and
+their hash.
 
-La finestra di verifica IBSI permette di selezionare il sottoinsieme PyRadiomics originale
-(104 righe) oppure i sei manifest MIRP: fantoccio digitale (482 righe), CT A/B (406 ciascuno)
-e CT C/D/E (270 ciascuno). I manifest coprono tutte le righe con riferimento e tolleranza
-numerici dei sei fogli IBSI 1. Le 1.622 righe CT includono 300 diagnostiche di preprocessing;
-A–E sono configurazioni dello stesso caso. I valori e le tolleranze sono letti dal workbook
-ufficiale verificato tramite hash. La verifica non richiede rete se la cache è già preparata.
+The IBSI verification window lets you select the original PyRadiomics subset (104 rows) or the
+six MIRP manifests: digital phantom (482 rows), CT A/B (406 each) and CT C/D/E (270 each). The
+manifests cover every row with a numeric reference and tolerance in the six IBSI 1 sheets. The
+1,622 CT rows include 300 preprocessing diagnostics; A–E are configurations of the same case.
+Values and tolerances are read from the official workbook, verified by hash. The verification
+needs no network once the cache is prepared.
 
-Per le estrazioni MIRP, QICOM calcola Moran I e Geary C con somme esatte delle distanze
-inverse tramite convoluzione FFT, senza campionamento casuale. Le ricevute distinguono
-questi due output e le diagnostiche dagli altri valori estratti con MIRP.
+For MIRP extractions, QICOM computes Moran's I and Geary's C with exact sums of inverse distances
+via FFT convolution, without random sampling. The receipts distinguish these two outputs and the
+diagnostics from the other values extracted with MIRP.
 
-MIRP è distribuito separatamente sotto EUPL-1.2. Citazione richiesta:
-[Zwanenburg e Löck, MIRP (JOSS, 2024)](https://doi.org/10.21105/joss.06413).
-I dati CT di riferimento sono CC BY-NC 3.0; URL, hash e attribuzioni sono nei manifest,
-mentre i file immagine non sono inclusi nella distribuzione QICOM.
+MIRP is distributed separately under EUPL-1.2. Required citation:
+[Zwanenburg and Löck, MIRP (JOSS, 2024)](https://doi.org/10.21105/joss.06413).
+The CT reference data are CC BY-NC 3.0; URLs, hashes and attributions are in the manifests,
+while the image files are not included in the QICOM distribution.

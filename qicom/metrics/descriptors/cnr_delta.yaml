@@ -1,0 +1,31 @@
+id: cnr_delta
+name_full: "Contrast-to-Noise Ratio (Reference vs Comparison)"
+name_short: "CNR (R vs C)"
+category: roi_based
+description: >
+  Absolute difference between a signal ROI's mean intensity in the
+  reference image and the same ROI's mean intensity in the comparison
+  image, normalized by the standard deviation of a noise ROI measured on
+  the reference image. Unlike the classic single-image CNR (signal vs
+  background within one image), this measures how much the signal level
+  itself shifted between the reference and the comparison image - useful
+  for spotting a reconstruction/processing pipeline that changes overall
+  signal intensity, not just intra-image contrast.
+value_range: "[0, +inf)"
+better_direction: lower
+target_value: 0.0
+parameters:
+  comparison_image:
+    required: true
+    description: "The comparison image/volume, same shape as the reference."
+  signal_roi:
+    required: true
+    description: "Boolean mask (same shape as the image) marking the signal region."
+  noise_roi:
+    required: true
+    description: >
+      Boolean mask (same shape as the image) marking a uniform noise/background
+      region on the reference image, used to estimate the noise standard
+      deviation.
+native_3d: true
+effort: low

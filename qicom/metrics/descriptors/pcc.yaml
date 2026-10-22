@@ -1,0 +1,15 @@
+id: pcc
+name_full: "Pearson Correlation Coefficient"
+name_short: "PCC"
+category: reference_statistical
+description: >
+  Linear correlation between the intensities of the two images (Pearson's r
+  computed over all pixels/voxels, flattened). Sensitive only to linear
+  relationships - a low PCC does not rule out a strong non-linear
+  relationship (see NMI for that case).
+value_range: "[-1, 1]"
+better_direction: target
+target_value: 1.0
+parameters: {}
+native_3d: true
+effort: low

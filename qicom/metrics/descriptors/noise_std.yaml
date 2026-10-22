@@ -1,0 +1,16 @@
+id: noise_std
+name_full: "Noise Standard Deviation"
+name_short: "Noise SD"
+category: roi_based
+description: >
+  Standard deviation of the intensities within an explicitly supplied ROI,
+  typically drawn over a visually uniform background/noise region.
+value_range: "[0, +inf)"
+better_direction: lower
+target_value: 0.0
+parameters:
+  roi_mask:
+    required: true
+    description: "Boolean mask (same shape as the image) marking the region to measure."
+native_3d: true
+effort: low

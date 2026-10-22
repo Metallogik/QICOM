@@ -1,0 +1,23 @@
+id: snr
+name_full: "Signal-to-Noise Ratio"
+name_short: "SNR"
+category: roi_based
+description: >
+  Ratio between the absolute mean intensity within a signal ROI and the standard
+  deviation of intensities within a noise/background ROI (absolute, so signed intensities
+  such as CT numbers in HU give a non-negative value). Both ROIs must be
+  supplied explicitly by the caller - never selected automatically.
+value_range: "[0, +inf)"
+better_direction: higher
+target_value: null
+parameters:
+  signal_roi:
+    required: true
+    description: "Boolean mask (same shape as the image) marking the signal region."
+  noise_roi:
+    required: true
+    description: >
+      Boolean mask (same shape as the image) marking a uniform noise/background
+      region, used to estimate the noise standard deviation.
+native_3d: true
+effort: low

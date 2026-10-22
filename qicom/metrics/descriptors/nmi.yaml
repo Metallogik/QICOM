@@ -1,0 +1,22 @@
+id: nmi
+name_full: "Normalized Mutual Information"
+name_short: "NMI"
+category: reference_statistical
+description: >
+  Statistical dependence between the intensity distributions of the two
+  images, estimated from their joint histogram (`bins` controls its
+  resolution) and normalized so it is comparable across image pairs.
+  Captures non-linear relationships that PCC would miss. Uses
+  scikit-image's convention: NMI = (H(A) + H(B)) / H(A, B).
+value_range: "[1, 2]"
+better_direction: higher
+target_value: 2.0
+parameters:
+  bins:
+    required: false
+    description: >
+      Number of bins along each axis of the joint intensity histogram used
+      to estimate NMI. Default 100; lower it for images with a small
+      dynamic range or high noise, raise it for higher-precision data.
+native_3d: true
+effort: low

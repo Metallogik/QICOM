@@ -1,0 +1,7 @@
+# Dedicated DICOM/NIfTI radiomics workflow. The exact upstream revision is
+# used because the PyPI 3.1.0 source archive currently reports inconsistent
+# internal version metadata and cannot be installed reliably by pip.
+-r base.txt
+SimpleITK>=2.3,<3
+pyradiomics @ git+https://github.com/AIM-Harvard/pyradiomics.git@6a761c4eb01905cfcb1139b0b158547c55edd4df
+PyWavelets>=1.4,<2

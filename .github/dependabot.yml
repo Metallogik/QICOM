@@ -1,0 +1,21 @@
+# Keeps the SHA-pinned GitHub Actions up to date.
+#
+# The workflows pin every action to a commit rather than a moving tag: a tag
+# can be repointed by whoever controls the action's repository, and a build
+# that fetches "v4" is a build whose contents are decided elsewhere, after
+# review. Pinning removes that, and adds the opposite problem - a pin nobody
+# updates is a pin that stays on a version with a known fix waiting.
+#
+# Dependabot resolves that: it opens a pull request when a pinned action has a
+# newer release, keeping the "# vX.Y.Z" comment in step with the SHA, so the
+# update is reviewed like any other change instead of happening silently.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci"
+    labels:
+      - dependencies

@@ -1,0 +1,3 @@
+# Desktop GUI stack.
+PySide6-Essentials>=6.6,<7
+pyqtgraph>=0.13,<1

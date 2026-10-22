@@ -1,0 +1,162 @@
+QICOM - istruzioni per il test
+==============================
+
+Il bundle include Python e le librerie dell'applicazione: non occorre
+installare Python. Si scompatta e si avvia mantenendo la cartella intera.
+Servono comunque un sistema operativo e un'architettura compatibili; su
+Linux possono servire librerie grafiche di sistema non incluse nel bundle.
+
+La verifica automatica dei bundle e' uno smoke test sul sistema di build.
+Non equivale a una prova su ogni versione del sistema operativo o su
+monitor fisici con DPI diversi. I dettagli e i limiti sono documentati in
+packaging/DISTRIBUTION.md nel repository, sezione Compatibility boundary.
+
+La build puo' essere "base" (analisi quantitativa e qualitativa) oppure
+"full" (aggiunge la radiomica). Requisiti pratici: minimo 8 GB RAM/4 core;
+consigliati 16 GB/6-8 core; 32 GB per grandi volumi 3D, molte ROI o metriche
+learned.
+
+L'artefatto scaricato contiene l'archivio e un file con suffisso .sha256.
+Il checksum identifica esattamente la build ricevuta e permette all'IT di
+confrontarla con quella autorizzata. Non sostituisce una firma digitale.
+
+Per verificare l'archivio prima di estrarlo:
+
+  Windows PowerShell (sostituisci il nome se necessario):
+
+    $atteso = (Get-Content .\QICOM-windows-x64.zip.sha256).Split()[0]
+    $calcolato = (Get-FileHash .\QICOM-windows-x64.zip -Algorithm SHA256).Hash
+    $calcolato.ToLower() -eq $atteso.ToLower()
+
+  macOS:
+
+    shasum -a 256 -c QICOM-macos-arm64.zip.sha256
+
+  Linux:
+
+    sha256sum -c QICOM-linux-x64.tar.gz.sha256
+
+Il risultato deve essere True su Windows oppure OK su macOS/Linux. Dopo
+l'estrazione, SHA256SUMS contiene anche l'hash dei singoli file del bundle,
+compresi i tre file di attribuzione descritti sotto.
+
+Accanto all'applicazione trovi:
+
+  THIRD_PARTY_LICENSES.txt    licenze dei componenti di terze parti inclusi
+                              in QUESTA build, generate dall'ambiente da cui
+                              e' stata compilata
+  THIRD_PARTY_INVENTORY.json  lo stesso elenco in forma leggibile da un
+                              programma: versione, origine e licenza di ogni
+                              componente
+  qicom-sbom.cdx.json         lo stesso insieme come SBOM CycloneDX, per chi
+                              in azienda deve inventariare il software
+
+Servono all'IT: descrivono esattamente cosa contiene la build che hai
+ricevuto, e sono coperti dallo stesso SHA256SUMS del resto del bundle.
+
+IMPORTANTE: la cartella va tenuta intera. L'eseguibile non funziona se
+viene spostato fuori dalla sua cartella, perche' le librerie che carica
+stanno accanto a lui.
+
+
+macOS 14 (Apple Silicon / arm64)
+--------------------------------
+Questa build NON funziona sui Mac Intel.
+Il sistema di build previsto e' macOS 14; le versioni successive richiedono
+una verifica della build ricevuta. Non e' garantito l'avvio su macOS 11-13.
+
+1. Scompatta lo zip (doppio click).
+2. Trascina QICOM.app dove preferisci (per esempio in Applicazioni).
+3. Al primo avvio macOS blocca l'app con un messaggio del tipo
+   "impossibile aprire perche' proviene da uno sviluppatore non
+   identificato" oppure "l'app e' danneggiata".
+
+   La build non e' firmata o notarizzata da Apple. Se il checksum coincide e
+   la policy della tua organizzazione consente il test, prova ad aprirla, poi
+   vai in Impostazioni di Sistema >
+   Privacy e sicurezza, scorri in fondo e premi "Apri comunque".
+
+   Se un antivirus/EDR segnala invece malware o mette l'app in quarantena,
+   non aggirarlo: annota prodotto, nome del rilevamento e hash, quindi
+   contatta l'IT.
+
+
+Windows 10 dal 1809 / Windows 11 (x64)
+--------------------------------------
+Sono i target desktop attesi. Lo smoke test automatico gira sul runner
+Windows Server di GitHub, non su Windows 10 e 11 separatamente. Non sono
+previsti Windows 7/8/8.1, sistemi a 32 bit o un bundle nativo Windows ARM.
+
+1. Scompatta lo zip in una cartella vera (per esempio sul Desktop).
+   NON avviare l'eseguibile direttamente da dentro lo zip: Windows lo
+   estrae in una cartella temporanea e l'applicazione non parte.
+2. Entra nella cartella e fai doppio click su qicom.exe
+3. Al primo avvio puo' comparire la schermata blu "Windows ha protetto il
+   PC" (SmartScreen). Premi "Ulteriori informazioni" e poi
+   "Esegui comunque" solo se il checksum coincide e la policy della tua
+   organizzazione consente esplicitamente il test.
+
+   L'avviso SmartScreen "app non riconosciuta" e' dovuto anche all'assenza
+   di una firma pubblicamente attendibile. Non e' pero' la stessa cosa di una
+   rilevazione malware. Se Defender o un EDR mostra un nome di minaccia o
+   mette il file in quarantena, non disattivarlo e non creare esclusioni:
+   invia all'IT prodotto, nome completo del rilevamento, hash SHA-256 e ora
+   dell'evento.
+
+Il primo avvio e' piu' lento degli altri (Windows analizza i file la
+prima volta). Compare una schermata iniziale con il logo, poi la
+finestra di scelta della modalita'.
+
+
+Linux (x86-64)
+---------------
+Il riferimento locale verificato e' Ubuntu 24.04 con glibc 2.39. Il bundle
+viene costruito sul runner ubuntu-latest: controlla la versione effettiva
+indicata per la build. Non e' garantito che un archivio costruito su una
+distribuzione recente funzioni su una piu' vecchia; la glibc del sistema
+non viene inclusa. Non sono previsti bundle Linux ARM o a 32 bit.
+
+Scompatta l'archivio mantenendo i permessi e avvia qicom dalla sua cartella.
+Se mancano librerie Qt o il driver grafico non e' compatibile, annota
+l'errore e la versione della distribuzione per il responsabile del test.
+
+
+Se qualcosa non funziona
+------------------------
+Segnalando un problema, allega il file di log. Si trova qui:
+
+  macOS:    ~/Library/Logs/qicom/qicom.log
+  Windows:  %LOCALAPPDATA%\qicom\Logs\qicom.log
+            (incollalo nella barra indirizzi di Esplora file)
+
+I dati delle sessioni (progetti, ROI, risultati) stanno qui:
+
+  macOS:    ~/Library/Application Support/qicom
+  Windows:  %LOCALAPPDATA%\qicom
+
+Per disinstallare: cancella la cartella dell'applicazione e, se vuoi
+ripulire tutto, anche le due cartelle dati qui sopra.
+
+
+Metriche learned: LPIPS e DISTS al primo avvio
+----------------------------------------------
+Se stai provando una build con le metriche learned, al primo avvio LPIPS e
+DISTS risultano NON disponibili. Non e' un difetto.
+
+I pesi di quei due modelli pesano circa 760 MB - piu' del resto
+dell'applicazione - e non sono inclusi in nessun bundle. QICOM non li scarica
+mai da solo, e in particolare mai durante un'analisi: se mancano, la metrica
+viene semplicemente omessa con la causa dichiarata, senza alcun accesso di
+rete.
+
+Per abilitarle serve un passaggio esplicito, deciso da te: nella finestra
+"Seleziona metriche" c'e' un pulsante che scarica i pesi, mostrando prima
+quanto occupano. Ogni file viene verificato con uno SHA-256 noto: se non
+corrisponde viene rifiutato.
+
+Le altre cinque metriche della stessa famiglia (MS-SSIM, FSIM, GMSD, VIF,
+HaarPSI) non usano pesi e funzionano subito.
+
+Questo download e' l'unica connessione di rete che l'intera applicazione
+apra mai. Tutto il resto - immagini, ROI, risultati, report - resta sulla
+tua macchina.

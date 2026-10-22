@@ -1,0 +1,3 @@
+# Full desktop packaging profile (base GUI + radiomics).
+-r packaging-base.txt
+-r radiomics.txt

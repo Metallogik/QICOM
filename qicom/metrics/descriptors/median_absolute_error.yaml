@@ -1,0 +1,13 @@
+id: median_absolute_error
+name_full: "Median Absolute Error"
+name_short: "Median AE"
+category: reference_error
+description: >
+  Median absolute comparison-minus-reference residual, robust to a minority of
+  large residuals.
+value_range: "[0, +inf), in calibrated intensity units when available"
+better_direction: lower
+target_value: 0.0
+parameters: {}
+native_3d: true
+effort: low

@@ -1,0 +1,14 @@
+id: rmse
+name_full: "Root Mean Squared Error"
+name_short: "RMSE"
+category: reference_error
+description: >
+  Square root of the Mean Squared Error. Expressed in the same units as the
+  original image intensities, which makes it more directly interpretable
+  than MSE.
+value_range: "[0, +inf)"
+better_direction: lower
+target_value: 0.0
+parameters: {}
+native_3d: true
+effort: low

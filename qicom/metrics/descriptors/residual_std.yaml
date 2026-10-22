@@ -1,0 +1,14 @@
+id: residual_std
+name_full: "Residual Standard Deviation after Bias Removal"
+name_short: "Residual SD"
+category: reference_error
+description: >
+  Population standard deviation of comparison-minus-reference residuals after
+  subtracting their mean signed error. It is descriptive over correlated
+  pixels/voxels and is not labeled as Bland-Altman limits.
+value_range: "[0, +inf), in calibrated intensity units when available"
+better_direction: lower
+target_value: 0.0
+parameters: {}
+native_3d: true
+effort: low

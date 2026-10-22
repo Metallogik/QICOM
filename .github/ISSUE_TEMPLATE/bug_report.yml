@@ -1,0 +1,74 @@
+name: Bug report
+description: Report a defect in QICOM
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never attach patient data, DICOM files or screenshots containing PHI.**
+        QICOM can generate a deterministic, PHI-free bundle that reproduces the
+        whole pipeline from a fixed seed — attach that instead:
+
+        - in the app: **Settings → Diagnostics → Create synthetic demo / bug-report bundle**
+          (also offered under **Help → Report a Bug**)
+        - from a terminal: `qicom-cli demo ./QICOM-synthetic-demo`
+
+        The folder's `qicom_demo.json` records the QICOM version, the platform
+        and a SHA-256 per file, so we regenerate it here and compare hashes.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: QICOM version
+      description: Help → About, or the `qicom_version` field of `qicom_demo.json`.
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system
+      description: The `platform` field of `qicom_demo.json` is exactly this.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      options:
+        - Quantitative
+        - Qualitative
+        - Radiomics
+        - CLI / batch
+        - Other or not sure
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: bundle
+    attributes:
+      label: Diagnostic bundle
+      options:
+        - label: I attached the synthetic bundle (or explained below why it does not reproduce the problem).
+        - label: This report contains no patient data.
+          required: true

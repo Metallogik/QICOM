@@ -1,0 +1,632 @@
+name: Package desktop applications
+
+# PyInstaller does not cross-compile, so each OS build has to run on its own
+# runner. This workflow is the only way to produce the Windows and macOS
+# bundles from a Linux development machine.
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Platforms to build. One bundle is ~200 MB without learned metrics and ~1 GB with them, so building every platform at once can exceed a small artifact storage quota - build only what you need to hand out."
+        type: choice
+        default: "macos+windows"
+        options:
+          - macos+windows
+          - macos
+          - windows
+          - linux
+          - all
+      include_learned:
+        description: "Bundle learned metrics (LPIPS/DISTS/MS-SSIM/FSIM/GMSD/VIF). Much larger and slower to build; uncheck for a quick test build."
+        type: boolean
+        default: true
+      profile:
+        description: "Base is the lightweight quantitative/qualitative GUI; full also bundles radiomics."
+        type: choice
+        default: "full"
+        options:
+          - full
+          - base
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  # A release must not be built from a revision whose radiomics features
+  # disagree with the official IBSI 1 reference. CI runs the same check on
+  # every push, but a tag can point at any commit, and "it passed on main" is
+  # not a statement about this one. Deliberately without
+  # QICOM_IBSI_ALLOW_NETWORK_FAILURE: a runner that cannot reach the official
+  # resources has verified nothing, and on a release that is a failure, never
+  # a green skip.
+  ibsi-gate:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QICOM_RUN_IBSI_REFERENCE: "1"
+      QICOM_IBSI_ARTIFACT_DIR: build/ibsi-release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          # A release installs fresh: a restored pip cache can hold wheels built
+          # from VCS sources that no hash pins.
+      # Keep runner-global packages (pipx, build tools, etc.) out of the
+      # environment tested, audited and frozen. setup-python supplies only
+      # the interpreter; all subsequent steps use this dedicated venv.
+      - name: Isolate Python dependencies from the runner
+        shell: bash
+        run: |
+          python -m venv .venv
+          python - <<'PYTHON'
+          import os
+          from pathlib import Path
+          scripts = Path(".venv").resolve() / ("Scripts" if os.name == "nt" else "bin")
+          with open(os.environ["GITHUB_PATH"], "a", encoding="utf-8") as output:
+              output.write(str(scripts) + "\n")
+          PYTHON
+      - name: Install Qt runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libopengl0 \
+            libxkbcommon0 libxkbcommon-x11-0 \
+            libdbus-1-3 \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 \
+            libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 \
+            libxrender1 libxi6 libfontconfig1 libfreetype6
+      - name: Prepare the Python toolchain before any dependency
+        run: python packaging/bootstrap_environment.py
+      # The environment the Linux bundle is built from (its lock), plus the
+      # test runner, which takes no part in the features being verified.
+      # tests/conftest.py imports Qt even for a radiomics-only selection.
+      - name: Install the locked radiomics environment
+        run: |
+          python packaging/generate_locks.py --install --profile full --platform linux
+          python -m pip install "pytest>=8.0,<10" "pytest-qt>=4.4,<5"
+      - name: Validate installed dependencies
+        run: python packaging/check_ci.py --phase environment
+      - name: Verify against the official IBSI reference
+        run: pytest -q tests/radiomics/test_ibsi_validation.py
+      - name: Publish the IBSI verification receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ibsi-release-verification
+          path: build/ibsi-release
+          if-no-files-found: error
+
+  # The same gate for the optional MIRP backend, in its own environment so the
+  # PyRadiomics verification above keeps running on the dependency set the
+  # bundle actually ships. Also without QICOM_IBSI_ALLOW_NETWORK_FAILURE.
+  ibsi-mirp-gate:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QICOM_RUN_IBSI_MIRP: "1"
+      QICOM_IBSI_EXTENDED_CACHE: build/ibsi-extended-resources
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Isolate Python dependencies from the runner
+        shell: bash
+        run: |
+          python -m venv .venv
+          python - <<'PYTHON'
+          import os
+          from pathlib import Path
+          scripts = Path(".venv").resolve() / ("Scripts" if os.name == "nt" else "bin")
+          with open(os.environ["GITHUB_PATH"], "a", encoding="utf-8") as output:
+              output.write(str(scripts) + "\n")
+          PYTHON
+      - name: Install Qt runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libopengl0 \
+            libxkbcommon0 libxkbcommon-x11-0 \
+            libdbus-1-3 \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 \
+            libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 \
+            libxrender1 libxi6 libfontconfig1 libfreetype6
+      - name: Prepare the Python toolchain before any dependency
+        run: python packaging/bootstrap_environment.py
+      # tests/conftest.py imports Qt even for a radiomics-only selection.
+      - name: Install QICOM with the MIRP backend
+        run: python -m pip install -e ".[gui,radiomics,mirp,dev]"
+      - name: Validate installed dependencies
+        run: python packaging/check_ci.py --phase environment
+      # The six hash-pinned resource sets the MIRP manifests name, cached on
+      # the manifests themselves: a changed pin changes the key. Every file is
+      # verified against its hash on read, so a cache hit is checked anyway.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: build/ibsi-extended-resources
+          key: ibsi-mirp-resources-${{ hashFiles('qicom/radiomics/reference_sets/*_mirp.json') }}
+      - name: Verify MIRP against the official IBSI reference
+        run: pytest -q -p no:cacheprovider tests/radiomics/test_mirp_backend.py
+
+  # The build matrix has to be computed here rather than filtered with an `if`
+  # on the build job itself: the `matrix` context is not available in a
+  # job-level `if`, while `needs` and `inputs` are available in `strategy`.
+  select:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+    steps:
+      - id: pick
+        shell: bash
+        env:
+          # Tag builds always produce every platform.
+          SELECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.platform || 'all' }}
+        run: |
+          all='[
+            {"os":"macos-14","platform":"macos","artifact":"QICOM-macos-arm64","extension":".zip"},
+            {"os":"windows-latest","platform":"windows","artifact":"QICOM-windows-x64","extension":".zip"},
+            {"os":"ubuntu-latest","platform":"linux","artifact":"QICOM-linux-x64","extension":".tar.gz"}
+          ]'
+          if [ "$SELECTION" = "all" ]; then
+            selected=$(jq -c . <<<"$all")
+          else
+            selected=$(jq -c --arg s "$SELECTION" \
+              '[.[] | select(.platform as $p | $s | contains($p))]' <<<"$all")
+          fi
+          echo "Building: $selected"
+          echo "matrix=$selected" >> "$GITHUB_OUTPUT"
+
+  package:
+    # `always()` so a manual (workflow_dispatch) build still runs while the
+    # tag-only IBSI gates are skipped - but a *tag* build waits for both and
+    # stops if either failed.
+    needs: [select, ibsi-gate, ibsi-mirp-gate]
+    if: >-
+      always() &&
+      needs.select.result == 'success' &&
+      (needs.ibsi-gate.result == 'success' ||
+       (github.event_name == 'workflow_dispatch' && needs.ibsi-gate.result == 'skipped')) &&
+      (needs.ibsi-mirp-gate.result == 'success' ||
+       (github.event_name == 'workflow_dispatch' && needs.ibsi-mirp-gate.result == 'skipped'))
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-14 is pinned rather than macos-latest so the runner
+        # architecture stays predictable: it produces an Apple Silicon (arm64)
+        # build, which will NOT run on an Intel Mac. Add a macos-13 entry to
+        # the `select` job if an Intel bundle is ever needed.
+        include: ${{ fromJSON(needs.select.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    env:
+      # '0' only when a manual run explicitly unchecks the box; tag builds are
+      # always complete builds.
+      QICOM_INCLUDE_LEARNED_METRICS: ${{ (github.event_name == 'workflow_dispatch' && !inputs.include_learned) && '0' || '1' }}
+      # Release tags remain full; manual builds can explicitly request base.
+      QICOM_PACKAGE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.profile || 'full' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The release gate verifies the annotated tag object itself and the
+          # commit it names; a shallow single-commit checkout can discard that
+          # distinction and make an annotated tag look lightweight.
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          # No cache on a tag: a release installs fresh (see the IBSI gates).
+          cache: ${{ startsWith(github.ref, 'refs/tags/') && '' || 'pip' }}
+      # Keep runner-global packages (pipx, build tools, etc.) out of the
+      # environment tested, audited and frozen. setup-python supplies only
+      # the interpreter; all subsequent steps use this dedicated venv.
+      - name: Isolate Python dependencies from the runner
+        shell: bash
+        run: |
+          python -m venv .venv
+          python - <<'PYTHON'
+          import os
+          from pathlib import Path
+          scripts = Path(".venv").resolve() / ("Scripts" if os.name == "nt" else "bin")
+          with open(os.environ["GITHUB_PATH"], "a", encoding="utf-8") as output:
+              output.write(str(scripts) + "\n")
+          PYTHON
+
+      # The installer fetches and executes build backends, so establish the
+      # audited minimum before the first dependency, including PyTorch.
+      - name: Prepare the Python toolchain before any dependency
+        run: python packaging/bootstrap_environment.py
+
+      # Every bundle installs from its profile and platform's lock, with a
+      # SHA-256 for every distribution (packaging/generate_locks.py): two
+      # builds of one tag ship the same files, and a release that merely falls
+      # inside a version range cannot enter the bundle. The Linux and Windows
+      # learned locks pin PyTorch's CPU-only wheels; macOS arm64 takes PyPI's.
+      # PyRadiomics, pinned by Git commit, is installed after the lock.
+      - name: Install the locked dependencies
+        shell: bash
+        run: |
+          profile="$QICOM_PACKAGE_PROFILE"
+          if [ "$QICOM_INCLUDE_LEARNED_METRICS" = "1" ]; then
+            profile="$profile-learned"
+          fi
+          python packaging/generate_locks.py --install \
+            --profile "$profile" --platform "${{ matrix.platform }}"
+
+      - name: Validate installed dependencies
+        run: python packaging/check_ci.py --phase environment
+
+      # The environment that produces the bundle is audited too, not only the
+      # one that runs the tests: they are not the same set of packages, and it
+      # is this one that ships.
+      #
+      # The auditor gets its own environment and reads this one through
+      # --path. Installing it here instead put its whole dependency tree
+      # (requests, rich, certifi, urllib3, pygments, defusedxml, tomli, ...)
+      # into the very environment PyInstaller then froze, so those modules
+      # were collected into the bundle and check-bundle below refused it -
+      # correctly, because the licence inventory describes QICOM's declared
+      # profile and the auditor is no part of what ships. A tool that
+      # measures an artifact must not change it.
+      - name: Audit the packaging environment
+        shell: bash
+        run: |
+          paths=$(python -c "
+          import sysconfig
+          seen = dict.fromkeys(
+              sysconfig.get_paths()[key] for key in ('purelib', 'platlib')
+          )
+          print(' '.join(f'--path {path}' for path in seen))
+          ")
+          python -m venv build/audit-venv
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            venv_bin=build/audit-venv/Scripts
+          else
+            venv_bin=build/audit-venv/bin
+          fi
+          "$venv_bin/python" packaging/bootstrap_environment.py
+          "$venv_bin/python" -m pip install "pip-audit>=2.7,<3"
+          mkdir -p build/audit
+          "$venv_bin/python" -m pip_audit $paths --format json --output build/audit/packaging.json
+          # The same inventory as a CycloneDX SBOM, published next to the bundle
+          # it describes (the upload below takes every "<artifact>.*" file).
+          "$venv_bin/python" -m pip_audit $paths --format cyclonedx-json \
+            --output "${{ matrix.artifact }}.sbom.cdx.json"
+      - name: Publish packaging dependency audit
+        if: ${{ always() && hashFiles('build/audit/packaging.json') != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: audit-${{ matrix.artifact }}
+          path: build/audit/packaging.json
+          if-no-files-found: error
+          retention-days: 7
+
+
+      # A tag build is a release: its version must name a changelog section,
+      # leave no numerical-results entry unreleased, and match the tag.
+      - name: Release consistency
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            python packaging/check_release_consistency.py \
+              --require-tag --expected-tag "$GITHUB_REF_NAME"
+          else
+            python packaging/check_release_consistency.py
+          fi
+
+      # Records the commit inside the package, before PyInstaller collects
+      # it. A bundle has no .git to consult at runtime, and a version string
+      # alone does not identify the source that produced a result (see
+      # qicom/build_identity.py). Release builds additionally refuse a
+      # modified checkout, which no commit can reproduce.
+      - name: Record build identity
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            python packaging/generate_build_identity.py --require-clean
+          else
+            python packaging/generate_build_identity.py
+          fi
+
+      # Exact versions and VCS origins from the environment PyInstaller is about
+      # to freeze. This deliberately performs no second resolution: doing so
+      # could lose the CPU-only torch index or choose a different artifact.
+      # It is build evidence, not an artifact-hash lock; SHA256SUMS below
+      # covers integrity of the published files.
+      - name: Record the installed dependency environment
+        shell: bash
+        run: |
+          profile="$QICOM_PACKAGE_PROFILE"
+          if [ "$QICOM_INCLUDE_LEARNED_METRICS" = "1" ]; then
+            profile="${profile}+learned"
+          fi
+          python packaging/generate_constraints.py \
+            --profile "$profile" --output-dir build/constraints
+
+      # No checkpoint pre-fetch here, deliberately. Model weights are not
+      # bundled - the policy is on-demand with explicit consent (see
+      # qicom/metrics/learned_weights.py and the README). qicom.spec does not
+      # read them and never refused a build without them, so downloading
+      # ~760 MB into the runner's cache only slowed every learned build down
+      # and made the frozen smoke test pass for a reason no user's machine
+      # would reproduce: it hid exactly the first-run state below.
+
+      # The inventory is read from the same environment PyInstaller is about
+      # to freeze, so it describes what is really being shipped rather than
+      # what a file checked in months ago says. It fails when a distribution
+      # has no version, origin, licence or licence text - the four things
+      # attribution needs. PyInstaller itself is included because its
+      # bootloader and runtime modules are redistributed in the frozen app.
+      - name: Generate licence inventory and SBOM
+        shell: bash
+        run: |
+          profile="$QICOM_PACKAGE_PROFILE"
+          if [ "$QICOM_INCLUDE_LEARNED_METRICS" = "1" ]; then
+            profile="${profile}+learned"
+          fi
+          echo "QICOM_ATTRIBUTION_PROFILE=$profile" >> "$GITHUB_ENV"
+          python packaging/attribution.py generate \
+            --profile "$profile" --include-build-runtime \
+            --output-dir build/attribution
+
+      - name: Build platform-native application
+        run: pyinstaller --clean --noconfirm packaging/qicom.spec
+
+      # qicom.spec records what the analysis actually collected. A bundled
+      # distribution the inventory does not describe fails the build here,
+      # before anything is uploaded.
+      - name: Verify the bundle against its licence inventory
+        shell: bash
+        run: |
+          python packaging/attribution.py check-bundle \
+            --inventory build/attribution/THIRD_PARTY_INVENTORY.json \
+            --bundle-modules "build/attribution/bundle-modules-${QICOM_PACKAGE_PROFILE}.json"
+
+      # The smoke test prints its build identity; the bundle must report the
+      # commit that produced it, resolved from the module generated above
+      # rather than from a repository it does not carry.
+      - name: Smoke-test frozen application
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            binary=dist/QICOM.app/Contents/MacOS/qicom
+          elif [ "$RUNNER_OS" = "Windows" ]; then
+            binary="dist/qicom-${QICOM_PACKAGE_PROFILE}/qicom.exe"
+          else
+            binary="dist/qicom-${QICOM_PACKAGE_PROFILE}/qicom"
+          fi
+          echo "$binary" > binary-path.txt
+          # An empty HOME and TORCH_HOME: the state a user's machine is in on
+          # the very first run, and the state that used to be untested here
+          # because the job pre-downloaded the checkpoints into the runner's
+          # own cache first.
+          rm -rf smoke-home
+          mkdir -p smoke-home
+          HOME="$PWD/smoke-home" \
+          XDG_CACHE_HOME="$PWD/smoke-home/.cache" \
+          XDG_DATA_HOME="$PWD/smoke-home/.local/share" \
+          XDG_CONFIG_HOME="$PWD/smoke-home/.config" \
+          TORCH_HOME="$PWD/smoke-home/.cache/torch" \
+          QT_QPA_PLATFORM=offscreen "$binary" \
+            --smoke-test --smoke-output smoke.json
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          import sys
+
+          payload = json.load(open("smoke.json", encoding="utf-8"))
+          expected = subprocess.run(
+              ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+          ).stdout.strip()
+          if payload["identity_source"] != "generated":
+              sys.exit(f"bundle resolved its identity from {payload['identity_source']!r}")
+          if payload["revision"] != expected:
+              sys.exit(f"bundle reports {payload['revision']!r}, built from {expected!r}")
+
+          learned = payload["learned_policy"]
+          wanted_learned = os.environ["QICOM_INCLUDE_LEARNED_METRICS"] == "1"
+          if not wanted_learned:
+              if learned["outcome"] != "not-built":
+                  sys.exit(f"a non-learned bundle reported {learned['outcome']!r}")
+          elif learned["outcome"] != "unavailable-offline":
+              # The documented first-run behaviour: weights are not bundled,
+              # nothing is downloaded during an analysis, and the metric is
+              # omitted with a stated cause.
+              sys.exit(
+                  "a learned bundle with an empty cache reported "
+                  f"{learned['outcome']!r}; expected 'unavailable-offline' "
+                  f"(installed checkpoints: {learned['checkpoints_installed']})"
+              )
+          # Data files only fail when a user reaches them: the smoke loads them.
+          if payload["profile"] != os.environ["QICOM_PACKAGE_PROFILE"]:
+              sys.exit(f"bundle reports profile {payload['profile']!r}")
+          if payload["profile"] == "full" and not payload["reference_sets"]:
+              sys.exit("a full bundle carries no IBSI reference sets")
+          if payload["riqe_model"] != "verified":
+              sys.exit("the bundled RIQE model did not load")
+          if payload["lossless_jpeg"] != "verified":
+              sys.exit("the bundle cannot decode lossless-JPEG DICOM (GDCM)")
+          print(f"Bundle identity verified: {payload['version']} {payload['revision']}")
+          print(f"Learned-metric policy verified: {learned['outcome']}")
+          print(f"IBSI reference sets bundled: {len(payload['reference_sets'])}")
+          PY
+
+      # The other half of the same policy: once the user explicitly prepares
+      # the weights, the metric really works in the bundle. Same empty home,
+      # one deliberate preparation step in between - the only network access
+      # the whole application ever makes.
+      - name: Verify the explicit checkpoint preparation path
+        if: env.QICOM_INCLUDE_LEARNED_METRICS == '1'
+        shell: bash
+        run: |
+          binary=$(cat binary-path.txt)
+          HOME="$PWD/smoke-home" \
+          TORCH_HOME="$PWD/smoke-home/.cache/torch" \
+            python packaging/prepare_learned_weights.py
+          HOME="$PWD/smoke-home" \
+          XDG_CACHE_HOME="$PWD/smoke-home/.cache" \
+          XDG_DATA_HOME="$PWD/smoke-home/.local/share" \
+          XDG_CONFIG_HOME="$PWD/smoke-home/.config" \
+          TORCH_HOME="$PWD/smoke-home/.cache/torch" \
+          QT_QPA_PLATFORM=offscreen "$binary" \
+            --smoke-test --smoke-output smoke-prepared.json
+          python - <<'PY'
+          import json
+          import sys
+
+          learned = json.load(open("smoke-prepared.json", encoding="utf-8"))["learned_policy"]
+          if learned["outcome"] != "computed":
+              sys.exit(
+                  f"after an explicit preparation the bundle reported {learned['outcome']!r}; "
+                  "expected 'computed'"
+              )
+          print(f"Prepared checkpoints: {', '.join(learned['checkpoints_installed'])}")
+          PY
+
+      - name: Verify Windows version metadata
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $expectedVersion = python -c "from qicom.__version__ import __version__; print(__version__)"
+          $versionInfo = (Get-Item "dist/qicom-$env:QICOM_PACKAGE_PROFILE/qicom.exe").VersionInfo
+          if ($versionInfo.CompanyName -ne "Fabio Mattiussi") {
+            throw "Unexpected CompanyName: $($versionInfo.CompanyName)"
+          }
+          if ($versionInfo.FileDescription -ne "QICOM medical-image quality assessment application") {
+            throw "Unexpected FileDescription: $($versionInfo.FileDescription)"
+          }
+          if ($versionInfo.FileVersion -ne $expectedVersion) {
+            throw "FileVersion $($versionInfo.FileVersion) does not match $expectedVersion"
+          }
+          if ($versionInfo.ProductName -ne "QICOM - Quality Image COMparator") {
+            throw "Unexpected ProductName: $($versionInfo.ProductName)"
+          }
+          if ($versionInfo.ProductVersion -ne $expectedVersion) {
+            throw "ProductVersion $($versionInfo.ProductVersion) does not match $expectedVersion"
+          }
+          $versionInfo | Format-List CompanyName, FileDescription, FileVersion, ProductName, ProductVersion
+
+      # SHA256SUMS travels inside the bundle so IT can allow-list individual
+      # files (especially qicom.exe) without inventing a directory hash.
+      - name: Stage application and create bundle checksum manifest
+        shell: bash
+        run: |
+          mkdir -p "staging/${{ matrix.artifact }}"
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            cp -R dist/QICOM.app "staging/${{ matrix.artifact }}/"
+          else
+            cp -R "dist/qicom-${QICOM_PACKAGE_PROFILE}/." "staging/${{ matrix.artifact }}/"
+          fi
+          cp packaging/LEGGIMI-TESTER.txt "staging/${{ matrix.artifact }}/"
+          # Attribution travels with the bundle it describes, and is covered
+          # by the same checksum manifest - an inventory a user cannot verify
+          # against the files they received is not evidence of anything.
+          cp build/attribution/THIRD_PARTY_LICENSES.txt \
+             build/attribution/THIRD_PARTY_INVENTORY.json \
+             build/attribution/qicom-sbom.cdx.json \
+             "staging/${{ matrix.artifact }}/"
+          cp build/constraints/* "staging/${{ matrix.artifact }}/"
+          python packaging/generate_sha256sums.py \
+            "staging/${{ matrix.artifact }}" \
+            --output "staging/${{ matrix.artifact }}/SHA256SUMS"
+
+      # actions/upload-artifact does not preserve the executable bit or
+      # symlinks, both of which a macOS .app needs to launch at all. Archiving
+      # first with a tool that does preserve them keeps the bundle intact
+      # through the download.
+      - name: Stage and archive (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            "staging/${{ matrix.artifact }}" "${{ matrix.artifact }}.zip"
+
+      - name: Stage and archive (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          7z a -mx=1 "${{ matrix.artifact }}.zip" "./staging/${{ matrix.artifact }}"
+
+      - name: Stage and archive (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          tar -C staging -czf "${{ matrix.artifact }}.tar.gz" "${{ matrix.artifact }}"
+
+      # The sidecar verifies the downloaded archive before extraction. It is
+      # an integrity identifier and allow-listing aid, not proof of publisher
+      # identity; that requires a future Authenticode/notarization step.
+      - name: Create archive checksum
+        run: >-
+          python packaging/generate_sha256sums.py
+          "${{ matrix.artifact }}${{ matrix.extension }}"
+          --output "${{ matrix.artifact }}${{ matrix.extension }}.sha256"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}.*
+          if-no-files-found: error
+          # The archive is already compressed; re-compressing a multi-GB file
+          # on upload costs minutes and saves nothing.
+          compression-level: 0
+          # These bundles are large and this is a private repository, where
+          # artifact storage is metered: a test build is kept as long as a test
+          # round needs. A tag build is a release, and VERSIONING.md ties a tag
+          # to the artifact and checksum that were distributed, so it is kept
+          # for the longest retention GitHub allows.
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 90 || 7 }}
+
+  # A tag is a release. Its bundles, checksums and SBOMs are attached to a
+  # *draft* GitHub Release, so they outlive the artifact retention and
+  # VERSIONING.md's "a published artifact, its checksum" holds; the maintainer
+  # reviews the draft and publishes it. Only this job may write to the
+  # repository, and only on a tag.
+  release:
+    needs: [package]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Collect the bundles, checksums and SBOMs of this run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download "${{ github.run_id }}" --repo "${{ github.repository }}" \
+            --dir release-files --pattern 'QICOM-*'
+          find release-files -type f | sort
+      - name: Take the release notes from the changelog
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          version = os.environ["GITHUB_REF_NAME"].removeprefix("v")
+          text = Path("CHANGELOG.md").read_text(encoding="utf-8")
+          match = re.search(
+              rf"^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## \[|\Z)", text, re.M | re.S
+          )
+          if match is None:
+              raise SystemExit(f"CHANGELOG.md has no section for {version}")
+          Path("release-notes.md").write_text(match.group(1).strip() + "\n", encoding="utf-8")
+          PY
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          find release-files -type f -print0 | xargs -0 gh release create "$GITHUB_REF_NAME" \
+            --repo "${{ github.repository }}" --draft --verify-tag \
+            --title "QICOM ${GITHUB_REF_NAME#v}" --notes-file release-notes.md
+

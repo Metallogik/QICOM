@@ -1,0 +1,22 @@
+id: fsim
+name_full: "Feature Similarity Index"
+name_short: "FSIM"
+category: reference_structural
+description: >
+  Perceptual similarity based on phase congruency (a contrast-invariant
+  measure of local structure salience) and gradient magnitude, both
+  believed to align with how the human visual system detects features.
+  Computed slice-by-slice on 3D volumes (no native 3D implementation
+  available). Chromatic (color) information is not used, since QICOM
+  operates on grayscale medical images.
+value_range: "[0, 1]"
+better_direction: higher
+target_value: 1.0
+parameters:
+  data_range:
+    required: true
+    description: >
+      The data range of the input images (max possible value minus min
+      possible value). Must always be provided explicitly.
+native_3d: false
+effort: high

@@ -1,0 +1,27 @@
+id: brisque
+name_full: "NSS feature distance"
+name_short: "NSS feature distance"
+category: no_reference
+description: >
+  Mahalanobis distance between the image's 36-dimensional NSS feature vector and a reference
+  distribution. QICOM uses NSS features derived from BRISQUE, but does not use its human-score-trained regressor. The default reference model is fitted to synthetic images with a
+  1/f spatial spectrum; a local reference corpus can replace it. Values measure distance from
+  that model, not a calibrated perceptual quality scale. Computed slice by slice for 3D
+  inputs. The persistent identifier brisque is retained for compatibility with earlier QICOM
+  projects.
+  Caution: with the default synthetic model, adding noise to an image can lower this distance, so
+  a noisier version of an image can score better than the original. It is not a noise measure:
+  compare images with similar noise, or use a reference-based or ROI noise metric to assess
+  noise.
+value_range: "unitless distance; values depend on the reference model"
+better_direction: lower
+target_value: null
+parameters:
+  data_range:
+    required: true
+    description: >
+      The data range of the input image (max possible value minus min
+      possible value), used to normalize pixel values to [0, 1] before
+      evaluating the model. Must always be provided explicitly.
+native_3d: false
+effort: medium

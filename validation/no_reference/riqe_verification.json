@@ -1,0 +1,58 @@
+{
+  "reference_code": "Metallogik/RIQE riqe-v1.0 scoring API",
+  "pair_table_sha256": "84cca973b695fbdb13530d486b3acf44e3da4678621527fbdd00846f4c64e8e2",
+  "dose_pairs": 480,
+  "dose_pairs_bit_identical_to_reference": 480,
+  "max_relative_deviation_from_published_scores": 5.245419115972714e-08,
+  "published_scores_note": "the paper pipeline caches features in float32",
+  "reduced_dose_ranked_worse": {
+    "chest": {
+      "correct": 240,
+      "pairs": 240
+    },
+    "abdomen": {
+      "correct": 230,
+      "pairs": 240
+    }
+  },
+  "ge_slices_with_padding": 20,
+  "ge_padding_values_hu": [
+    -3024.0
+  ],
+  "ge_max_absolute_difference_vs_reference_reading_padding": 0.0,
+  "air_fraction_of_field_of_view": {
+    "threshold": {
+      "air_hu": -900.0,
+      "min_fraction_of_fov": 0.01
+    },
+    "fitting_corpus": {
+      "slices": 3792,
+      "min": 0.0726358226891245,
+      "p1": 0.10469849528648603,
+      "median": 0.34803655534665556,
+      "below_threshold": 0
+    },
+    "test_pairs_full_dose": {
+      "slices": 480,
+      "min": 0.21632003784179688,
+      "p1": 0.2777235412597656,
+      "median": 0.4655628204345703,
+      "below_threshold": 0
+    },
+    "test_pairs_reduced_dose": {
+      "slices": 480,
+      "min": 0.16628646850585938,
+      "p1": 0.23109687805175783,
+      "median": 0.4204902648925781,
+      "below_threshold": 0
+    },
+    "series_ends_and_every_40th_slice": {
+      "slices": 2472,
+      "min": 0.03548446494679511,
+      "p1": 0.07533541371891536,
+      "median": 0.35660845463531876,
+      "below_threshold": 0
+    }
+  },
+  "numpy": "2.5.2"
+}

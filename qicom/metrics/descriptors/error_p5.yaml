@@ -1,0 +1,13 @@
+id: error_p5
+name_full: "Signed Error 5th Percentile"
+name_short: "Error P5"
+category: reference_error
+description: >
+  Fifth percentile of comparison-minus-reference residuals; a descriptive
+  distribution bound over correlated voxels.
+value_range: "(-inf, +inf), in calibrated intensity units when available"
+better_direction: target
+target_value: 0.0
+parameters: {}
+native_3d: true
+effort: low

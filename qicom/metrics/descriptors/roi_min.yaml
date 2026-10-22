@@ -1,0 +1,15 @@
+id: roi_min
+name_full: "ROI Minimum Intensity"
+name_short: "Min"
+category: roi_based
+description: >
+  Minimum intensity of the pixels/voxels within an explicitly supplied ROI.
+value_range: "(-inf, +inf)"
+better_direction: none
+target_value: null
+parameters:
+  roi_mask:
+    required: true
+    description: "Boolean mask (same shape as the image) marking the region to measure."
+native_3d: true
+effort: low

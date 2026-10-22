@@ -1,0 +1,38 @@
+id: riqe
+name_full: "Radiology Image Quality Evaluator v1.0 (CT images only)"
+name_short: "RIQE"
+category: no_reference
+description: >
+  NIQE-style distance from the riqe-v1.0 model, fitted on full-dose CT (TCIA
+  LDCT-and-Projection-data, 158 patients) instead of natural photographs. Lower means closer
+  to that model; it is not a judgement of diagnostic quality and is not comparable with NIQE
+  values. Defined only for CT in Hounsfield units: HU are clipped to [-1000, +1000] and mapped
+  to [0, 255]; DICOM CT and NIfTI images are treated as HU, anything else is not scored,
+  and a slice with less than 1% of air (<= -900 HU) in its field of view is refused as not
+  HU, so a non-CT NIfTI yields no score.
+  Each axial slice is scored on 24x24 patches inside the field of view (HU >= -1024) and at
+  least 90% inside an automatic body mask; at least 72 such patches are required. In a
+  comparison both images are scored on the masks of the reference, which must also be HU.
+  ROI and background exclusion do not apply. Use it for paired ranking within one protocol (same
+  anatomy, kernel and slice thickness): a degraded image against its source. It ranks
+  added noise, blur and simulated dose reduction as worse, but its preferences among filtered
+  images do not follow lesion signal: do not use it alone to choose, compare or tune
+  denoisers. The model is bundled and verified by SHA-256.
+value_range: "[0, +inf), unitless distance from the riqe-v1.0 CT model"
+better_direction: lower
+target_value: null
+parameters:
+  intensity_unit:
+    required: true
+    description: "Declared pixel unit of the image; RIQE is computed only when it is HU."
+  domain_image:
+    required: false
+    description: >
+      Co-registered HU image whose field-of-view and body masks define the scored patches. In
+      a comparison the reference supplies them for both images, as in the RIQE validation, so
+      that a degradation cannot change the scored domain.
+  domain_unit:
+    required: false
+    description: "Declared pixel unit of domain_image; it must be HU."
+native_3d: false
+effort: medium

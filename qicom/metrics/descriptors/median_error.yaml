@@ -1,0 +1,12 @@
+id: median_error
+name_full: "Median Signed Error"
+name_short: "Median Error"
+category: reference_error
+description: >
+  Median of the signed comparison-minus-reference residual distribution.
+value_range: "(-inf, +inf), in calibrated intensity units when available"
+better_direction: target
+target_value: 0.0
+parameters: {}
+native_3d: true
+effort: low

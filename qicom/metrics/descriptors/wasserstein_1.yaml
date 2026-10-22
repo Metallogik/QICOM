@@ -1,0 +1,15 @@
+id: wasserstein_1
+name_full: "Wasserstein-1 Intensity Distance"
+name_short: "Wasserstein-1"
+category: reference_statistical
+description: >
+  Earth-mover distance between the two intensity distributions. It is expressed
+  in physical intensity units when the images are calibrated and intentionally
+  ignores every pixel/voxel's spatial position. No voxel-level KS p-value is
+  produced.
+value_range: "[0, +inf), in calibrated intensity units when available"
+better_direction: lower
+target_value: 0.0
+parameters: {}
+native_3d: true
+effort: low

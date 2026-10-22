@@ -1,0 +1,16 @@
+# Core dependencies: metrics, medical/common image I/O, reporting.
+# Mirrors [project.dependencies] in pyproject.toml.
+numpy>=1.26,<3
+scipy>=1.11,<2
+scikit-image>=0.22,<1
+pandas>=2.1,<4
+openpyxl>=3.1,<4
+pydicom>=2.4,<4
+python-gdcm>=3.0.10,<4
+dicom-anonymizer>=2.0,<3
+nibabel>=5.2,<6
+Pillow>=12.3,<13
+PyYAML>=6.0,<7
+platformdirs>=4.0,<5
+threadpoolctl>=3.6,<4
+cryptography>=44,<51

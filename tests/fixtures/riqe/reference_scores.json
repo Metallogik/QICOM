@@ -1,0 +1,30 @@
+{
+  "reference": "Metallogik/RIQE riqe-v1.0 scoring API (features_from_hu, mahalanobis_mixed)",
+  "revision": "73a1d420524cc80821d2b092416f650e78ad77fe",
+  "sources": {
+    "riqe/hu.py": "ba1ff78f31d4afbdff6cdc08fac2d0c56d47ddc2043d92aae5e20d7a0caf6706",
+    "riqe/nss.py": "4ea83a96ad3b09a61a3f4ca1f642723776e9bb6afa8673b21290ed1eb41e1d31",
+    "riqe/extract.py": "05c889a5d7f65b634a8a85db59e6acc59b9b85797d9ba6579a3f4844231fb4ac",
+    "riqe/model.py": "e1312f9093b7830f38e96d36ac744111585e5e13da1f0177e47a81cd9b1dccec",
+    "riqe-v1.0.npz": "b1a4ffdf8288c7c6667fd3b0ca674756c69e5f1c85e9b5a53d596bf19b32f595",
+    "inputs.npz": "23d87565a8dfd909e37bc0e9b74acee3fe92faa3e260bef49d7e48e6a4d8900f",
+    "padded (derived)": "a2983e51ab07a77c44ceeb4aa10eb31b2689357b1a0e1c536a4c48ebcba726d1",
+    "odd_size (derived)": "5a335adc292f8bf65b601747af460181b47645dc2d22d633194d173d638c4f28"
+  },
+  "numpy": "2.5.3",
+  "own_masks": {
+    "full": 3.4522062054945946,
+    "low": 3.678135700525295,
+    "blurred": 4.809877611054411,
+    "padded": 3.452212786549777,
+    "odd_size": 3.325596789436169
+  },
+  "reference_masks": {
+    "low@full": 3.678400183501084,
+    "blurred@full": 4.809877611054411
+  },
+  "tolerance": {
+    "atol": 0.0,
+    "rtol": 1e-09
+  }
+}

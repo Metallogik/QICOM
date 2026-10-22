@@ -1,0 +1,28 @@
+id: niqe
+name_full: "NSS patch-distribution distance"
+name_short: "NSS patch-distribution distance"
+category: no_reference
+description: >
+  Distance between the mean NSS features of the image patches and the reference model, using
+  their pooled covariance. Inspired by NIQE; the QICOM reference model and feature
+  implementation define a separate score. The default model is fitted to synthetic images with
+  a 1/f spatial spectrum; a local reference corpus can replace it. Values depend on the
+  reference model. Computed slice by slice for 3D inputs, with a minimum image size set by the
+  model patch size (96 pixels by default). The persistent identifier niqe is retained for
+  compatibility with earlier QICOM projects.
+  Caution: with the default synthetic model, adding noise to an image can lower this distance, so
+  a noisier version of an image can score better than the original. It is not a noise measure:
+  compare images with similar noise, or use a reference-based or ROI noise metric to assess
+  noise.
+value_range: "unitless distance; values depend on the reference model"
+better_direction: lower
+target_value: null
+parameters:
+  data_range:
+    required: true
+    description: >
+      The data range of the input image (max possible value minus min
+      possible value), used to normalize pixel values to [0, 1] before
+      evaluating the model. Must always be provided explicitly.
+native_3d: false
+effort: medium

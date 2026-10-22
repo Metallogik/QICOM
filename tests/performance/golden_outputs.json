@@ -1,0 +1,77 @@
+{
+  "background": {
+    "excluded_fraction": 0.7,
+    "selected_pixels": 120,
+    "suppressed_comparison_sum": 1280.0,
+    "suppressed_reference_sum": 1040.0,
+    "suppressed_shape": [
+      10,
+      12
+    ],
+    "threshold": 1.0
+  },
+  "metrics_2d": {
+    "epi": 0.21083180606365204,
+    "hfen": 0.18246914686898877,
+    "mae": 0.01285814082075376,
+    "mse": 0.00024077415795292594,
+    "nmse": 0.0007116141258475473,
+    "psnr": 36.18390127300856,
+    "rmse": 0.015516899108807982,
+    "ssim": 0.9865430627877896
+  },
+  "per_slice_distributions": {
+    "mse": [
+      0.00024077415795292594,
+      0.00030747281012741463,
+      0.00039217262932551584
+    ]
+  },
+  "qualitative": {
+    "cohen_quadratic": {
+      "ci_high": 0.9411764705882353,
+      "ci_low": 0.5150278293135436,
+      "n_subjects": 8,
+      "value": 0.8260869565217391
+    },
+    "fleiss": {
+      "ci_high": 0.36790123456790125,
+      "ci_low": 0.19242902208201892,
+      "n_subjects": 8,
+      "value": 0.35678391959798994
+    },
+    "icc_2_1": {
+      "ci_high": 0.900943396226415,
+      "ci_low": 0.6379310344827586,
+      "n_subjects": 8,
+      "value": 0.8481012658227848
+    },
+    "paired_superiority": {
+      "ci_high": 0.9375,
+      "ci_low": 0.5625,
+      "n_subjects": 8,
+      "value": 0.75
+    },
+    "wilcoxon_auc": {
+      "ci_high": 0.8515625,
+      "ci_low": 0.3203125,
+      "n_subjects": 8,
+      "value": 0.6015625
+    }
+  },
+  "radiomics": {
+    "Maximum": 890.0,
+    "Mean": 511.5,
+    "Minimum": 133.0,
+    "StandardDeviation": 221.60080475184802,
+    "Variance": 49106.916666666664
+  },
+  "roi": {
+    "cv": 0.24561445598301698,
+    "noise_std": 0.1523128032658765,
+    "noise_variance": 0.023199190038709606,
+    "roi_max": 0.8400869369506836,
+    "roi_mean": 0.6201296363289308,
+    "roi_min": 0.23007209599018097
+  }
+}

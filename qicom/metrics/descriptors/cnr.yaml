@@ -1,0 +1,27 @@
+id: cnr
+name_full: "Contrast-to-Noise Ratio"
+name_short: "CNR"
+category: roi_based
+description: >
+  Absolute difference between the mean intensities of a signal ROI and a
+  background ROI, normalized by the noise standard deviation. If noise_roi
+  is not given, background_roi is also used to estimate the noise.
+value_range: "[0, +inf)"
+better_direction: higher
+target_value: null
+parameters:
+  signal_roi:
+    required: true
+    description: "Boolean mask (same shape as the image) marking the signal region."
+  background_roi:
+    required: true
+    description: >
+      Boolean mask (same shape as the image) marking the background/reference
+      region.
+  noise_roi:
+    required: false
+    description: >
+      Optional boolean mask used to estimate the noise standard deviation
+      instead of background_roi (e.g. a dedicated uniform noise patch).
+native_3d: true
+effort: low

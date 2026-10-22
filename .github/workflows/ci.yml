@@ -1,0 +1,259 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  # Discover new advisories even when no commit is pushed.
+  schedule:
+    - cron: "23 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      QT_QPA_PLATFORM: offscreen
+      # Where the learned-metric checkpoints are prepared and then read from.
+      # Named explicitly instead of relying on the ~/.cache/torch default, so
+      # the preparation step and the suite cannot end up on opposite sides of
+      # a default that changes underneath them.
+      TORCH_HOME: ${{ github.workspace }}/build/torch-home
+      QICOM_RUN_IBSI_REFERENCE: "1"
+      QICOM_IBSI_ARTIFACT_DIR: build/ibsi-ci
+      QICOM_IBSI_CACHE: build/ibsi-resources
+      # A runner that cannot reach the official IBSI host has not disproved
+      # anything, so on a pull request that is reported as a skip naming the
+      # transport error. On a push to main - and on the tag gate below, which
+      # runs the same check without this flag - it is a failure. A
+      # verification result is never covered by it: a feature that disagrees
+      # with the reference fails either way.
+      QICOM_IBSI_ALLOW_NETWORK_FAILURE: ${{ github.event_name == 'pull_request' && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      # Keep runner-global packages (pipx, build tools, etc.) out of the
+      # environment tested, audited and frozen. setup-python supplies only
+      # the interpreter; all subsequent steps use this dedicated venv.
+      - name: Isolate Python dependencies from the runner
+        shell: bash
+        run: |
+          python -m venv .venv
+          python - <<'PYTHON'
+          import os
+          from pathlib import Path
+          scripts = Path(".venv").resolve() / ("Scripts" if os.name == "nt" else "bin")
+          with open(os.environ["GITHUB_PATH"], "a", encoding="utf-8") as output:
+              output.write(str(scripts) + "\n")
+          PYTHON
+      - name: Install Qt runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libopengl0 \
+            libxkbcommon0 libxkbcommon-x11-0 \
+            libdbus-1-3 \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 \
+            libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 \
+            libxrender1 libxi6 libfontconfig1 libfreetype6
+      # Upgrade pip first, then the build tools in the environment we audit.
+      - name: Prepare the Python toolchain before any dependency
+        run: python packaging/bootstrap_environment.py
+      - name: Install QICOM and test dependencies
+        run: python -m pip install -e ".[gui,learned,radiomics,dev]"
+      - name: Audit installed dependencies before tests
+        run: python packaging/check_ci.py --phase audit
+      - name: Publish dependency audit
+        if: ${{ always() && hashFiles('build/audit/dependencies.json') != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: audit-full-3.12
+          path: build/audit/dependencies.json
+          if-no-files-found: error
+          retention-days: 7
+      # Hash-pinned in qicom/metrics/learned_weights.py and verified on every
+      # read, so a cache hit is checked before it is trusted; this only saves
+      # re-downloading 760 MB on every push. Keyed on the module that holds
+      # the pins, so the key changes exactly when a checkpoint does.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ github.workspace }}/build/torch-home/hub/checkpoints
+          key: learned-checkpoints-${{ hashFiles('qicom/metrics/learned_weights.py') }}
+      # TORCH_HOME is set for the whole job rather than on this step alone:
+      # the suite has to read back exactly what this writes. tests/conftest.py
+      # gives every test a throwaway profile and links these files into it -
+      # without that bridge the learned metrics find no weights and refuse to
+      # run, which is a failure, never a skip (see
+      # TestPreparedLearnedCheckpointsStayReachable).
+      - name: Prepare verified learned-metric weights
+        run: python packaging/prepare_learned_weights.py
+
+      # Cached on the manifest's own hash, so the key changes exactly when the
+      # pinned resources do - a stale entry cannot silently satisfy a manifest
+      # that now points somewhere else. The files are hash-pinned anyway (see
+      # qicom/radiomics/ibsi_validation.py), so a cache hit is verified before
+      # it is used; this only avoids re-downloading them on every run.
+      - name: Compute the IBSI manifest hash
+        id: ibsi
+        run: |
+          echo "hash=$(python -c '
+          from qicom.radiomics.ibsi_validation import load_reference_manifest, manifest_hash
+          print(manifest_hash(load_reference_manifest()))
+          ')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: build/ibsi-resources
+          key: ibsi-resources-${{ steps.ibsi.outputs.hash }}
+      - name: Static checks and repository gates
+        run: python packaging/check_ci.py --phase static
+      - name: Test and coverage gates
+        run: python packaging/check_ci.py --phase test --profile full
+      - name: Publish IBSI reference verification receipt
+        if: ${{ hashFiles('build/ibsi-ci/**') != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ibsi-reference-verification
+          path: build/ibsi-ci
+          if-no-files-found: error
+
+  test-base:
+    # The base install deliberately omits the `learned` extra (torch/piq/lpips).
+    # This job proves the suite stays green there and that the learned-metric
+    # tests skip with a stated cause instead of failing on ImportError.
+    #
+    # It is also where both supported Python versions are exercised.
+    # pyproject.toml declares `requires-python = ">=3.11"` and classifiers for
+    # 3.11 and 3.12, but only 3.12 was ever run: the lower bound was a claim,
+    # not a tested one. The matrix goes here rather than on the full job
+    # because the heavy job's torch/PyRadiomics install dominates its runtime
+    # and doubling it buys nothing - what differs between interpreters is
+    # QICOM's own code, and this job runs all of it.
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      # Keep runner-global packages (pipx, build tools, etc.) out of the
+      # environment tested, audited and frozen. setup-python supplies only
+      # the interpreter; all subsequent steps use this dedicated venv.
+      - name: Isolate Python dependencies from the runner
+        shell: bash
+        run: |
+          python -m venv .venv
+          python - <<'PYTHON'
+          import os
+          from pathlib import Path
+          scripts = Path(".venv").resolve() / ("Scripts" if os.name == "nt" else "bin")
+          with open(os.environ["GITHUB_PATH"], "a", encoding="utf-8") as output:
+              output.write(str(scripts) + "\n")
+          PYTHON
+      - name: Install Qt runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libopengl0 \
+            libxkbcommon0 libxkbcommon-x11-0 \
+            libdbus-1-3 \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 \
+            libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 \
+            libxrender1 libxi6 libfontconfig1 libfreetype6
+      # Upgrade pip first, then the build tools in the environment we audit.
+      - name: Prepare the Python toolchain before any dependency
+        run: python packaging/bootstrap_environment.py
+      - name: Install QICOM without the learned extra
+        run: python -m pip install -e ".[gui,radiomics,dev]"
+      - name: Audit installed dependencies before tests
+        run: python packaging/check_ci.py --phase audit
+      - name: Publish dependency audit
+        if: ${{ always() && hashFiles('build/audit/dependencies.json') != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: audit-base-${{ matrix.python-version }}
+          path: build/audit/dependencies.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Test and module collection
+        run: python packaging/check_ci.py --phase test --profile base
+
+  ibsi-mirp:
+    # MIRP stays out of the jobs above (packaging/DISTRIBUTION.md): it is an
+    # optional backend outside every bundle profile, and its transitive
+    # requirements are audited here, on their own. Without this job its IBSI
+    # conformance - six presets, 2104 reference rows - was never checked, and
+    # a regression in MIRP, preset_settings or Moran/Geary passed with CI green.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QICOM_RUN_IBSI_MIRP: "1"
+      QICOM_IBSI_EXTENDED_CACHE: build/ibsi-extended-resources
+      QICOM_IBSI_ALLOW_NETWORK_FAILURE: ${{ github.event_name == 'pull_request' && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Isolate Python dependencies from the runner
+        shell: bash
+        run: |
+          python -m venv .venv
+          python - <<'PYTHON'
+          import os
+          from pathlib import Path
+          scripts = Path(".venv").resolve() / ("Scripts" if os.name == "nt" else "bin")
+          with open(os.environ["GITHUB_PATH"], "a", encoding="utf-8") as output:
+              output.write(str(scripts) + "\n")
+          PYTHON
+      - name: Install Qt runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libopengl0 \
+            libxkbcommon0 libxkbcommon-x11-0 \
+            libdbus-1-3 \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 \
+            libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 \
+            libxrender1 libxi6 libfontconfig1 libfreetype6
+      - name: Prepare the Python toolchain before any dependency
+        run: python packaging/bootstrap_environment.py
+      # tests/conftest.py imports Qt even for a radiomics-only selection.
+      - name: Install QICOM with the MIRP backend
+        run: python -m pip install -e ".[gui,radiomics,mirp,dev]"
+      - name: Audit the MIRP dependency set
+        run: python packaging/check_ci.py --phase audit
+      - name: Publish dependency audit
+        if: ${{ always() && hashFiles('build/audit/dependencies.json') != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: audit-mirp-3.12
+          path: build/audit/dependencies.json
+          if-no-files-found: error
+          retention-days: 7
+      # The six hash-pinned resource sets the MIRP manifests name, cached on
+      # the manifests themselves: a changed pin changes the key. Every file is
+      # verified against its hash on read, so a cache hit is checked anyway.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: build/ibsi-extended-resources
+          key: ibsi-mirp-resources-${{ hashFiles('qicom/radiomics/reference_sets/*_mirp.json') }}
+      - name: Verify MIRP against the official IBSI reference
+        run: pytest -q -p no:cacheprovider tests/radiomics/test_mirp_backend.py

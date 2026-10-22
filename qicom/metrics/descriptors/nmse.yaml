@@ -1,0 +1,15 @@
+id: nmse
+name_full: "Normalized Mean Squared Error"
+name_short: "NMSE"
+category: reference_error
+description: >
+  Mean Squared Error normalized by the mean squared value (average power) of
+  the reference image. Makes the error comparable across images with
+  different intensity scales. Undefined (raises an error) when the
+  reference image is all zeros.
+value_range: "[0, +inf)"
+better_direction: lower
+target_value: 0.0
+parameters: {}
+native_3d: true
+effort: low

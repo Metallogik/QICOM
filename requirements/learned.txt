@@ -1,0 +1,15 @@
+# Heavy learned-metric dependencies: LPIPS (official package, AlexNet backbone),
+# and via piq: MS-SSIM, FSIM, GMSD, VIF, DISTS. NIQE/BRISQUE no longer need
+# anything here - they are a from-scratch numpy/scipy reimplementation (see
+# qicom/metrics/nss.py, nss_reference.py), dropped from this file along
+# with pyiqa (PolyForm-Noncommercial licensed, incompatible with free public
+# distribution - see the packaging/licensing report).
+# Optional - install with: pip install -r requirements/base.txt -r requirements/learned.txt
+#
+# For cross-platform packaging (Windows/macOS/Linux), prefer the CPU-only
+# torch build instead of the default (CUDA) one:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+torch>=2.2,<3
+torchvision>=0.17,<1
+lpips==0.1.4
+piq==0.8.0

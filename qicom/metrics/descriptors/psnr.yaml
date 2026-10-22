@@ -1,0 +1,22 @@
+id: psnr
+name_full: "Peak Signal-to-Noise Ratio"
+name_short: "PSNR"
+category: reference_error
+description: >
+  Ratio between the maximum possible signal power (defined by data_range)
+  and the power of the error (MSE), expressed in decibels. Higher values
+  indicate a comparison image closer to the reference. Returns +inf when
+  the two images are identical (MSE = 0).
+value_range: "[0, +inf) dB (typically ~20-50 dB for medical images)"
+better_direction: higher
+target_value: null
+parameters:
+  data_range:
+    required: true
+    description: >
+      The data range of the input images (max possible value minus min
+      possible value), e.g. 1.0 for images normalized to [0, 1], 255 for
+      8-bit images, or 4095 for typical 12-bit DICOM data. Must always be
+      provided explicitly - never assumed from dtype or observed min/max.
+native_3d: true
+effort: low

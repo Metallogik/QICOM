@@ -1,0 +1,44 @@
+{
+  "reference_manifest": "tests/fixtures/niqe/reference_scores.json",
+  "cases": [
+    {
+      "case": "structured",
+      "reference": 21.143108281796753,
+      "qicom": 21.143114527452013,
+      "absolute_error": 6.245655260528338e-06
+    },
+    {
+      "case": "blurred",
+      "reference": 13.453791136131887,
+      "qicom": 13.45382230917267,
+      "absolute_error": 3.117304078337213e-05
+    },
+    {
+      "case": "noise",
+      "reference": 69.12203285674221,
+      "qicom": 69.12203720784161,
+      "absolute_error": 4.3510994061080055e-06
+    },
+    {
+      "case": "odd_size",
+      "reference": 21.143108281796753,
+      "qicom": 21.143114527452013,
+      "absolute_error": 6.245655260528338e-06
+    },
+    {
+      "case": "two_patches",
+      "reference": 21.782863384737425,
+      "qicom": 21.782851514765362,
+      "absolute_error": 1.1869972063038858e-05
+    }
+  ],
+  "published_natural_image_crosscheck": {
+    "image_url": "https://raw.githubusercontent.com/XPixelGroup/BasicSR/8d56e3a045f9fb3e1d8872f92ee4a4f07f886b0a/test_scripts/data/baboon.png",
+    "image_sha256": "275a75fd08d0a7899cbdaa8820ff15869e33bc1d6d07dbc79133374683fe411c",
+    "qicom_float64": 5.729960245259823,
+    "basicsr_float64_input": 5.7299653672513315,
+    "basicsr_float32_input": 5.729575666140773,
+    "matlab_published": 5.72957338,
+    "qualification": "The published MATLAB execution was not rerun here; BasicSR results were executed independently. The image is not redistributed."
+  }
+}

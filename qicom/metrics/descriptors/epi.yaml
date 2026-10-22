@@ -1,0 +1,16 @@
+id: epi
+name_full: "Edge preservation: Laplacian correlation"
+name_short: "EPI (Laplacian correlation)"
+category: edge_detail
+description: >
+  Correlation between the high-frequency (edge) content of the reference
+  and comparison images, obtained by applying a discrete Laplacian filter
+  to each image and computing the Pearson correlation between the two
+  filtered maps. Assesses how well edge/detail structure is preserved,
+  independent of the images' overall (low-frequency) intensity content.
+value_range: "[-1, 1]"
+better_direction: target
+target_value: 1.0
+parameters: {}
+native_3d: true
+effort: low

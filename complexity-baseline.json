@@ -1,0 +1,25 @@
+{
+  "_comment": [
+    "Functions already over ruff's C901 limit of 20, with their current",
+    "value. THE TOOL MATTERS: radon, flake8's mccabe and ruff's C901 walk",
+    "the AST differently and disagree by several points on the same",
+    "function. Every number here is ruff's, at the version pinned in",
+    "pyproject.toml's dev extra.",
+    "",
+    "New entries are not allowed - split the function instead. Existing",
+    "entries may not grow, and must be lowered when they shrink, so the",
+    "ratchet only turns one way. Enforced by packaging/check_complexity.py."
+  ],
+  "tool": "ruff C901",
+  "max_complexity": 20,
+  "functions": {
+    "qicom/gui/controller.py::calculate_all_pairs": 27,
+    "qicom/gui/controller.py::export_results": 24,
+    "qicom/metrics/runner.py::_run_analysis_metrics": 50,
+    "qicom/radiomics/config.py::__post_init__": 28,
+    "qicom/radiomics/feature_qc.py::feature_quality_flags": 31,
+    "qicom/session/evaluation_aggregation.py::build_answers_dataframe": 28,
+    "qicom/session/evaluation_folder.py::_validate_save_model": 25,
+    "qicom/session/evaluation_folder.py::parse_evaluation_pages": 35
+  }
+}

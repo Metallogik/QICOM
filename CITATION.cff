@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use QICOM in work that is published, please cite it as below."
+title: "QICOM - Quality Image COMparator"
+abstract: >-
+  Desktop application for the comparison and quality assessment of medical
+  images, with three separate workflows: quantitative full-reference and
+  no-reference metrics, blinded structured qualitative evaluation, and paired
+  2D/3D radiomics with delta-radiomics and repeatability statistics. Reads
+  DICOM, NIfTI and common 2D image formats; runs entirely locally.
+type: software
+authors:
+  - family-names: Mattiussi
+    given-names: Fabio
+    city: Lugano
+    country: CH
+version: 1.1.0.dev0
+# No date-released: 1.1.0.dev0 is the version being worked towards, not one
+# that was released (see VERSIONING.md). 2026-08-19 was 1.0.0's changelog
+# date, and leaving it here asserted a release of this version that never
+# happened. The release commit restores the field with its own date.
+license: Apache-2.0
+repository-code: "https://github.com/Metallogik/QICOM"
+url: "https://github.com/Metallogik/QICOM"
+keywords:
+  - medical imaging
+  - image quality assessment
+  - DICOM
+  - radiomics
+  - IBSI
+  - quality control
+# Add the archive DOI here once the first release is deposited (e.g. on
+# Zenodo), and mirror it in qicom/about.py so the About dialog and the
+# citation stay identical:
+#
+# doi: "10.5281/zenodo.XXXXXXX"
+# identifiers:
+#   - type: doi
+#     value: "10.5281/zenodo.XXXXXXX"
+#     description: "Concept DOI for all versions of QICOM"

@@ -1,0 +1,54 @@
+QICOM — Quality Image COMparator
+Copyright 2026 Fabio Mattiussi
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this software except in compliance with the License. You may obtain a
+copy of the License in the LICENSE file distributed with this software, or
+at http://www.apache.org/licenses/LICENSE-2.0
+
+Designed and developed in Lugano, Switzerland.
+
+
+INTENDED USE
+------------
+
+QICOM is intended for research and quality-assessment use only. It is not a
+medical device, and it is not intended for clinical diagnosis or for any
+decision concerning the care of a patient.
+
+
+DICOM ATTRIBUTION
+-----------------
+
+QICOM supports DICOM® medical images.
+
+DICOM® is the registered trademark of the National Electrical Manufacturers
+Association (NEMA) for its standards publications relating to digital
+communications of medical information.
+
+QICOM is an independent software project and is not affiliated with,
+sponsored by, or endorsed by NEMA or the DICOM Standards Committee.
+
+QICOM reads DICOM files; it implements no DICOM network or storage service,
+claims no conformance to the DICOM Standard, and publishes no DICOM
+Conformance Statement.
+
+
+THIRD-PARTY SOFTWARE
+--------------------
+
+QICOM is distributed with third-party components that remain under their own
+licences. Their notices are collected in THIRD_PARTY_LICENSES.txt, next to this
+file in a desktop bundle and in packaging/ in the source tree.
+
+
+BUNDLED MODEL
+-------------
+
+QICOM bundles, unmodified, the RIQE reference model riqe-v1.0
+(qicom/metrics/models/riqe-v1.0.npz, doi:10.5281/zenodo.23055559), released
+under CC BY 4.0 and fitted on the TCIA collection LDCT-and-Projection-data
+(doi:10.7937/9npb-2637, CC BY 4.0). Its licence and the attributions it
+requires are in notices/RIQE-MODEL.txt (next to this file in a desktop bundle),
+in qicom/metrics/models/RIQE-MODEL.txt (next to the model in an installed
+package) and in packaging/notices/ in the source tree.

@@ -1,0 +1,16 @@
+id: mse
+name_full: "Mean Squared Error"
+name_short: "MSE"
+category: reference_error
+description: >
+  Average of the squared pixel-wise (or voxel-wise) differences between the
+  reference and the comparison image. Penalizes large local errors more than
+  small ones. Unit-dependent: its magnitude scales with the square of the
+  image intensity units, so absolute values are only comparable across
+  images that share the same intensity scale.
+value_range: "[0, +inf)"
+better_direction: lower
+target_value: 0.0
+parameters: {}
+native_3d: true
+effort: low

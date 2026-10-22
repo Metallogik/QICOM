@@ -1,0 +1,16 @@
+# Launcher for a source install (pip install -e ".[gui]"), with qicom-gui on PATH.
+# Install it with:
+#   cp packaging/qicom.desktop ~/.local/share/applications/
+#   install -D qicom/gui/resources/icons/qicom_logo.png ~/.local/share/icons/qicom.png
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=QICOM
+GenericName=Quality Image Comparator
+Comment=Quantitative comparison and quality assessment for medical images
+Exec=qicom-gui
+Icon=qicom
+Terminal=false
+Categories=Science;MedicalSoftware;
+StartupWMClass=qicom
+StartupNotify=true

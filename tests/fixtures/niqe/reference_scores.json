@@ -1,0 +1,22 @@
+{
+  "oracle": "BasicSR grayscale niqe; float64 input, upstream float32 resize",
+  "revision": "8d56e3a045f9fb3e1d8872f92ee4a4f07f886b0a",
+  "sources": {
+    "niqe.py": "d8052aa4617d2c0f7712f1871078d0244209481aa00cfce8a9ce1998f83a0088",
+    "matlab_functions.py": "29a3a3d209ce15724202bfb01415e5d4e574e7b853090551a7938c7b78ec4975",
+    "modelparameters.mat": "fa2aa4d12dd9595c3fb6bf8b4e1a15c79d5d1469238d0901c88dead195be578d",
+    "inputs.npz": "12f3fa15ed17a02c1ee4798d9b99d941d78721aa94af80a4c5621cf46e5fc487"
+  },
+  "numpy": "2.5.2",
+  "scores": {
+    "structured": 21.143108281796753,
+    "blurred": 13.453791136131887,
+    "noise": 69.12203285674221,
+    "odd_size": 21.143108281796753,
+    "two_patches": 21.782863384737425
+  },
+  "tolerance": {
+    "atol": 0.0001,
+    "rtol": 1e-05
+  }
+}

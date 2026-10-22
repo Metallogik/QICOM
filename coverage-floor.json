@@ -1,0 +1,85 @@
+{
+  "_comment": [
+    "Measured, not chosen. Regenerate by running the suite with",
+    "  pytest --cov=qicom --cov-branch --cov-report=json:coverage.json",
+    "and reading the numbers out of it. Raised when coverage improves; lowered",
+    "only in a change that explains why the drop is correct.",
+    "Enforced by packaging/check_coverage.py."
+  ],
+  "measured_on": "2026-10-09",
+  "measured_revision": "working tree after the audit fixes, with worker QThreads traced (tests/conftest.py); 3796 tests",
+  "global": {
+    "statements": 91.9,
+    "branches": 77.5
+  },
+  "trust_boundaries": {
+    "qicom/io/nifti_anonymize.py": {
+      "branch_target": 100.0,
+      "why": "de-identification is fail-closed; a missed branch is a header that was not stripped. Every branch is covered, so anything less is a regression"
+    },
+    "qicom/metrics/learned_weights.py": {
+      "branch_target": 90.0,
+      "why": "the only network access in the application, gated on consent and a pinned SHA-256"
+    },
+    "qicom/session/recent_projects.py": {
+      "branch_target": 100.0,
+      "why": "writes into the user profile and must degrade rather than fail an open project. Every branch is covered, so anything less is a regression"
+    },
+    "qicom/reporting/excel_safety.py": {
+      "branch_target": 90.0,
+      "why": "formula-injection escaping; a missed branch is a cell that reaches a spreadsheet live"
+    },
+    "qicom/session/archive_safety.py": {
+      "branch_target": 90.0,
+      "why": "every untrusted archive enters here - traversal, symlinks, budgets, free space, and the cleanup that follows a refusal"
+    },
+    "qicom/io/dicom_anonymize.py": {
+      "branch_target": 85.0,
+      "why": "fail-closed DICOM de-identification. Target raised toward 90 as the remaining malformed-dataset paths gain tests"
+    },
+    "qicom/reporting/llm_export.py": {
+      "branch_target": 85.0,
+      "why": "the export that leaves the machine: a whitelist, a row budget and an atomic write"
+    },
+    "qicom/build_identity.py": {
+      "branch_target": 60.0,
+      "why": "identifies the source behind a result. The frozen and git-absent branches are mocked rather than exercised, so the reachable ceiling here is low"
+    },
+    "qicom/radiomics/ibsi_validation.py": {
+      "branch_target": 55.0,
+      "why": "the second network access: official IBSI resources downloaded on request, verified by SHA-256 and size, then parsed (a workbook and NIfTI images from the network). Target set at the measured level and raised as tests land"
+    },
+    "qicom/io/bitmap_anonymize.py": {
+      "branch_target": 95.0,
+      "why": "PNG chunk and JPEG segment surgery that removes embedded text, EXIF and XMP from exported bitmaps; a damaged structure must be refused, never guessed."
+    },
+    "qicom/io/deidentification.py": {
+      "branch_target": 90.0,
+      "why": "Carries every image that could not be de-identified from the format modules to the user's decision; a refusal lost on the way would export identifying data unannounced."
+    },
+    "qicom/atomic_files.py": {
+      "branch_target": 95.0,
+      "why": "Every persistent write goes through it: an unpredictable temporary, fsync and an atomic rename, so a failure or a second writer never leaves a corrupt file in place."
+    },
+    "qicom/io/dicom_edit.py": {
+      "branch_target": 95.0,
+      "why": "writes edited copies of patient files: never over a source, all or nothing, pixel-defining tags locked, no old value in the log; a missed branch is an edit reaching a file it should not"
+    },
+    "qicom/io/output_folders.py": {
+      "branch_target": 90.0,
+      "why": "every multi-file tool output is staged and renamed into an empty, real destination here; a missed branch is a half-written folder or one written over existing files"
+    },
+    "qicom/io/folder_deidentification.py": {
+      "branch_target": 95.0,
+      "why": "the anonymizer's path into the fail-closed de-identifiers; a missed branch is a file written without its de-identification or a refusal that writes"
+    },
+    "qicom/io/file_listing.py": {
+      "branch_target": 90.0,
+      "why": "tool folder walks never follow a link out of the chosen folder"
+    },
+    "qicom/segmentation/label_files.py": {
+      "branch_target": 90.0,
+      "why": "reads label tables that can come from anywhere: bounded size, exact version, validated labels, a map whose values are all defined"
+    }
+  }
+}

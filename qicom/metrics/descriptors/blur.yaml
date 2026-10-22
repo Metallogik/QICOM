@@ -1,0 +1,21 @@
+id: blur
+name_full: "Image Sharpness (Variance of Laplacian)"
+name_short: "Blur (VoL)"
+category: no_reference
+description: >
+  Variance of the image's discrete Laplacian, normalized by data_range. A
+  classic, lightweight blur/sharpness indicator: a sharp image has strong,
+  varied edge responses (high variance); a blurred image's edges are
+  smoothed out (low variance). Despite the metric's name, higher values
+  mean a *sharper* (less blurry) image, not more blur.
+value_range: "[0, +inf)"
+better_direction: higher
+target_value: null
+parameters:
+  data_range:
+    required: true
+    description: >
+      The data range of the input image (max possible value minus min
+      possible value). Must always be provided explicitly.
+native_3d: true
+effort: low

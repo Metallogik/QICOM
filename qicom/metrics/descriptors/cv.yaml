@@ -1,0 +1,19 @@
+id: cv
+name_full: "Coefficient of Variation"
+name_short: "CV"
+category: roi_based
+description: >
+  Ratio between the standard deviation and the absolute mean intensity within an
+  explicitly supplied ROI (absolute, so signed intensities such as CT numbers in HU give a
+  non-negative value). Expressed as a plain ratio (multiply by 100 for
+  a percentage). Useful to assess relative noise/uniformity independent of
+  the ROI's absolute intensity level.
+value_range: "[0, +inf)"
+better_direction: lower
+target_value: 0.0
+parameters:
+  roi_mask:
+    required: true
+    description: "Boolean mask (same shape as the image) marking the region to measure."
+native_3d: true
+effort: low

@@ -1,0 +1,165 @@
+[build-system]
+# Capped at the next major: setuptools is installed into the build environment
+# and frozen into the bundle, so an untested major must not arrive unannounced.
+requires = ["setuptools>=83,<85", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qicom"
+# Kept in step with qicom/__version__.py and CITATION.cff;
+# packaging/check_release_consistency.py fails the build if they drift.
+version = "1.1.0.dev0"
+description = "Quality Image Comparator - quantitative comparison and quality assessment for medical images (2D/3D)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Fabio Mattiussi", email = "support.qicom@gmail.com" }]
+keywords = ["medical imaging", "DICOM", "image quality", "radiomics", "IBSI"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Healthcare Industry",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Medical Science Apps.",
+  "Topic :: Scientific/Engineering :: Image Processing",
+]
+
+# Base dependencies: core metrics + I/O + reporting. Deliberately excludes
+# heavy learned-metric libraries (torch, lpips, piq, DISTS) and the GUI
+# stack, which are opt-in via the extras below.
+dependencies = [
+  "numpy>=1.26,<3",
+  "scipy>=1.11,<2",
+  "scikit-image>=0.22,<1",
+  "pandas>=2.1,<4",
+  "openpyxl>=3.1,<4",
+  "pydicom>=2.4,<4",
+  # Lossless JPEG - what most CT/MRI exports use - and JPEG-LS pixel data:
+  # pydicom and Pillow alone decode only RLE, baseline JPEG and JPEG 2000.
+  "python-gdcm>=3.0.10,<4",
+  "dicom-anonymizer>=2.0,<3",
+  "nibabel>=5.2,<6",
+  "Pillow>=12.3,<13",
+  "PyYAML>=6.0,<7",
+  "platformdirs>=4.0,<5",
+  "threadpoolctl>=3.6,<4",
+  "cryptography>=44,<51",
+]
+
+[project.optional-dependencies]
+# Learned/reference metrics: LPIPS (official package, AlexNet backbone),
+# and via piq: MS-SSIM, FSIM, GMSD, VIF, DISTS and canonical BRISQUE.
+# The legacy NSS distances and canonical NIQE need only numpy/scipy.
+# NIQE/BRISQUE's historical NSS implementations used to be here
+# too (via pyiqa), but are now a from-scratch reimplementation in
+# qicom.metrics.nss/nss_reference needing only numpy/scipy (base deps) -
+# pyiqa was dropped because it is licensed under PolyForm-Noncommercial
+# (plus the NTU S-Lab License), incompatible with distributing QICOM freely
+# to users whose own use may be commercial. See the packaging/licensing
+# report for the full analysis.
+# For cross-platform packaging, install the CPU-only torch build explicitly:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+learned = [
+  "torch>=2.2,<3",
+  "torchvision>=0.17,<1",
+  "lpips==0.1.4",
+  "piq==0.8.0",
+]
+gui = [
+  # QICOM uses QtCore/Gui/Widgets/Svg/OpenGL only; the PySide6 meta-wheel also
+  # installs the 435 MiB Addons distribution (WebEngine, Multimedia, 3D, ...).
+  "PySide6-Essentials>=6.6,<7",
+  "pyqtgraph>=0.13,<1",
+]
+# PyPI's nominal 3.1.0 sdist currently exposes inconsistent package
+# metadata.  Pin the corresponding official upstream revision so Python
+# 3.12 builds are deterministic and PyRadiomics' compiled matrix backend is
+# available on every supported platform.
+radiomics = [
+  "SimpleITK>=2.3,<3",
+  "pyradiomics @ git+https://github.com/AIM-Harvard/pyradiomics.git@6a761c4eb01905cfcb1139b0b158547c55edd4df",
+  "PyWavelets>=1.4,<2",
+]
+# Optional second radiomics engine, installed explicitly; not part of packaged defaults.
+mirp = ["mirp==2.7.0"]
+dev = [
+  "pytest>=8.0,<10",
+  "pytest-cov>=4.1,<8",
+  "pytest-qt>=4.4,<5",
+  "black>=24.0,<27",
+  "ruff>=0.3,<1",
+  "mypy>=1.9,<3",
+  "pip-audit>=2.7,<3",
+]
+packaging = [
+  "pyinstaller>=6.0,<7",
+  "pip-licenses>=5.0,<6",
+  # Requirement/marker parsing for packaging/attribution.py, which resolves
+  # each distributed profile's dependency closure from installed metadata.
+  # The upper bound has to stay ahead of what the build machine's own tooling
+  # asks for. The packaging workflow validates its environment with
+  # `pip check`, which reports every installed distribution and not only the
+  # ones QICOM ships: capping at <26 held packaging at 25.0 and so broke the
+  # pipx preinstalled on the GitHub Windows runner, which requires >=26 - a
+  # conflict in a distribution that is no part of any bundle.
+  "packaging>=23.0,<27",
+]
+
+[project.urls]
+Homepage = "https://github.com/Metallogik/QICOM"
+Repository = "https://github.com/Metallogik/QICOM"
+Issues = "https://github.com/Metallogik/QICOM/issues"
+Changelog = "https://github.com/Metallogik/QICOM/blob/main/CHANGELOG.md"
+
+[project.scripts]
+qicom-cli = "qicom.cli.main:main"
+qicom-gui = "qicom.gui.app:main"
+
+[tool.setuptools.packages.find]
+include = ["qicom*"]
+
+[tool.setuptools.package-data]
+qicom = [
+  "metrics/descriptors/*.yaml",
+  "metrics/models/*.npz",
+  # CC BY 4.0 requires the attribution to travel with every copy of the model.
+  "metrics/models/*.txt",
+  "radiomics/reference_sets/*.json",
+  "gui/i18n/locales/*.json",
+  "gui/themes/*.qss",
+  "gui/resources/icons/*.png",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+# The dev venv runs 3.12 and numpy's bundled stubs use 3.12-only syntax
+# (PEP 695 type aliases); requires-python still allows 3.11.
+python_version = "3.12"
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The repository root must be importable for both `pytest` and `python -m pytest`:
+# the bare console script does not put the invocation directory on sys.path, so
+# tests importing the top-level `benchmarks` package failed to collect under it.
+pythonpath = ["."]
+# A test that hangs (an unanswered modal dialog, a deadlocked worker) dumps every
+# thread's stack after this many seconds instead of waiting silently for the CI timeout.
+faulthandler_timeout = 600
+markers = [
+  "requires_learned: needs the 'learned' extra (torch/piq/lpips); skipped on a base install",
+]

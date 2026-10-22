@@ -1,0 +1,11 @@
+# Lightweight quantitative + qualitative desktop bundle.
+-r base.txt
+-r gui.txt
+pyinstaller>=6.0,<7
+pip-licenses>=5.0,<6
+# Requirement/marker parsing for packaging/attribution.py, which resolves
+# each distributed profile's dependency closure from installed metadata. The
+# ceiling stays ahead of what the build machine's own tooling asks for: the
+# packaging workflow runs `pip check`, which audits the whole environment and
+# not only what QICOM ships.
+packaging>=23.0,<27

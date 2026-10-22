@@ -1,0 +1,14 @@
+id: mean_signed_error
+name_full: "Mean Signed Error (Bias)"
+name_short: "Bias"
+category: reference_error
+description: >
+  Mean signed residual, defined explicitly as comparison minus reference.
+  This is a descriptive voxel residual summary, not an independent-case
+  Bland-Altman estimate.
+value_range: "(-inf, +inf), in calibrated intensity units when available"
+better_direction: target
+target_value: 0.0
+parameters: {}
+native_3d: true
+effort: low

@@ -1,0 +1,12 @@
+id: absolute_error_p95
+name_full: "Absolute Error 95th Percentile"
+name_short: "Absolute Error P95"
+category: reference_error
+description: >
+  Ninety-fifth percentile of absolute comparison-minus-reference residuals.
+value_range: "[0, +inf), in calibrated intensity units when available"
+better_direction: lower
+target_value: 0.0
+parameters: {}
+native_3d: true
+effort: low

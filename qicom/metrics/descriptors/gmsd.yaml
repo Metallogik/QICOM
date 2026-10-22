@@ -1,0 +1,22 @@
+id: gmsd
+name_full: "Gradient Magnitude Similarity Deviation"
+name_short: "GMSD"
+category: reference_structural
+description: >
+  Standard deviation of the pixel-wise gradient magnitude similarity
+  between the reference and comparison images. A low deviation means
+  distortions are spread uniformly (e.g. a globally blurred image); a high
+  deviation means distortions are localized (e.g. artifacts in specific
+  regions). Computed slice-by-slice on 3D volumes (no native 3D
+  implementation available).
+value_range: "[0, +inf), typically small (<0.5) for natural/medical images"
+better_direction: lower
+target_value: 0.0
+parameters:
+  data_range:
+    required: true
+    description: >
+      The data range of the input images (max possible value minus min
+      possible value). Must always be provided explicitly.
+native_3d: false
+effort: medium

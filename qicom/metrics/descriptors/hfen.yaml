@@ -1,0 +1,23 @@
+id: hfen
+name_full: "High-Frequency Error Norm"
+name_short: "HFEN"
+category: edge_detail
+description: >
+  Normalized L2 distance between Laplacian-of-Gaussian (LoG) filtered
+  versions of the reference and comparison images. LoG acts as an
+  edge/fine-detail detector, so HFEN quantifies how much high-frequency detail
+  (edges, fine texture) differs between the two images, relative to the
+  reference's own high-frequency content.
+value_range: "[0, +inf)"
+better_direction: lower
+target_value: 0.0
+parameters:
+  sigma:
+    required: false
+    description: >
+      Standard deviation (in pixels/voxels) of the Gaussian used in the
+      Laplacian-of-Gaussian filter. Default 1.5, matching the scale
+      commonly used in the MRI reconstruction literature (a LoG kernel of
+      about 15x15 pixels for typical image resolutions).
+native_3d: true
+effort: low

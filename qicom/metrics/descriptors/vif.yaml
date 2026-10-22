@@ -1,0 +1,21 @@
+id: vif
+name_full: "Visual Information Fidelity"
+name_short: "VIF"
+category: reference_structural
+description: >
+  Fraction of the information present in the reference image (as modeled
+  by a natural scene statistics model) that is still recoverable from the
+  comparison image, evaluated through a simulated human visual system.
+  Computed slice-by-slice on 3D volumes (no native 3D implementation
+  available).
+value_range: "[0, +inf), typically [0, 1]; 1 = no information loss, can exceed 1 for enhanced images"
+better_direction: higher
+target_value: 1.0
+parameters:
+  data_range:
+    required: true
+    description: >
+      The data range of the input images (max possible value minus min
+      possible value). Must always be provided explicitly.
+native_3d: false
+effort: medium

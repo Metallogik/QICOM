@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "_comment": [
+    "Reviewed manual attribution entries, for distributions whose wheel metadata",
+    "does not supply what Apache-2.0 requires to travel with a redistributed copy.",
+    "Each entry states why the automatic reading is insufficient and points at a",
+    "licence text checked in under packaging/attribution/notices/.",
+    "",
+    "An override is a claim by the person responsible for the distribution, not a",
+    "finding of this tooling. packaging/attribution.py verifies only that the",
+    "referenced files exist and that the required fields are filled in; it does",
+    "not and cannot confirm that the licence named is the correct one."
+  ],
+  "overrides": {
+    "pyside6-essentials": {
+      "license": "LGPL-3.0-only",
+      "origin": "https://www.qt.io/qt-for-python",
+      "notice_files": ["notices/pyside6-shiboken6-LGPL-3.0.txt"],
+      "reason": "The PySide6-Essentials wheel declares 'LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only' with no embedded licence file. QICOM relies on the LGPLv3 option and links dynamically; the verbatim LGPLv3 text, the GPLv3 text it incorporates by reference, and QICOM's own statement of how it links are reproduced in the referenced file."
+    },
+    "shiboken6": {
+      "license": "LGPL-3.0-only",
+      "origin": "https://www.qt.io/qt-for-python",
+      "notice_files": ["notices/pyside6-shiboken6-LGPL-3.0.txt"],
+      "reason": "Same wheel family and same missing licence file as PySide6-Essentials; covered by the same reproduced text."
+    },
+    "python-gdcm": {
+      "license": "Apache-2.0 AND BSD-3-Clause AND BSD-2-Clause AND IJG AND OFFIS AND MIT AND Zlib AND OpenSSL AND LicenseRef-socketxx",
+      "origin": "https://github.com/tfmoraes/python-gdcm",
+      "notice_files": ["notices/python-gdcm.txt"],
+      "reason": "The python-gdcm wheel ships only the Apache-2.0 licence of its packaging code, not those of GDCM and of the libraries compiled into its binaries (IJG libjpeg with the DCMTK patches, CharLS, OpenJPEG, Expat, zlib, libuuid, md5, socket++; OpenSSL 1.1.1k on Linux, 3.5.2 on macOS). The referenced file reproduces the wheel's Apache-2.0 text and those licences, verbatim from GDCM v3.2.6, the revision python-gdcm 3.2.6 builds, and from OpenSSL_1_1_1k."
+    }
+  }
+}

@@ -1,0 +1,27 @@
+id: niqe_canonical
+name_full: "Natural Image Quality Evaluator (canonical pristine model)"
+name_short: "NIQE"
+category: no_reference
+description: >
+  NIQE distance to the original LIVE pristine natural-image MVG model, with an independent
+  QICOM implementation. Lower is better relative to that fixed model; this is not a clinical
+  quality threshold. Uses nonoverlapping 96x96 patches at two scales and scores each image
+  independently on its full extent. ROI and background exclusion do not apply. At least
+  two valid patches are required; incomplete right/bottom blocks are discarded.
+  Normalization preserves [0, data_range] inputs, shifts a negative minimum to zero, and
+  expands the range only if necessary; the transform is recorded and fixed across a
+  volume's slices. Requires an explicit model download before analysis.
+  Separate from NSS patch-distribution distance and its synthetic or local reference model.
+  The model is fitted on natural photographs: its relation to CT image quality is not
+  established, and in the RIQE study (arXiv:2610.00384) a refit with NIQE's parameters on
+  photographs ranked every simulated reduced-dose abdominal CT image as better than its
+  full-dose counterpart. For CT in Hounsfield units, use RIQE.
+value_range: "[0, +inf), unitless distance to the identified pristine MVG"
+better_direction: lower
+target_value: null
+parameters:
+  data_range:
+    required: true
+    description: "Declared intensity range; the recorded single-image transform maps to [0, 255]."
+native_3d: false
+effort: medium

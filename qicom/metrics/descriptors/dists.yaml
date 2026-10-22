@@ -1,0 +1,25 @@
+id: dists
+name_full: "Deep Image Structure and Texture Similarity"
+name_short: "DISTS"
+category: reference_structural
+description: >
+  Perceptual distance combining structure and texture similarity, computed
+  from deep features extracted by a pretrained VGG16 network. More
+  tolerant of texture resampling (e.g. denoising/reconstruction artifacts)
+  than LPIPS while still correlating with human judgments. Grayscale images
+  are automatically replicated to 3 channels before being fed to the
+  network. Computed slice-by-slice on 3D volumes (no native 3D
+  implementation available). Downloads pretrained network weights on
+  first use.
+value_range: "[0, 1]"
+better_direction: lower
+target_value: 0.0
+parameters:
+  data_range:
+    required: true
+    description: >
+      The data range of the input images (max possible value minus min
+      possible value), used to normalize pixel values to [0, 1] before
+      feeding the network. Must always be provided explicitly.
+native_3d: false
+effort: high

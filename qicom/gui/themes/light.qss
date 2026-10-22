@@ -1,0 +1,1063 @@
+/* QICOM light theme — "Clinico": clinical teal on warm-neutral grays,
+   moderate radii, and one consistent teal workflow action.
+   Palette reference (keep both .qss files in sync when touching these):
+     --bg      #f2f7f6   app background
+     --surface #ffffff   cards/inputs/lists
+     --band    #e7f2ef   header bands (dock title, table header, tabs)
+     --line    #d6e3e0   borders/dividers
+     --ink     #152220   primary text
+     --muted   #5f716d   secondary/disabled text
+     --accent       #0e8f7f   teal - selection, focus, links, primary chrome
+     --accent-strong #0b7568  teal hover/pressed
+     --accent-soft   #dcf1ed  teal tint background
+     --attention    #c94f3f   coral - errors and attention only
+     --good         #2f9e5c   semantic success (Export ready)
+     --warn         #c98a1f   semantic warning (required-question gating)
+     --coral-chip bg #f3b8ae / border #e2897a / text #5c1c12 - close/delete affordances */
+
+* {
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    color: #152220;
+}
+
+QMainWindow, QDialog {
+    background-color: #f2f7f6;
+}
+
+QMenuBar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #d6e3e0;
+    padding: 2px;
+}
+
+QMenuBar::item {
+    padding: 4px 10px;
+    background: transparent;
+    border-radius: 4px;
+}
+
+QMenuBar::item:selected {
+    background-color: #dcf1ed;
+}
+
+QMenu {
+    background-color: #ffffff;
+    border: 1px solid #d6e3e0;
+    padding: 4px;
+}
+
+QMenu::item {
+    padding: 6px 24px 6px 12px;
+    border-radius: 4px;
+}
+
+QMenu::item:selected {
+    background-color: #0e8f7f;
+    color: #ffffff;
+}
+
+QMenu::separator {
+    height: 1px;
+    background: #d6e3e0;
+    margin: 4px 8px;
+}
+
+QToolBar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #d6e3e0;
+    spacing: 4px;
+    padding: 4px;
+}
+
+QToolButton {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 7px;
+}
+
+QToolButton:hover {
+    background-color: #eaf4f2;
+    border-color: #d6e3e0;
+}
+
+QToolButton:checked {
+    background-color: #dcf1ed;
+    border-color: #0e8f7f;
+}
+
+QStatusBar {
+    background-color: #ffffff;
+    border-top: 1px solid #d6e3e0;
+}
+
+QDockWidget {
+    font-weight: 600;
+}
+
+QDockWidget::title {
+    background-color: #e7f2ef;
+    padding: 7px 10px;
+    border-bottom: 1px solid #d6e3e0;
+}
+
+/* Task-oriented workbench navigation, now a browser-style tab strip in
+   its own top toolbar row instead of a left dock. The strip paints itself
+   (the curved tab shoulders are beyond any QSS box model - see
+   qicom/gui/widgets/workflow_rail.py), so all that is needed here is to
+   keep the generic QToolBar chrome out of its way. */
+QToolBar#workflowToolBar {
+    background: transparent;
+    border: none;
+    padding: 0px;
+    margin: 0px;
+    spacing: 0px;
+}
+
+QWidget#workflowRail {
+    background: transparent;
+}
+
+/* The page the active tab points at - see workflowPages in
+   aggregation_dialog.py. */
+QStackedWidget#workflowPages,
+QStackedWidget#workflowPages > QWidget {
+    background-color: #ffffff;
+}
+
+QPushButton {
+    background-color: #ffffff;
+    border: 1px solid #c3d6d2;
+    border-radius: 10px;
+    padding: 7px 16px;
+}
+
+QPushButton:hover {
+    background-color: #eaf4f2;
+    border-color: #0e8f7f;
+}
+
+QPushButton:pressed {
+    background-color: #dcf1ed;
+}
+
+QPushButton:checked {
+    background-color: #dcf1ed;
+    border-color: #0e8f7f;
+    color: #0b7568;
+    font-weight: 600;
+}
+
+QFrame#backgroundToolCard {
+    background-color: #f7fbfa;
+    border: 1px solid #d6e3e0;
+    border-radius: 10px;
+}
+
+QLabel#toolSectionTitle {
+    color: #5f716d;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Air removal is optional and says so permanently, in a band that stays
+   at the top of the column whether the step is on or off (see
+   BackgroundPanel) - amber, the palette's existing "read this before you
+   continue" color, never coral: nothing here is an error. */
+QLabel#backgroundOptionalNotice {
+    background-color: #fdf3dd;
+    border: 1px solid #e6c979;
+    border-left: 4px solid #c98a1f;
+    border-radius: 8px;
+    color: #6b4a08;
+    padding: 8px 10px;
+}
+
+QLabel#backgroundEnableQuestion {
+    color: #152220;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* The whole column's on/off switch, sized like the decision it is. */
+QPushButton#backgroundEnableToggle {
+    background-color: #ffffff;
+    border: 2px solid #0e8f7f;
+    border-radius: 8px;
+    color: #0b7568;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 14px;
+}
+
+QPushButton#backgroundEnableToggle:hover {
+    background-color: #dcf1ed;
+}
+
+QPushButton#backgroundEnableToggle:checked {
+    background-color: #0e8f7f;
+    border-color: #0e8f7f;
+    color: #ffffff;
+}
+
+QPushButton#backgroundEnableToggle:checked:hover {
+    background-color: #0b7568;
+}
+
+QLabel#roiCountBadge {
+    background-color: #dcf1ed;
+    border: 1px solid #9bcfc6;
+    border-radius: 9px;
+    color: #0b7568;
+    font-weight: 700;
+    min-width: 22px;
+    padding: 3px 6px;
+}
+
+QPushButton#toleranceStepButton {
+    background-color: #dcf1ed;
+    border: 2px solid #0e8f7f;
+    border-radius: 21px;
+    color: #0b7568;
+    font-size: 22px;
+    font-weight: 700;
+    padding: 0px;
+}
+
+QPushButton#toleranceStepButton:hover {
+    background-color: #c8e9e3;
+    border-color: #0b7568;
+}
+
+QPushButton:disabled {
+    color: #5f716d;
+    background-color: #f2f7f6;
+}
+
+QPushButton#primary, QPushButton#radiomicsExtractButton {
+    background-color: #0e8f7f;
+    border-color: #0e8f7f;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+QPushButton#primary:hover, QPushButton#radiomicsExtractButton:hover {
+    background-color: #0b7568;
+}
+
+/* Calculate is the one action on the Analysis setup page, and it sits at
+   the foot of a wall of metric rows each carrying a green/amber/coral
+   effort badge (see metric_selection_dialog._EFFORT_COLORS). In teal it
+   was one more colored rectangle among dozens; indigo belongs to nothing
+   else in the app, so the eye lands on it first. Full width, at the
+   bottom edge of the page - see AnalysisSetupPanel. */
+QPushButton#calculateButton {
+    background-color: #4338ca;
+    border-color: #4338ca;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 12px 18px;
+}
+
+QPushButton#calculateButton:hover {
+    background-color: #3730a3;
+    border-color: #3730a3;
+}
+
+QPushButton#calculateButton:pressed {
+    background-color: #312a8f;
+}
+
+/* An ID selector outranks the plain QPushButton:disabled rule above, so
+   without this a disabled primary action keeps the full accent fill and
+   reads as clickable. That matters most where being disabled is part of
+   the design: the radiomics preview button is deliberately unavailable
+   until its method's precondition (a seed) is met. */
+QPushButton#primary:disabled, QPushButton#calculateButton:disabled,
+QPushButton#radiomicsExtractButton:disabled {
+    background-color: #cfe0dc;
+    border-color: #cfe0dc;
+    color: #7d8d89;
+}
+
+/* ---- Air removal: one colored button at a time -----------------------
+
+   The Background (air) column is a three-step sequence, and every step
+   used to wear the same accent fill at the same time - four teal
+   rectangles competing for the eye, none of them saying which one was
+   the one to press. BackgroundPanel._refresh_guidance now marks exactly
+   one button `guidance="next"` (the step actually due) and every other
+   button `guidance="done"`, including once the mask is detected and no
+   step is due at all - at which point the whole column reads as muted
+   grey. Written as explicit per-ID rules because an ID selector
+   (#toleranceStepButton, #backgroundEnableToggle) outranks a bare
+   attribute selector, so a generic [guidance="done"] alone would lose to
+   the accent those rules already set. */
+
+QPushButton[guidance="done"] {
+    background-color: #f2f7f6;
+    border: 1px solid #d6e3e0;
+    color: #5f716d;
+    font-weight: 500;
+}
+
+QPushButton[guidance="done"]:hover {
+    background-color: #eaf4f2;
+    border-color: #0e8f7f;
+    color: #152220;
+}
+
+QPushButton[guidance="done"]:disabled {
+    background-color: #f7fafa;
+    border-color: #e4edeb;
+    color: #9aa9a5;
+}
+
+/* A checkable step button that is done but chosen - the effect or the ROI
+   shape in use - keeps the plain checked look, so the choice stays visible
+   while the colour has moved on to the next step. */
+QPushButton[guidance="done"]:checked {
+    background-color: #dcf1ed;
+    border-color: #0e8f7f;
+    color: #0b7568;
+    font-weight: 600;
+}
+
+QPushButton[guidance="next"] {
+    background-color: #0e8f7f;
+    border: 1px solid #0e8f7f;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+QPushButton[guidance="next"]:hover {
+    background-color: #0b7568;
+    border-color: #0b7568;
+}
+
+/* The two numbered step buttons (Add air ROI, Detect air). Muted by
+   default - the guidance rule above lights whichever one is due. */
+QPushButton#backgroundStepButton {
+    background-color: #f2f7f6;
+    border: 1px solid #d6e3e0;
+    border-radius: 10px;
+    color: #5f716d;
+}
+
+QPushButton#backgroundStepButton[guidance="next"] {
+    background-color: #0e8f7f;
+    border-color: #0e8f7f;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+QPushButton#backgroundStepButton[guidance="next"]:hover {
+    background-color: #0b7568;
+    border-color: #0b7568;
+}
+
+QPushButton#backgroundStepButton:disabled {
+    background-color: #f7fafa;
+    border-color: #e4edeb;
+    color: #9aa9a5;
+}
+
+/* The exclusion toggle: colored while the answer is still open, muted
+   once it has been answered - the leading tick and the wording ("Air
+   exclusion is on") carry the state from there, so an answered question
+   stops competing with the step that follows it. */
+QPushButton#backgroundEnableToggle[guidance="next"] {
+    background-color: #0e8f7f;
+    border-color: #0e8f7f;
+    color: #ffffff;
+}
+
+QPushButton#backgroundEnableToggle[guidance="next"]:hover {
+    background-color: #0b7568;
+    border-color: #0b7568;
+}
+
+QPushButton#backgroundEnableToggle[guidance="done"],
+QPushButton#backgroundEnableToggle[guidance="done"]:checked {
+    background-color: #f2f7f6;
+    border-color: #d6e3e0;
+    color: #5f716d;
+}
+
+QPushButton#backgroundEnableToggle[guidance="done"]:hover,
+QPushButton#backgroundEnableToggle[guidance="done"]:checked:hover {
+    background-color: #eaf4f2;
+    border-color: #0e8f7f;
+    color: #152220;
+}
+
+/* The round -/+ steppers are a fine adjustment, never a step of the
+   sequence, so they stay muted throughout. */
+QPushButton#toleranceStepButton[guidance="done"] {
+    background-color: #f2f7f6;
+    border-color: #d6e3e0;
+    color: #5f716d;
+}
+
+QPushButton#toleranceStepButton[guidance="done"]:hover {
+    background-color: #eaf4f2;
+    border-color: #0e8f7f;
+    color: #152220;
+}
+
+QPushButton#toleranceStepButton[guidance="done"]:disabled {
+    background-color: #f7fafa;
+    border-color: #e4edeb;
+    color: #9aa9a5;
+}
+
+/* ---- Analyze: the run's own progress, in the page ---------------------
+
+   Calculate no longer opens a modal QProgressDialog over the page that
+   started it (see AnalysisSetupPanel): the bottom edge of the page swaps
+   the Calculate button for this panel. It therefore inherits that
+   button's job of being the one thing at the foot of the page - same
+   full width, outside the content margins - and keeps its indigo, so the
+   eye lands where it already was rather than on a new window. */
+
+QFrame#analysisProgressPanel {
+    background-color: #e9edfb;
+    border: none;
+    border-top: 1px solid #c6cdf2;
+}
+
+QLabel#analysisProgressTitle {
+    color: #1f2547;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+QLabel#analysisProgressStep {
+    color: #1f2547;
+    font-size: 12px;
+}
+
+QLabel#analysisProgressNotice {
+    color: #5f6689;
+    font-size: 11px;
+}
+
+QProgressBar#analysisProgressBar {
+    background-color: #ffffff;
+    border: 1px solid #c6cdf2;
+    border-radius: 8px;
+    color: #1f2547;
+    font-weight: 600;
+    text-align: center;
+}
+
+QProgressBar#analysisProgressBar::chunk {
+    background-color: #4338ca;
+    border-radius: 7px;
+}
+
+QPushButton#analysisProgressCancel {
+    background-color: #ffffff;
+    border: 1px solid #c6cdf2;
+    border-radius: 8px;
+    color: #1f2547;
+    font-weight: 600;
+    padding: 6px 16px;
+}
+
+QPushButton#analysisProgressCancel:hover {
+    background-color: #fdecea;
+    border-color: #c94f3f;
+    color: #c94f3f;
+}
+
+QPushButton#analysisProgressCancel:disabled {
+    background-color: #ffffff;
+    border-color: #c6cdf2;
+    color: #5f6689;
+}
+
+/* All workflow-primary actions use the same accent. Coral is reserved for
+   attention/error affordances instead of changing meaning per screen. */
+
+/* Export CSV/Excel: a lighter, distinctly-green "ready" signal while
+   there's something to export - gray
+   and disabled beforehand/after Reset All, rather than clickable but
+   guaranteed to just show a "nothing to export" error. */
+QPushButton#export {
+    background-color: #6ab98a;
+    border-color: #6ab98a;
+    color: #0c2417;
+    font-weight: 600;
+}
+
+QPushButton#export:hover {
+    background-color: #56a476;
+}
+
+QPushButton#export:disabled {
+    background-color: #f2f7f6;
+    border-color: #c3d6d2;
+    color: #5f716d;
+}
+
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {
+    background-color: #ffffff;
+    border: 1px solid #c3d6d2;
+    border-radius: 8px;
+    padding: 5px 8px;
+}
+
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {
+    border-color: #0e8f7f;
+}
+
+/* See the matching comment in dark.qss - unstyled QRadioButton/QCheckBox
+   fall back to the OS's native indicator rendering, unreadable on some
+   Linux desktop themes (reported for the qualitative Rating panel's score
+   buttons). Both indicators become a solid accent-filled shape when
+   checked (a thick colored border alone read as a hollow ring with the
+   center still background-colored - not obviously "checked" at a
+   glance). */
+QRadioButton, QCheckBox {
+    spacing: 8px;
+    padding: 2px 0;
+}
+
+QRadioButton::indicator, QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #a9bdb9;
+    background-color: #ffffff;
+}
+
+QRadioButton::indicator {
+    border-radius: 8px;
+}
+
+QCheckBox::indicator {
+    border-radius: 4px;
+}
+
+QRadioButton::indicator:hover, QCheckBox::indicator:hover {
+    border-color: #0e8f7f;
+}
+
+QRadioButton::indicator:checked {
+    background-color: #0e8f7f;
+    border-color: #0e8f7f;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #0e8f7f;
+    border-color: #0e8f7f;
+}
+
+QRadioButton::indicator:disabled, QCheckBox::indicator:disabled {
+    border-color: #d6e3e0;
+    background-color: #f2f7f6;
+}
+
+/* The inline warning shown while a required question is unanswered
+   (QualitativeController._refresh_navigation_gating) - the app's one
+   semantic-warning color, previously unstyled (fell back to plain body
+   text, easy to miss). */
+QLabel#gatingWarning {
+    color: #c98a1f;
+    font-weight: 600;
+}
+
+/* Rich-text read-out panes (the Export step's written summary). Qt
+   paints QTextBrowser/QTextEdit on a hard-coded white base regardless of
+   the palette, which on the dark theme left pale text on white. */
+QTextBrowser, QTextEdit {
+    background-color: #ffffff;
+    border: 1px solid #d6e3e0;
+    border-radius: 6px;
+    color: #152220;
+}
+
+QTableView, QListWidget, QTreeView, QListView {
+    background-color: #ffffff;
+    alternate-background-color: #f3f8f7;
+    border: 1px solid #d6e3e0;
+    gridline-color: #e3ede9;
+    selection-background-color: #0e8f7f;
+    selection-color: #ffffff;
+}
+
+/* QComboBox's dropdown popup is an internal QListView, not a QListWidget -
+   without an explicit rule it falls back to the native/OS palette for its
+   background while our `*` selector still forces this theme's text color,
+   which can produce unreadable combinations (e.g. dark text on a dark
+   native popup background) depending on the OS's own theme. */
+QComboBox QAbstractItemView {
+    background-color: #ffffff;
+    color: #152220;
+    border: 1px solid #d6e3e0;
+    selection-background-color: #0e8f7f;
+    selection-color: #ffffff;
+    outline: none;
+}
+
+/* Same native-palette pitfall as QComboBox's popup above: QScrollArea's
+   viewport is a plain, unstyled child widget - without an explicit rule it
+   falls back to the OS's native palette for its background, which can be
+   dark on a desktop with a dark native/GTK theme even while everything
+   else here correctly follows this (light) theme. Used by ChartsPanel. */
+QScrollArea, QScrollArea > QWidget, QScrollArea > QWidget > QWidget {
+    background-color: transparent;
+    border: none;
+}
+
+/* ChartsPanel's stat tiles (single-value metric cards with no bar chart to
+   draw) - same native-palette pitfall: a bare QFrame's fill falls back to
+   the OS's native palette without an explicit rule. */
+QFrame#statTile {
+    background-color: #ffffff;
+    border: 1px solid #d6e3e0;
+    border-radius: 8px;
+}
+
+/* Explanatory note printed under a results table (currently the
+   confidence-interval caveat - see ResultsTablePanel._ci_note_label).
+   Muted ink spelled out here for the same reason as the tile above: an
+   explicit rule, never "palette(mid)". */
+QLabel#tableNote {
+    color: #5f716d;
+}
+
+/* Radiomics ROI workspace. The two hint labels are muted (same ink as
+   tableNote above - guidance, not content); the two warnings are not,
+   because each one exists to stop the user acting on something wrong:
+   results that no longer match their inputs, and a comparison panel
+   whose outlines cannot be trusted for this pair of geometries. */
+QLabel#radiomicsToolHint {
+    color: #5f716d;
+}
+
+QLabel#radiomicsPreviewSummary {
+    color: #152220;
+    font-weight: 600;
+}
+
+/* The four numbered steps of the semi-automatic flow, and the sentence
+   that states what the current scope settings add up to. The step labels
+   have to read as structure rather than as content, hence the accent ink
+   and the extra space above them; the scope summary is a conclusion the
+   user acts on, so it is full-strength ink, not hint grey. */
+QLabel#radiomicsStepLabel {
+    color: #2f6f66;
+    font-weight: 700;
+    padding-top: 6px;
+}
+
+QLabel#radiomicsScopeSummary {
+    color: #152220;
+    font-style: italic;
+}
+
+QLabel#radiomicsStaleBanner,
+QLabel#radiomicsGeometryNotice {
+    color: #7a3d00;
+    background-color: #fff4e0;
+    border: 1px solid #e8a33d;
+    border-radius: 4px;
+    padding: 6px 8px;
+}
+
+QLabel#panelSectionTitle {
+    color: #152220;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+QLabel#panelSectionHint {
+    color: #5f716d;
+    font-size: 11px;
+}
+
+/* Which page a building step is currently working on (see
+   WizardStepBar) - a chip rather than more body text, so it reads as
+   "you are here" and not as part of the instruction above it. */
+QLabel#wizardStepContext {
+    background-color: #dcf1ed;
+    border: 1px solid #9bcfc6;
+    border-radius: 9px;
+    color: #0b7568;
+    font-weight: 600;
+    padding: 3px 10px;
+}
+
+/* The privacy statement the images step carries (see WizardStepBar's own
+   _notice): a standing declaration about what QICOM does to the files
+   being loaded, so it is deliberately quieter than the step's own hint but
+   still framed as its own block rather than another line of body text. */
+QLabel#wizardStepNotice {
+    background-color: #eef6f4;
+    border-left: 3px solid #0e8f7f;
+    border-radius: 6px;
+    color: #3d4a47;
+    padding: 8px 12px;
+}
+
+QLabel#qualitativeCompletionSummary {
+    background-color: #e7f2ef;
+    border: 1px solid #c3d6d2;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 600;
+}
+
+QLabel#analysisEffortSummary,
+QLabel#workflowSummaryCard {
+    background-color: #e7f2ef;
+    border: 1px solid #c3d6d2;
+    border-radius: 10px;
+    color: #24423d;
+    padding: 12px 14px;
+    font-weight: 600;
+}
+
+QListWidget#pageNavigatorList, QListWidget#questionCardList {
+    border-radius: 10px;
+    padding: 4px;
+}
+
+QListWidget#pageNavigatorList::item, QListWidget#questionCardList::item {
+    padding: 9px 8px;
+    margin: 2px;
+    /* Reserved so selecting a row adds no 1px jitter to every other one. */
+    border: 1px solid transparent;
+    border-radius: 7px;
+}
+
+/* Styling ::item at all makes Qt paint these rows itself, and it then
+   ignores the selection-background-color the shared QListWidget rule
+   above sets - while still drawing the text in the *highlighted-text*
+   colour, which is designed to sit on that missing fill. The selected
+   question/page therefore rendered pale-on-pale: measured 1.79:1 in this
+   theme and 1.66:1 in the other, i.e. invisible, and since a freshly
+   added question is selected immediately it was the new one that
+   vanished. Both states are spelled out here rather than inherited. */
+QListWidget#pageNavigatorList::item:selected,
+QListWidget#questionCardList::item:selected {
+    background-color: #dcf1ed;
+    border-color: #0e8f7f;
+    color: #152220;
+}
+
+QListWidget#pageNavigatorList::item:hover,
+QListWidget#questionCardList::item:hover {
+    background-color: #eef7f5;
+}
+
+/* The unread-error count badge on the Errors tab (see MainWindow.
+   _refresh_error_badge_text) uses the app's attention hue. */
+/* The status bar's always-visible unread-errors indicator - History/Log/
+   Errors have no workflow step of their own any more, so this is what
+   keeps an unread failure from passing unnoticed. Reads as a warning,
+   not as a command button. */
+QPushButton#errorsStatusButton {
+    background-color: transparent;
+    border: none;
+    color: #c94f3f;
+    font-weight: 600;
+    padding: 1px 8px;
+}
+
+QPushButton#errorsStatusButton:hover {
+    background-color: #c94f3f;
+    color: #ffffff;
+    border-radius: 8px;
+}
+
+QLabel#errorBadge {
+    background-color: #c94f3f;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 1px 6px;
+}
+
+/* The header *widget* itself, not just its sections: the strip past the
+   last row/column is painted with the widget's own base colour, which
+   without this stayed a hard white on the dark theme. */
+QHeaderView {
+    background-color: #f2f7f6;
+    border: none;
+}
+
+QHeaderView::section {
+    background-color: #e7f2ef;
+    border: none;
+    border-bottom: 1px solid #d6e3e0;
+    border-right: 1px solid #e3ede9;
+    padding: 6px;
+    font-weight: 600;
+}
+
+QTableCornerButton::section {
+    background-color: #e7f2ef;
+    border: none;
+    border-right: 1px solid #e3ede9;
+    border-bottom: 1px solid #d6e3e0;
+}
+
+QTabWidget::pane {
+    border: 1px solid #d6e3e0;
+    background-color: #ffffff;
+}
+
+QTabBar::tab {
+    background-color: #e7f2ef;
+    padding: 6px 14px;
+    border: 1px solid #d6e3e0;
+    border-bottom: none;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+QTabBar::tab:selected {
+    background-color: #ffffff;
+    font-weight: 600;
+}
+
+QScrollBar:vertical {
+    background: transparent;
+    width: 12px;
+}
+
+QScrollBar::handle:vertical {
+    background: #c3d6d2;
+    border-radius: 6px;
+    min-height: 24px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #9db3ad;
+}
+
+QScrollBar:horizontal {
+    background: transparent;
+    height: 12px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #c3d6d2;
+    border-radius: 6px;
+    min-width: 24px;
+}
+
+/* Panel header color coding: reference is a neutral slate, every
+   comparison panel (comparison, comparison_2, comparison_3, ...) takes the
+   accent teal - a dynamic property (not the per-panel objectName, which is
+   unique to each one) so every comparison variant shares this one rule
+   regardless of how many have been added. */
+QLabel[panelRole="reference"] {
+    background-color: #4c5a57;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 5px 9px;
+    border-radius: 6px;
+}
+
+QLabel[panelRole="comparison"] {
+    background-color: #0e8f7f;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 5px 9px;
+    border-radius: 6px;
+}
+
+/* A qualitative evaluation box its author has not named yet: the header
+   shows a "name this box" call to action instead of a title (see
+   ImagePanel.set_name_prompt), and has to look like an empty field
+   waiting to be filled in rather than like the box's real name - the
+   author's label is the only thing an evaluator ever sees of that image.
+   Placed after the panelRole rules above so it wins on equal specificity. */
+QLabel[unnamedBox="true"] {
+    background-color: transparent;
+    color: #5b6b67;
+    font-weight: 500;
+    font-style: italic;
+    border: 1px dashed #0e8f7f;
+}
+
+/* The "-"/"Load Images" header buttons are small, fixed-size icon buttons -
+   the generic QPushButton rule's 14px horizontal padding would otherwise
+   leave no room at all for a single glyph inside a ~22px-wide button. */
+QPushButton#panelCloseButton {
+    padding: 0px;
+    min-width: 22px;
+    max-width: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    font-weight: 700;
+    border-radius: 8px;
+    background-color: #f3b8ae;
+    border-color: #e2897a;
+    color: #5c1c12;
+}
+
+QPushButton#panelCloseButton:hover {
+    background-color: #eda296;
+}
+
+/* Rotate/flip header buttons - same small fixed-size treatment as
+   panelCloseButton above, but neutral (not coral) coloring: reorienting an
+   image isn't destructive the way removing a panel is. */
+QPushButton#panelOrientationButton {
+    padding: 0px;
+    min-width: 22px;
+    max-width: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    border-radius: 8px;
+    background-color: #eef4f3;
+    border-color: #c3d6d2;
+}
+
+QPushButton#panelOrientationButton:hover {
+    background-color: #eaf4f2;
+    border-color: #0e8f7f;
+}
+
+QPushButton#panelAddImagesButton {
+    padding: 3px 8px;
+    font-size: 11px;
+}
+
+/* Fills an empty panel's whole canvas - a dashed drop-zone border by
+   default, turning light coral on hover as an unmistakable "click (or drop
+   a file) here to load images" cue, matching common web file-upload
+   conventions. Reuses panelCloseButton's own coral tones for the hover
+   state, rather than inventing a new color, for consistency. */
+QPushButton#panelEmptyStatePrompt {
+    background-color: transparent;
+    border: 2px dashed #c3d6d2;
+    border-radius: 14px;
+    color: #5f716d;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+QPushButton#panelEmptyStatePrompt:hover {
+    background-color: #f3b8ae;
+    border-color: #e2897a;
+    color: #5c1c12;
+}
+
+/* The "+ Add Comparison" button: a normal button in its own control strip
+   above the image grid (see DualImageView.__init__) - never a floating
+   overlay (which used to cover whatever panel was underneath it) and
+   never a grid cell of its own (which wasted a whole section's worth of
+   space whenever the panel count didn't fill a perfect rectangle). */
+QPushButton#addComparisonPanelButton {
+    background-color: #dcf1ed;
+    border: 1px solid #0e8f7f;
+    border-radius: 10px;
+    padding: 5px 12px;
+    font-weight: 600;
+    color: #0b7568;
+}
+
+QPushButton#addComparisonPanelButton:hover {
+    background-color: #c6e9e2;
+    border-color: #0b7568;
+    color: #095e53;
+}
+
+/* The startup launcher's two big mode-choice buttons - taller and
+   left-aligned (icon + label) rather than the generic centered
+   QPushButton, so they read as cards to pick between, not ordinary
+   dialog buttons. */
+QPushButton#launcherModeCard {
+    text-align: left;
+    padding: 13px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 8px;
+    background-color: #ffffff;
+    border-color: #d6e3e0;
+}
+
+QPushButton#launcherModeCard:hover {
+    background-color: #dcf1ed;
+    border-color: #0e8f7f;
+}
+
+QLabel#launcherDisclaimer {
+    color: #3d4a47;
+    font-size: 10px;
+}
+
+QLabel#launcherSubtitle {
+    color: #5f716d;
+    font-size: 13px;
+}
+
+QLabel#launcherModeDescription {
+    color: #5f716d;
+    font-size: 11px;
+    padding-left: 16px;
+    padding-right: 8px;
+}
+
+QToolButton#launcherLanguageButton {
+    border: 1px solid #d6e3e0;
+    border-radius: 6px;
+    padding: 5px 8px;
+}
+
+/* Take Evaluation - the launcher's qualitative page always leads with this
+   one, in the same light-green "ready" family as #export, so it reads as
+   the obvious first pick against New/Edit/Aggregate's plain neutral
+   buttons below it (most visitors are here to answer an evaluation, not
+   author one - see LauncherDialog's own module docstring). */
+QPushButton#launcherTakeEvaluationButton {
+    background-color: #6ab98a;
+    border-color: #6ab98a;
+    color: #0c2417;
+    text-align: center;
+    padding: 14px 16px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+QPushButton#launcherTakeEvaluationButton:hover {
+    background-color: #56a476;
+}
+
+/* One row per shortcut in the launcher's "Recent Projects" list (see
+   qicom.session.recent_projects) - flatter and left-aligned, closer to a
+   list row than a standalone button. */
+QPushButton#launcherRecentButton {
+    text-align: left;
+    padding: 6px 10px;
+    font-weight: 500;
+    background-color: #f2f7f6;
+    border-color: #e3ede9;
+}
+
+QPushButton#launcherRecentButton:hover {
+    background-color: #eaf4f2;
+    border-color: #0e8f7f;
+}
+
+/* Explicit rule for consistency with dark.qss - the OS default tooltip
+   background/text pairing is left alone otherwise, but pinning it here
+   guarantees the same readable contrast in both themes. */
+QToolTip {
+    background-color: #ffffff;
+    color: #152220;
+    border: 1px solid #0e8f7f;
+    padding: 4px 6px;
+}

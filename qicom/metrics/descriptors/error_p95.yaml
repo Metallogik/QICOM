@@ -1,0 +1,13 @@
+id: error_p95
+name_full: "Signed Error 95th Percentile"
+name_short: "Error P95"
+category: reference_error
+description: >
+  Ninety-fifth percentile of comparison-minus-reference residuals; a
+  descriptive distribution bound, not an inferential agreement limit.
+value_range: "(-inf, +inf), in calibrated intensity units when available"
+better_direction: target
+target_value: 0.0
+parameters: {}
+native_3d: true
+effort: low

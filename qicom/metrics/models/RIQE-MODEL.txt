@@ -1,0 +1,38 @@
+RIQE model riqe-v1.0 (qicom/metrics/models/riqe-v1.0.npz)
+Source: https://github.com/Metallogik/RIQE, release v1.0, doi:10.5281/zenodo.23055559
+SHA-256: b1a4ffdf8288c7c6667fd3b0ca674756c69e5f1c85e9b5a53d596bf19b32f595
+Redistributed unmodified inside QICOM.
+
+The RIQE model (mean vector, covariance, corpus manifests, hyperparameters)
+and the experimental results are released under
+
+    Creative Commons Attribution 4.0 International (CC BY 4.0)
+    https://creativecommons.org/licenses/by/4.0/
+
+Copyright (c) 2026 Metallogik
+
+Commercial use and derivative works are permitted, with attribution.
+
+INHERITED ATTRIBUTIONS, TO BE REPRODUCED IN EVERY USE OF THE MODEL
+
+The model is fitted on public data from The Cancer Imaging Archive, also
+distributed under CC BY 4.0. Anyone using the model must cite:
+
+  McCollough, C., Chen, B., Holmes III, D., Duan, X., Yu, Z., Yu, L.,
+  Leng, S., Fletcher, J. (2020). Low Dose CT Image and Projection Data
+  (LDCT-and-Projection-data) (Version 7) [dataset]. The Cancer Imaging
+  Archive. https://doi.org/10.7937/9npb-2637
+
+  Clark, K., Vendt, B., Smith, K., et al. (2013). The Cancer Imaging Archive
+  (TCIA): Maintaining and Operating a Public Information Repository.
+  Journal of Digital Imaging, 26(6), 1045-1057.
+
+and acknowledge NIBIB grants EB017095 and EB017185
+(PI: Cynthia McCollough).
+
+The algorithm is implemented from the following paper, which must be cited
+as the source of the algorithm (no third-party code is incorporated):
+
+  Mittal, A., Soundararajan, R., Bovik, A. C. (2013). Making a "Completely
+  Blind" Image Quality Analyzer. IEEE Signal Processing Letters, 20(3),
+  209-212.

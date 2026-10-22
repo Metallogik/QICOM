@@ -1,0 +1,25 @@
+id: lpips
+name_full: "Learned Perceptual Image Patch Similarity"
+name_short: "LPIPS"
+category: reference_structural
+description: >
+  Perceptual distance between the reference and comparison images, computed
+  from the difference between deep features extracted by a pretrained
+  neural network (AlexNet backbone by default). Correlates better with
+  human perceptual judgments than pixel-wise metrics. Grayscale images are
+  automatically replicated to 3 channels before being fed to the network
+  (which expects RGB input). Computed slice-by-slice on 3D volumes (no
+  native 3D implementation available). Downloads pretrained network
+  weights on first use.
+value_range: "[0, +inf), typically [0, 1]"
+better_direction: lower
+target_value: 0.0
+parameters:
+  data_range:
+    required: true
+    description: >
+      The data range of the input images (max possible value minus min
+      possible value), used to normalize pixel values to [0, 1] before
+      feeding the network. Must always be provided explicitly.
+native_3d: false
+effort: high

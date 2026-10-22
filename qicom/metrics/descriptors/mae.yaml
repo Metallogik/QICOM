@@ -1,0 +1,14 @@
+id: mae
+name_full: "Mean Absolute Error"
+name_short: "MAE"
+category: reference_error
+description: >
+  Average of the absolute pixel-wise (or voxel-wise) differences between the
+  reference and the comparison image. Less sensitive to large outlier errors
+  than MSE/RMSE, since differences are not squared.
+value_range: "[0, +inf)"
+better_direction: lower
+target_value: 0.0
+parameters: {}
+native_3d: true
+effort: low

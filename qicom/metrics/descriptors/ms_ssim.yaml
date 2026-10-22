@@ -1,0 +1,21 @@
+id: ms_ssim
+name_full: "Multi-Scale Structural Similarity Index"
+name_short: "MS-SSIM"
+category: reference_structural
+description: >
+  Extension of SSIM that compares structural similarity across multiple
+  resolutions (scales) via successive downsampling, more robust to
+  viewing-distance/resolution effects than single-scale SSIM. Computed
+  slice-by-slice on 3D volumes (no native 3D implementation available).
+  Requires images of at least 161x161 pixels (5-level pyramid).
+value_range: "[0, 1]"
+better_direction: higher
+target_value: 1.0
+parameters:
+  data_range:
+    required: true
+    description: >
+      The data range of the input images (max possible value minus min
+      possible value). Must always be provided explicitly.
+native_3d: false
+effort: medium

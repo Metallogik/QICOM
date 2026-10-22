@@ -1,0 +1,22 @@
+id: ssim
+name_full: "Structural Similarity Index"
+name_short: "SSIM"
+category: reference_structural
+description: >
+  Perceptual similarity between the reference and comparison images, based
+  on local luminance, contrast, and structure comparisons within a sliding
+  window. Has a native ND formulation (scikit-image), so it is computed
+  directly on 2D images or whole 3D volumes using 3D windows. With the
+  default 7-pixel window, every axis of the input (including the slice
+  axis of a 3D volume) must be at least 7 elements.
+value_range: "[-1, 1] in theory, typically [0, 1] for real images"
+better_direction: higher
+target_value: 1.0
+parameters:
+  data_range:
+    required: true
+    description: >
+      The data range of the input images (max possible value minus min
+      possible value). Must always be provided explicitly.
+native_3d: true
+effort: low

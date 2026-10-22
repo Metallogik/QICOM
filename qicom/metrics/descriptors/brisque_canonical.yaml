@@ -1,0 +1,21 @@
+id: brisque_canonical
+name_full: "Blind/Referenceless Image Spatial Quality Evaluator (canonical PIQ)"
+name_short: "BRISQUE"
+category: no_reference
+description: >
+  Absolute BRISQUE score using PIQ 0.8.0 and its verified pretrained SVM.
+  Lower is better on the natural-image model's scale; this is not a clinical quality
+  threshold. Scores are not clipped to 0–100. Each image is scored independently,
+  on its full extent: ROI and background exclusion do not apply. Normalization preserves
+  [0, data_range] inputs, shifts a negative minimum to zero, and expands the range only
+  if necessary; the transform is recorded and fixed across a volume's slices.
+  Requires an explicit model download before analysis. Separate from NSS feature distance.
+value_range: "unitless calibrated SVM score; typically 0–100, not bounded"
+better_direction: lower
+target_value: null
+parameters:
+  data_range:
+    required: true
+    description: "Declared intensity range; the recorded single-image transform maps to [0, 1]."
+native_3d: false
+effort: medium

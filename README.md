@@ -2,7 +2,7 @@
 
 Desktop application with three separate workflows for medical images: quantitative analysis,
 qualitative evaluation and pairwise 2D/3D radiomics on DICOM/NIfTI; alongside them, a collection
-of utility tools (segmentation, masks, conversion, DICOM headers, anonymization).
+of utility tools (segmentation, masks, conversion, DICOM headers, anonymisation).
 
 > **For research and quality-control use only.** QICOM is not a medical device and is not
 > intended for clinical diagnosis or for any decision concerning a patient's care.
@@ -59,7 +59,7 @@ pip install -e ".[learned]"      # + learned metrics (LPIPS, DISTS, piq) — hea
 that PyInstaller is about to freeze: full versions (including local tags such as `+cpu`) and,
 for VCS dependencies such as PyRadiomics, repository and commit. It does not run a second
 resolution that could use an index different from the build's. The file is build evidence,
-**not** a hash-pinned artifact lock, and must not be used with `--require-hashes`; the
+**not** a hash-pinned artefact lock, and must not be used with `--require-hashes`; the
 integrity of the published files is covered separately by `SHA256SUMS`. The workflow
 generates it on each platform and publishes it alongside the bundle.
 
@@ -82,7 +82,7 @@ metrics that use no weights (MS-SSIM, FSIM, GMSD, VIF, HaarPSI) work straight aw
 DISTS stay unavailable until the user prepares the weights, from the download button in the
 "Select Metrics" window or with `python packaging/prepare_learned_weights.py`. On first launch,
 with an empty cache, LPIPS and DISTS are therefore omitted with a stated cause and without any
-network access: the packaging workflow verifies exactly this behavior on the frozen bundle
+network access: the packaging workflow verifies exactly this behaviour on the frozen bundle
 (`--smoke-test`, field `learned_policy`).
 
 As an alternative to the `extras` in `pyproject.toml`, equivalent files are available in
@@ -119,7 +119,7 @@ from the original paper. The official models are downloaded only on request from
 Metrics, with size and SHA-256 verified. Without them the outcome is `unavailable-backend`: the
 analysis does not access the network. Two absolute scores are reported, one per image, with
 lower values better. These metrics evaluate the whole image even when background exclusion is
-active. Definitions, normalization and checks are in
+active. Definitions, normalisation and checks are in
 [NO_REFERENCE_METHODOLOGY.md](NO_REFERENCE_METHODOLOGY.md); the current inventory is
 [metric_inventory.csv](metric_inventory.csv), distinct from the frozen inventory of the paper
 that describes QICOM.
@@ -170,7 +170,7 @@ In the GUI the flow is guided in three steps and is semi-automatic plus manual: 
 single **green circle** (`DualImageView.add_air_roi`) and place it on a background-only area —
 it is the only place the air level is read from, never a measurement ROI drawn earlier (a noise
 ROI sits in the air on purpose, a signal ROI never does); `Detect air` turns that sample into a
-threshold and immediately colors on the images everything that would be excluded, with
+threshold and immediately colours on the images everything that would be excluded, with
 adjustable tolerance and exact threshold; a paint-style **eraser** puts back into the
 measurement whatever the threshold took by mistake (tissue as dark as air), with
 `Undo corrections` to return to the detected result.
@@ -213,7 +213,7 @@ Each computation also produces:
   The historical CIs are kept for compatibility but are described as optimistic, since slices
   and ROIs of the same case are not independent units.
 
-The bias map uses `comparison - reference`, a blue-white-red LUT centered on zero, a symmetric
+The bias map uses `comparison - reference`, a blue-white-red LUT centred on zero, a symmetric
 range and tissue/ROI masks; the PNG export saves the scale's JSON alongside. The NPS uses only
 dedicated `noise_texture_roi` ROIs, declared detrending and windowing, window energy correction,
 PixelSpacing and frequencies in mm⁻¹, multiple ROIs/slices, radial curve, anisotropy, integrated
@@ -291,7 +291,7 @@ not reproduced. The file is readable Markdown: open it and read it before sendin
 A **Citation** section asks the model to make any article, report or presentation written from
 the file cite QICOM with the reference in **Help ▸ About QICOM ▸ Citation**; when RIQE is among
 the results, also the study (arXiv:2610.00384), the model release (doi:10.5281/zenodo.23055559)
-and the attributions its CC BY 4.0 license requires. The references stay in English in every
+and the attributions its CC BY 4.0 licence requires. The references stay in English in every
 language.
 
 The file stays small enough to paste into a chat: at most 200 result rows and an explicit byte
@@ -307,13 +307,13 @@ previous file intact, never a half-written report that looks complete.
   transmitted, there is no telemetry and no analysis opens network connections. The explicit
   downloads are the optional learned-metric checkpoints and the IBSI verification resources;
   both use pinned checksums.
-- Portable projects and evaluation packages anonymize DICOM by default, remove
+- Portable projects and evaluation packages anonymise DICOM by default, remove
   private/identifying tags and regenerate UIDs consistently.
 - Detection is fail-closed: a DICOM dataset saved without the PS3.10 preamble (common in PACS
-  exports and older archives) is anonymized too, and a file recognizable as DICOM but not
+  exports and older archives) is anonymised too, and a file recognisable as DICOM but not
   parseable blocks the export instead of being copied as is. In quantitative ZIPs non-DICOM
   files are copied unchanged and the original names are kept: these ZIPs do not guarantee the
-  removal of identifying data from NIfTI headers or file names. The NIfTI sanitization of
+  removal of identifying data from NIfTI headers or file names. The NIfTI sanitisation of
   qualitative packages does not currently extend to quantitative ZIPs.
 - The result is verified, not taken on trust: no value with which the original file identified a
   person can survive anywhere in the copy (nested sequences included). A file that fails this
@@ -325,7 +325,7 @@ previous file intact, never a half-written report that looks complete.
   verified for annotations burned into the pixels. QICOM performs no OCR and does not remove text
   embedded in the pixels.
 - If the export is blocked by these checks, QICOM shows the reason and asks whether to export
-  anyway. Only with explicit consent are the rejected files included, anonymized as far as
+  anyway. Only with explicit consent are the rejected files included, anonymised as far as
   possible and marked `PatientIdentityRemoved=NO` (not verified); the list stays in the error log.
 - Errors can be selected in the Errors window and saved to a text report (version, platform,
   recent log with traceback) to attach to a bug report. QICOM sends nothing.
@@ -333,7 +333,7 @@ previous file intact, never a half-written report that looks complete.
   and compression ratio); manifests and answers are bounded and validated before use.
 - Sensitive local files and logs use owner-only permissions on POSIX systems. Logs redact
   sensitive fields and the user's home path.
-- Text exported to Excel is neutralized when it starts like a formula; sheet names are validated
+- Text exported to Excel is neutralised when it starts like a formula; sheet names are validated
   and made unique.
 - The Markdown AI assistant export is built on a whitelist, not a blacklist: it writes only
   explicitly allowed fields (values, metric descriptors, configuration not derived from the
@@ -377,12 +377,12 @@ step at a time and keeps the viewer free of panels that do not apply.
   both image loading and import of a saved project; `Results` and `Export` hide the canvas
   entirely (numbers, charts and the written summary are the only useful content there), while
   `Heatmaps` does the opposite: full-size images and only the table of mappable metrics. Heatmaps
-  are colored with standard medical-imaging LUTs (the perceptually uniform Inferno, Magma and
-  Viridis, Hot Iron from the DICOM palette, plus grayscale). The direction of the scale follows
+  are coloured with standard medical-imaging LUTs (the perceptually uniform Inferno, Magma and
+  Viridis, Hot Iron from the DICOM palette, plus greyscale). The direction of the scale follows
   the metric: for difference maps (MSE/MAE/NMSE) zero is transparent, while for SSIM — which is
   1.0 where the images match — the LUT is applied in reverse, so it is still the degraded areas
   that stand out (legend included). `Analyze` also hosts background air exclusion (see above).
-  `Export` lists in writing what was analyzed, what was generated and which files will be
+  `Export` lists in writing what was analysed, what was generated and which files will be
   written, with two exclusion options (heatmap images and key images with ROIs, both on by
   default). History, log and errors are no longer a step: they live in `View → Panels`, and
   unread errors stay flagged by an indicator in the status bar.
@@ -411,7 +411,7 @@ Main components:
   `SessionStorage`/`AnalysisHistory` (save/reopen past analyses).
 - **`commands.py`**: concrete subclasses of `qicom.session.commands.Command` for every undoable
   action (ROI, window/level, annotations).
-- **`widgets/dual_image_view.py`**: two synchronized `pg.ImageView` panels (slice;
+- **`widgets/dual_image_view.py`**: two synchronised `pg.ImageView` panels (slice;
   circle/rectangle/polygon ROIs duplicated on both panels; text annotations).
 - **`widgets/background_panel.py`**: air exclusion in the `Analyze` step, in three steps (green
   sampling circle → `Detect air` → eraser for manual corrections), with adjustable
@@ -421,8 +421,8 @@ Main components:
   air included), but it should be a conscious one. There is **only one** air sample — once the
   circle is placed, the button that creates it is disabled.
 - **`widgets/evaluation_setup_panel.py`**: the first step of the qualitative composer — answer
-  anonymity, general instructions, randomization and blinding, hidden repeats, statistics and
-  timing. Nothing here concerns a single page or question: it is the behavior of the whole
+  anonymity, general instructions, randomisation and blinding, hidden repeats, statistics and
+  timing. Nothing here concerns a single page or question: it is the behaviour of the whole
   evaluation, decided before anything exists to apply it to.
 - **`widgets/page_overview_panel.py`**: the overview of the qualitative form composer — one row
   per page with the number of images and questions, and the actions to open, duplicate, rename
@@ -437,14 +437,14 @@ Main components:
   to the owning window without knowing anything about the controller or the scientific data. It
   is a strip of browser-style horizontal tabs, hand-drawn (`QPainterPath`: curved shoulders
   cannot be expressed in QSS) and hosted in a toolbar at the top of the window: the active tab is
-  filled with the color of the surface beneath it and merges into it, while the others stay
+  filled with the colour of the surface beneath it and merges into it, while the others stay
   detached on the recessed background. Only one step is visible at a time — they are the steps
   of a single flow, not documents open side by side.
 - **`i18n/`**: runtime translation through JSON dictionaries
   (`locales/{en,it,fr,de,es,pt,zh-Hans,ja}.json`), not Qt `.ts`/`.qm` files (no build step);
   the language switches live, without a restart.
-- **`theming.py`**: light/gray/dark QSS (`themes/{light,gray,dark}.qss`) applied both to the Qt
-  chrome and (explicitly, via `pg.setConfigOption` + a refresh of the canvases already built) to
+- **`theming.py`**: light, grey and dark QSS themes (`themes/{light,gray,dark}.qss`) applied
+  both to the Qt chrome and (explicitly, via `pg.setConfigOption` + a refresh of the canvases already built) to
   the pyqtgraph panels, which QSS alone does not reach.
 
 Before every computation QICOM compares the physical metadata of the loaded images and reports
@@ -497,7 +497,7 @@ statistical unit and the limits of the bootstrap intervals.
 
 ### Qualitative design v4
 
-The first **Setup** step configures general instructions, randomization of
+The first **Setup** step configures general instructions, randomisation of
 cases/questions/panels, counterbalancing, seed, A/B/C labels, calibration pages, hidden repeats
 and optional timing collection. These choices apply to the whole evaluation and change what each
 evaluator sees, so they are made before building the pages, not while writing the questions.
@@ -521,7 +521,7 @@ The primary agreement measure is Krippendorff's ordinal alpha; Gwet's AC2 is dec
 Comparisons first take the median over slices in each evaluator×case cell, apply an independent
 bootstrap over evaluator and case clusters and also report Wilcoxon with Holm correction.
 Repeats, descriptive QC, completeness and precision have separate sheets; no flag excludes or
-re-centers an evaluator automatically. Details in
+re-centres an evaluator automatically. Details in
 [QUALITATIVE_METHODOLOGY.md](QUALITATIVE_METHODOLOGY.md).
 
 ## Pairwise radiomics
@@ -533,16 +533,16 @@ necessary physical geometry.
 
 The dedicated workflow includes:
 
-- resampling centered in physical coordinates to configurable isotropic voxels, with B-spline by
-  default for the image and nearest-neighbor for the mask;
-- IBSI discretization by bin count or fixed bin width. In the latter case, during extraction,
+- resampling centred in physical coordinates to configurable isotropic voxels, with B-spline by
+  default for the image and nearest-neighbour for the mask;
+- IBSI discretisation by bin count or fixed bin width. In the latter case, during extraction,
   QICOM replaces PyRadiomics's default anchoring at zero with the anchoring at the ROI minimum
   required by the IBSI profile;
-- explicit normalization, clipping and resegmentation, included in the profile hash; the default
+- explicit normalisation, clipping and resegmentation, included in the profile hash; the default
   remains `none`, with no silent changes to the values;
-- synchronized manual ROIs/VOIs, thresholding and region growing without deep learning;
+- synchronised manual ROIs/VOIs, thresholding and region growing without deep learning;
 - multi-label NIfTI import with strict size/spacing/origin/direction checks, explicit
-  confirmation before nearest-neighbor resampling, and original/preprocessed export with a
+  confirmation before nearest-neighbour resampling, and original/preprocessed export with a
   sidecar;
 - 2D/3D shape, first-order, GLCM, GLRLM, GLSZM, GLDM and NGTDM on Original, Wavelet and/or LoG;
 - absolute, classic percentage and symmetric percentage delta for every feature; the symmetric
@@ -564,7 +564,7 @@ On the Images page, **Verify QICOM with an IBSI phantom** opens the dedicated fo
 manifest shared with CI downloads the official image, mask and workbook only after consent,
 checks them against their pinned SHA-256 and reuses them offline. The current verification
 compares 104 features of the IBSI-1 digital phantom and is limited to the declared formulas, 3D
-aggregation, NIfTI loading/geometry, labels, discretization and extraction: it is not a
+aggregation, NIfTI loading/geometry, labels, discretisation and extraction: it is not a
 full-pipeline DICOM verification and it is not a certification. PASS requires every mandatory
 feature to be comparable and within tolerance; a missing feature produces INCOMPLETE. An editable
 copy becomes `derived-experiment` and loses the reference verdict.
@@ -583,15 +583,15 @@ this iteration.
 
 ## Utility tools
 
-From the launcher, **Utility Tools** opens a window with the catalog on the left and the tool on
-the right; the same catalog is in the `Tools` menu of every working window. The tools read their
+From the launcher, **Utility Tools** opens a window with the catalogue on the left and the tool on
+the right; the same catalogue is in the `Tools` menu of every working window. The tools read their
 sources without modifying them: every result is a copy, and a set of files appears in the (new or
 empty) destination folder all at once or not at all. A NIfTI written by a tool is positioned from
 the source geometry (`qicom/io/geometry.py`) and copies no header field. Every processing and
 saving operation shows its progress percentage in a window of its own; in the image area the
 wheel scrolls through the slices (Ctrl+wheel zooms), dragging with the left button adjusts window
 and level, the middle button pans the image and the right button zooms it, and a click, or a
-dropped file, loads the image; a colored button always shows the next step.
+dropped file, loads the image; a coloured button always shows the next step.
 
 | Tool | What it does |
 | --- | --- |
@@ -678,7 +678,7 @@ CI is configured to run the suite on **Linux, Python 3.11 and 3.12**: the base j
 and radiomics but omits learned; the full job also includes torch and runs on 3.12.
 Windows and macOS have native builds with smoke tests, not the same full suite.
 CI also runs every Monday to catch new vulnerabilities without waiting for a commit. The audit
-runs before the tests, and its JSON report is kept as an artifact for seven days even when
+runs before the tests, and its JSON report is kept as an artefact for seven days even when
 vulnerabilities are found. The individual gates can still be run separately:
 
 ```bash
@@ -739,15 +739,15 @@ Notes:
   dependencies remain build tools.
 - The `.github/workflows/package.yml` workflow configures native builds for Linux x64, Windows
   x64 and macOS 14 arm64 and runs `--smoke-test` on the frozen app before uploading the
-  artifacts. The platforms actually produced depend on the selection and outcome of each run;
+  artefacts. The platforms actually produced depend on the selection and outcome of each run;
   the [verification matrix](packaging/DISTRIBUTION.md#build-and-verification-matrix) details
   their coverage. The Windows executable embeds product name, description, author, copyright and
   version; every bundle contains `SHA256SUMS` and every archive is published with a `.sha256`
-  sidecar, useful for verifying and authorizing exactly the build received. Checksums do not,
-  however, authenticate the publisher. The artifacts remain unsigned: Windows Authenticode
-  signing and Apple signing/notarization require the distributor's certificates and credentials.
+  sidecar, useful for verifying and authorising exactly the build received. Checksums do not,
+  however, authenticate the publisher. The artefacts remain unsigned: Windows Authenticode
+  signing and Apple signing/notarisation require the distributor's certificates and credentials.
 
-## Intended use, attribution and license
+## Intended use, attribution and licence
 
 ### Intended use
 
@@ -783,10 +783,10 @@ the **Legal & DICOM** tab of the About window:
 > QICOM reads DICOM files; it implements no DICOM network or storage service, claims no
 > conformance to the DICOM Standard, and publishes no DICOM Conformance Statement.
 
-### License
+### Licence
 
 Apache-2.0: see [LICENSE](LICENSE) and [NOTICE](NOTICE). Third-party components distributed with
-the application remain subject to their respective licenses. The build generates the inventory
+the application remain subject to their respective licences. The build generates the inventory
 for the actual profile and reproduces in its own `THIRD_PARTY_LICENSES.txt` the texts declared by
 the installed distributions; [packaging/THIRD_PARTY_LICENSES.txt](packaging/THIRD_PARTY_LICENSES.txt)
 remains the repository's reference copy.
@@ -806,7 +806,7 @@ is archived.
 
 QICOM follows [Semantic Versioning](https://semver.org/). [CHANGELOG.md](CHANGELOG.md) gives a
 section of its own — *Changes affecting numerical results* — to every change for which **the same
-inputs produce different numbers**: formulas, preprocessing, radiomics discretization, masks,
+inputs produce different numbers**: formulas, preprocessing, radiomics discretisation, masks,
 resampling or defaults that enter a computation. These never end up under a generic "bug fixes".
 Deprecated Python APIs, their replacements and the minimum removal window are recorded in
 [DEPRECATIONS.md](DEPRECATIONS.md); no public 1.x API is removed before 2.0.
@@ -816,13 +816,13 @@ of commits can lie between two builds that carry the same number. That is why th
 reproducibility receipt also records `build_revision` — the exact commit — and `source_dirty`,
 and the bundle can state them without a `.git` directory at hand. The full strategy (one
 version, four files, who enforces it, and why `main` carries a `.dev` version) is in
-[VERSIONING.md](VERSIONING.md). The distribution requirements, signing and notarization included,
+[VERSIONING.md](VERSIONING.md). The distribution requirements, signing and notarisation included,
 are in [packaging/DISTRIBUTION.md](packaging/DISTRIBUTION.md).
 
 ### In-app information
 
 **Help ▸ About QICOM** — present in all three main windows and reachable from the launcher's ⓘ
-button — gathers version and build, author and location, license, repository and support contact,
+button — gathers version and build, author and location, licence, repository and support contact,
 intended use (what QICOM does and does not do), DICOM attribution, privacy statement and a
 copyable citation. All of this comes from `qicom/about.py`, the single source shared with
 `pyproject.toml`, `CITATION.cff` and this README: their consistency is verified by
@@ -833,7 +833,7 @@ copyable citation. All of this comes from `qicom/about.py`, the single source sh
 The default backend remains PyRadiomics. The optional MIRP 2.7.0 backend adds local intensity,
 intensity histogram, intensity-volume histogram, GLDZM and the 2D/2.5D/3D aggregations. It is
 selected in the radiomics configuration panel and supports Original images. Results record
-backend, version and configuration; existing PyRadiomics profiles keep their serialization and
+backend, version and configuration; existing PyRadiomics profiles keep their serialisation and
 their hash.
 
 The IBSI verification window lets you select the original PyRadiomics subset (104 rows) or the

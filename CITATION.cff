@@ -1,5 +1,8 @@
 cff-version: 1.2.0
-message: "If you use QICOM in work that is published, please cite it as below."
+message: >-
+  If you use QICOM in work that is published, please cite the article given
+  under preferred-citation, and the software below to record the exact version
+  used.
 title: "QICOM - Quality Image COMparator"
 abstract: >-
   Desktop application for the comparison and quality assessment of medical
@@ -28,6 +31,27 @@ keywords:
   - radiomics
   - IBSI
   - quality control
+# The article describing QICOM. GitHub's "Cite this repository" offers this
+# reference first; the fields above stay the citation of the software itself.
+preferred-citation:
+  type: article
+  title: >-
+    QICOM: Open-Source Software for Reproducible Image Quality Evaluation,
+    Blinded Assessment, and Radiomic Comparison
+  authors:
+    - family-names: Mattiussi
+      given-names: Fabio
+    - family-names: Ghotra
+      given-names: Switinder
+  year: 2026
+  month: 10
+  journal: arXiv
+  doi: "10.48550/arXiv.2610.31218"
+  url: "https://arxiv.org/abs/2610.31218"
+  identifiers:
+    - type: other
+      value: "arXiv:2610.31218"
+      description: "arXiv identifier (primary category eess.IV)"
 # Add the archive DOI here once the first release is deposited (e.g. on
 # Zenodo), and mirror it in qicom/about.py so the About dialog and the
 # citation stay identical:

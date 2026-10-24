@@ -97,7 +97,7 @@ jobs:
       - name: Verify against the official IBSI reference
         run: pytest -q tests/radiomics/test_ibsi_validation.py
       - name: Publish the IBSI verification receipt
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ibsi-release-verification
           path: build/ibsi-release
@@ -303,7 +303,7 @@ jobs:
             --output "${{ matrix.artifact }}.sbom.cdx.json"
       - name: Publish packaging dependency audit
         if: ${{ always() && hashFiles('build/audit/packaging.json') != '' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: audit-${{ matrix.artifact }}
           path: build/audit/packaging.json
@@ -570,7 +570,7 @@ jobs:
           "${{ matrix.artifact }}${{ matrix.extension }}"
           --output "${{ matrix.artifact }}${{ matrix.extension }}.sha256"
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}.*

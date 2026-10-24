@@ -27,6 +27,11 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Added
 
+- **Citazione dell'articolo QICOM** (arXiv:2610.31218, doi:10.48550/arXiv.2610.31218): badge e
+  frase di citazione in apertura, a metà e in fondo al README, con la voce BibTeX nella nuova
+  sezione *Citing the QICOM article*; `CITATION.cff` riporta l'articolo come `preferred-citation`,
+  così il pulsante *Cite this repository* di GitHub propone l'articolo. La citazione del software
+  (versione) resta invariata accanto a quella dell'articolo.
 - **Strumenti di utilità**, quarta sezione del launcher accanto ai tre flussi e sottomenu del menu
   Strumenti di ogni finestra di lavoro: un catalogo di strumenti autonomi in una finestra dedicata
   (catalogo a sinistra, strumento a destra), che torna al launcher alla chiusura. Gli strumenti

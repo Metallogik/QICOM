@@ -1,5 +1,21 @@
 # QICOM — Quality Image Comparator
 
+<p align="center">
+  <a href="https://arxiv.org/abs/2610.31218"><img alt="arXiv:2610.31218" src="https://img.shields.io/badge/arXiv-2610.31218-b31b1b.svg"></a>
+  <a href="https://doi.org/10.48550/arXiv.2610.31218"><img alt="DOI: 10.48550/arXiv.2610.31218" src="https://img.shields.io/badge/DOI-10.48550%2FarXiv.2610.31218-blue.svg"></a>
+  <a href="https://arxiv.org/list/eess.IV/recent"><img alt="arXiv category: eess.IV" src="https://img.shields.io/badge/eess.IV-Image%20and%20Video%20Processing-b31b1b.svg"></a>
+  <a href="LICENSE"><img alt="Licence: Apache-2.0" src="https://img.shields.io/badge/licence-Apache--2.0-green.svg"></a>
+  <a href="#citing-the-qicom-article"><img alt="Cite the QICOM article" src="https://img.shields.io/badge/cite-QICOM%20article-orange.svg"></a>
+</p>
+
+<p align="center">
+  <b>If you use QICOM in published work, please cite the article:</b><br>
+  Mattiussi, F., &amp; Ghotra, S. (2026). <i>QICOM: Open-Source Software for Reproducible Image
+  Quality Evaluation, Blinded Assessment, and Radiomic Comparison</i>. arXiv:2610.31218 [eess.IV].
+  <a href="https://doi.org/10.48550/arXiv.2610.31218">https://doi.org/10.48550/arXiv.2610.31218</a><br>
+  <a href="#citing-the-qicom-article">BibTeX</a>
+</p>
+
 Desktop application with three separate workflows for medical images: quantitative analysis,
 qualitative evaluation and pairwise 2D/3D radiomics on DICOM/NIfTI; alongside them, a collection
 of utility tools (segmentation, masks, conversion, DICOM headers, anonymisation).
@@ -458,6 +474,12 @@ Asynchronous loads and computations carry a generation identifier: a stale resul
 overwrite images or results requested more recently. On closing, the "Save" option persists the
 editable portable project, not just a snapshot of the results.
 
+> **Citing QICOM.** If QICOM contributes to published work, please cite the article:
+> Mattiussi, F., & Ghotra, S. (2026). *QICOM: Open-Source Software for Reproducible Image Quality
+> Evaluation, Blinded Assessment, and Radiomic Comparison*. arXiv:2610.31218 [eess.IV].
+> [https://doi.org/10.48550/arXiv.2610.31218](https://doi.org/10.48550/arXiv.2610.31218) —
+> BibTeX in [Citing the QICOM article](#citing-the-qicom-article).
+
 ## Qualitative evaluations and statistics
 
 In the first **Setup** step, the author can mark the evaluation as **anonymous-response**:
@@ -793,6 +815,10 @@ remains the repository's reference copy.
 
 ### How to cite QICOM
 
+For published work, cite the article first — see
+[Citing the QICOM article](#citing-the-qicom-article). The software citation below records the
+exact version used:
+
 ```
 Mattiussi, F. (2026). QICOM — Quality Image COMparator (Version 1.1.0.dev0)
 [Computer software]. https://github.com/Metallogik/QICOM
@@ -851,3 +877,29 @@ MIRP is distributed separately under EUPL-1.2. Required citation:
 [Zwanenburg and Löck, MIRP (JOSS, 2024)](https://doi.org/10.21105/joss.06413).
 The CT reference data are CC BY-NC 3.0; URLs, hashes and attributions are in the manifests,
 while the image files are not included in the QICOM distribution.
+
+## Citing the QICOM article
+
+If you use QICOM in published work, please cite the article:
+
+> Mattiussi, F., & Ghotra, S. (2026). *QICOM: Open-Source Software for Reproducible Image Quality
+> Evaluation, Blinded Assessment, and Radiomic Comparison*. arXiv:2610.31218 [eess.IV].
+> [https://doi.org/10.48550/arXiv.2610.31218](https://doi.org/10.48550/arXiv.2610.31218)
+
+```bibtex
+@misc{mattiussi2026qicom,
+  author        = {Mattiussi, Fabio and Ghotra, Switinder},
+  title         = {{QICOM}: Open-Source Software for Reproducible Image Quality Evaluation,
+                   Blinded Assessment, and Radiomic Comparison},
+  year          = {2026},
+  eprint        = {2610.31218},
+  archivePrefix = {arXiv},
+  primaryClass  = {eess.IV},
+  doi           = {10.48550/arXiv.2610.31218},
+  url           = {https://arxiv.org/abs/2610.31218}
+}
+```
+
+To record the exact version that produced your results, cite the software as well
+([How to cite QICOM](#how-to-cite-qicom)). [CITATION.cff](CITATION.cff) lists the article as the
+preferred citation, so GitHub's **Cite this repository** button returns the same reference.

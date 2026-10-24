@@ -1,4 +1,4 @@
-# QICOM — Quality Image Comparator
+# QICOM - Quality Image Comparator
 
 <p align="center">
   <a href="https://arxiv.org/abs/2610.31218"><img alt="arXiv:2610.31218" src="https://img.shields.io/badge/arXiv-2610.31218-b31b1b.svg"></a>

@@ -534,12 +534,15 @@ empty between that version and yours, re-run the analysis before comparing.
   `--upgrade-package` per spostare solo i pin interessati da un avviso. PNG e TIFF scritti da
   `Image.fromarray` sono byte per byte identici fra Pillow 12.3 e 13.0 nei modi L, I;16, RGB e
   RGBA.
-- **Gate MIRP dei tag**: `pip check` (pip 26.2.2) si fermava con un `ValueError` su itk,
+- **Job MIRP e `pip check`**: `pip check` (pip 26.2.2) si fermava con un `ValueError` su itk,
   dipendenza di MIRP, i cui wheel 5.4.x scrivono `Tag: itk-5.4.7-cp311-abi3-…` invece di
-  `Tag: cp311-abi3-…`, e il job non poteva validare l'ambiente. `packaging/repair_wheel_tags.py`
-  toglie solo quel prefisso, quando è esattamente nome e versione della distribuzione stessa, e
-  gira solo in `ibsi-mirp-gate`, il cui ambiente non finisce in nessun bundle; `pip check` resta
-  completo.
+  `Tag: cp311-abi3-…`, e i job MIRP non potevano validare né auditare l'ambiente.
+  `packaging/repair_wheel_tags.py` toglie solo quel prefisso, quando è esattamente nome e versione
+  della distribuzione stessa, e gira nei due soli job MIRP, prima del controllo: `ibsi-mirp-gate`
+  (tag, `package.yml`) e `ibsi-mirp` (ogni push, `ci.yml`). Nessuno dei due ambienti finisce in un
+  bundle e `pip check` resta completo. Fino a questa correzione lo script compariva solo nel gate
+  dei tag, che gira soltanto su push di un tag `v*`: non era mai stato eseguito in CI, e il job
+  `ibsi-mirp` falliva ancora nell'audit, come prima dell'introduzione dello script.
 - CI: matrice Python 3.11/3.12, Action fissate a commit SHA con aggiornamento
   Dependabot, risorse IBSI in cache sull'hash del manifest, e la seconda
   esecuzione completa della suite sostituita dalla sola collection (che è ciò

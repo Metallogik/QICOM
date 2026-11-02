@@ -238,6 +238,12 @@ jobs:
       # tests/conftest.py imports Qt even for a radiomics-only selection.
       - name: Install QICOM with the MIRP backend
         run: python -m pip install -e ".[gui,radiomics,mirp,dev]"
+      # The same itk WHEEL-tag defect that stops the tag gate's `pip check`
+      # (see packaging/repair_wheel_tags.py) stops this audit before pip-audit
+      # runs. Only the exact name-version prefix is removed; this environment
+      # is never frozen into a bundle.
+      - name: Repair itk's malformed wheel tags
+        run: python packaging/repair_wheel_tags.py
       - name: Audit the MIRP dependency set
         run: python packaging/check_ci.py --phase audit
       - name: Publish dependency audit

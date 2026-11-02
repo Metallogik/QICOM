@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import io
 import json
+import warnings
 import zipfile
 from dataclasses import replace
 from pathlib import Path
@@ -167,6 +168,27 @@ class TestProjectsWrittenBeforeTypedTables:
         assert table["status"].iloc[0] == "NA"
         assert table["value"].iloc[0] == 1.5
         assert np.isnan(table["value"].iloc[1])
+
+    def test_no_missing_value_marker_applies_to_a_text_column(self) -> None:
+        markers = ["NA", "N/A", "null", "NULL", "None", "NaN", "nan", "#N/A", "<NA>", "n/a"]
+        csv = "roi_name,status,value\n" + "".join(f"{marker},ok,{marker}\n" for marker in markers)
+
+        table = read_legacy_table(io.BytesIO(csv.encode()))
+
+        assert table["roi_name"].tolist() == markers
+        # Outside the known text columns, the markers still mean missing.
+        assert table["value"].dtype == np.float64
+        assert table["value"].isna().all()
+
+    def test_floats_are_read_bit_exactly_without_a_deprecated_option(self) -> None:
+        values = np.random.default_rng(7).standard_normal(3000) * 1e3
+        csv = pd.DataFrame({"roi_name": "001", "value": values}).to_csv(index=False)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            table = read_legacy_table(io.BytesIO(csv.encode()))
+
+        assert table["value"].to_numpy().tobytes() == values.tobytes()
 
     def test_a_project_without_typed_tables_is_still_read(self, tmp_path: Path) -> None:
         path = save_radiomics_project(tmp_path / "study.zip", _project())

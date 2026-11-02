@@ -13,7 +13,7 @@ from PySide6.QtGui import QWheelEvent
 from PySide6.QtWidgets import QLabel
 from pytestqt.qtbot import QtBot
 
-from qicom.gui.i18n import translator
+from qicom.gui.i18n import SUPPORTED_LANGUAGES, translator
 from qicom.gui.widgets.charts_panel import (
     ChartsPanel,
     StatTile,
@@ -120,6 +120,24 @@ class TestChartsPanelOverviewView:
 
         assert panel._scroll_area.isHidden()
         assert not panel._empty_label.isHidden()
+
+    @pytest.mark.parametrize("language", SUPPORTED_LANGUAGES)
+    def test_the_empty_text_wraps_instead_of_setting_the_dock_width(
+        self, qtbot: QtBot, language: str
+    ) -> None:
+        """On a runner with only DejaVu Sans, the Portuguese text on one line
+        made the window 529 px wide on a 512 px screen."""
+        previous = translator.language
+        translator.set_language(language)
+        try:
+            panel = ChartsPanel()
+            qtbot.addWidget(panel)
+            label = panel._empty_label
+            one_line = label.fontMetrics().horizontalAdvance(label.text())
+
+            assert panel.minimumSizeHint().width() < one_line
+        finally:
+            translator.set_language(previous)
 
     def test_metrics_with_reference_and_comparison_become_one_chart_each(
         self, qtbot: QtBot

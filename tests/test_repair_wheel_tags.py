@@ -6,6 +6,7 @@ import runpy
 from importlib.metadata import distributions
 from pathlib import Path
 
+import pytest
 import yaml
 from packaging.tags import parse_tag
 
@@ -87,20 +88,33 @@ def test_a_second_run_changes_nothing(tmp_path: Path) -> None:
     assert wheel.read_bytes() == repaired
 
 
-def test_only_the_mirp_gate_repairs_and_before_it_validates() -> None:
-    """The packaging jobs freeze their environment: it must reach PyInstaller untouched."""
-    workflow = yaml.safe_load((REPO_ROOT / ".github" / "workflows" / "package.yml").read_text())
-    runs = {
+def _workflow_runs(name: str) -> dict[str, list[str]]:
+    workflow = yaml.safe_load((REPO_ROOT / ".github" / "workflows" / name).read_text())
+    return {
         job: [step.get("run", "") for step in spec.get("steps", [])]
         for job, spec in workflow["jobs"].items()
     }
-    repairing = {
-        job for job, steps in runs.items() if any("repair_wheel_tags.py" in run for run in steps)
-    }
-    assert repairing == {"ibsi-mirp-gate"}
 
-    steps = runs["ibsi-mirp-gate"]
+
+@pytest.mark.parametrize(
+    ("workflow", "job", "check"),
+    [
+        ("package.yml", "ibsi-mirp-gate", "check_ci.py --phase environment"),
+        ("ci.yml", "ibsi-mirp", "check_ci.py --phase audit"),
+    ],
+)
+def test_only_the_mirp_jobs_repair_and_before_they_check(
+    workflow: str, job: str, check: str
+) -> None:
+    """Every other job tests, audits or freezes the environment it installed, untouched."""
+    runs = _workflow_runs(workflow)
+    repairing = {
+        name for name, steps in runs.items() if any("repair_wheel_tags.py" in run for run in steps)
+    }
+    assert repairing == {job}
+
+    steps = runs[job]
     repair = next(i for i, run in enumerate(steps) if "repair_wheel_tags.py" in run)
     install = next(i for i, run in enumerate(steps) if ".[gui,radiomics,mirp,dev]" in run)
-    validate = next(i for i, run in enumerate(steps) if "check_ci.py --phase environment" in run)
+    validate = next(i for i, run in enumerate(steps) if check in run)
     assert install < repair < validate

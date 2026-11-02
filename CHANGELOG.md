@@ -534,12 +534,15 @@ empty between that version and yours, re-run the analysis before comparing.
   `--upgrade-package` per spostare solo i pin interessati da un avviso. PNG e TIFF scritti da
   `Image.fromarray` sono byte per byte identici fra Pillow 12.3 e 13.0 nei modi L, I;16, RGB e
   RGBA.
-- **Gate MIRP dei tag**: `pip check` (pip 26.2.2) si fermava con un `ValueError` su itk,
+- **Job MIRP e `pip check`**: `pip check` (pip 26.2.2) si fermava con un `ValueError` su itk,
   dipendenza di MIRP, i cui wheel 5.4.x scrivono `Tag: itk-5.4.7-cp311-abi3-…` invece di
-  `Tag: cp311-abi3-…`, e il job non poteva validare l'ambiente. `packaging/repair_wheel_tags.py`
-  toglie solo quel prefisso, quando è esattamente nome e versione della distribuzione stessa, e
-  gira solo in `ibsi-mirp-gate`, il cui ambiente non finisce in nessun bundle; `pip check` resta
-  completo.
+  `Tag: cp311-abi3-…`, e i job MIRP non potevano validare né auditare l'ambiente.
+  `packaging/repair_wheel_tags.py` toglie solo quel prefisso, quando è esattamente nome e versione
+  della distribuzione stessa, e gira nei due soli job MIRP, prima del controllo: `ibsi-mirp-gate`
+  (tag, `package.yml`) e `ibsi-mirp` (ogni push, `ci.yml`). Nessuno dei due ambienti finisce in un
+  bundle e `pip check` resta completo. Fino a questa correzione lo script compariva solo nel gate
+  dei tag, che gira soltanto su push di un tag `v*`: non era mai stato eseguito in CI, e il job
+  `ibsi-mirp` falliva ancora nell'audit, come prima dell'introduzione dello script.
 - CI: matrice Python 3.11/3.12, Action fissate a commit SHA con aggiornamento
   Dependabot, risorse IBSI in cache sull'hash del manifest, e la seconda
   esecuzione completa della suite sostituita dalla sola collection (che è ciò
@@ -552,6 +555,43 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Fixed
 
+- **mypy con numpy 2.5.4**: lo stub di `np.isscalar` è passato da
+  `TypeGuard[generic | complex | str | bytes | memoryview]` a `TypeIs[… | numbers.Number]`, e la
+  chiamata `np.isnan(result)` in `qicom/metrics/runner.py` non tipizzava più (`arg-type`). Il
+  risultato scalare è ora convertito con `np.asarray` prima di `np.isnan`, la stessa conversione
+  che l'ufunc fa da sé: nessun esito cambia, compresi i tipi su cui `np.isnan` solleva
+  `TypeError` (testo, byte, `Fraction`, `Decimal`), che restano accettati. Un test fissa gli esiti.
+  L'errore esisteva già prima del merge della PR #4, nascosto dall'audit che falliva prima della
+  fase statica; i lock fissano numpy 2.5.3, la CI installa senza lock e risolve 2.5.4.
+- **Progetti radiomici senza tabelle tipizzate: il testo "NA" tornava mancante con pandas 3.1.**
+  `read_legacy_table` proteggeva le colonne di testo note con un converter, ma pandas applica i
+  marcatori di mancante ("NA", "null", "None", …) anche al risultato del converter: il motore
+  Python lo ha sempre fatto, il motore C da pandas 3.1. Una ROI o uno stato chiamati "NA"
+  diventavano mancanti. Le colonne di testo sono ora lette a parte senza alcun marcatore, e solo un
+  campo vuoto è mancante; le altre colonne mantengono i marcatori di pandas. `float_precision`,
+  deprecato da pandas 3.1 (`Pandas4Warning`) perché il parser predefinito è diventato esatto, è
+  passato solo con pandas < 3.1, dove serve ancora per leggere i float bit per bit. Verificato con
+  pandas 2.3.3, 3.0.6 (lock) e 3.1.0. L'errore esisteva già prima del merge della PR #4: la CI,
+  senza lock, installa pandas 3.1.0.
+- **Python 3.11: la GUI terminava con SIGABRT con PySide6 6.12.0.** Ogni chiamata ai setter di
+  dimensione di `QGraphicsWidget` (`setMaximumHeight`, `setMinimumWidth`, `setPreferredHeight`, …)
+  toglie un riferimento a `None`, e pyqtgraph li chiama a ogni ridimensionamento. Da Python 3.12
+  `None` è immortale e non succede nulla; su 3.11 il conteggio arriva a zero e l'interprete
+  abortisce (`Fatal Python error: none_dealloc`). Nel job `test-base (3.11)` la suite si fermava
+  dopo 68 test in `test_adaptive_layout.py` senza traceback né riepilogo: la cattura di pytest
+  teneva l'output di faulthandler in un file temporaneo perso con il processo, e `check_ci.py`
+  restituiva il `returncode` −6 del pytest ucciso, che `SystemExit` trasforma nel codice 250.
+  L'extra `gui` esclude ora 6.12.0 solo su Python < 3.12 (6.11.3 non ha il difetto); i bundle,
+  su 3.12, restano su 6.12.0 e i lock sono invariati. `generate_locks.py --check` valuta i marker
+  per l'interprete e la piattaforma di ogni lock. Un test misura direttamente il conteggio di
+  `None` attorno a quei setter. L'errore esisteva già prima del merge della PR #4.
+- **Finestra quantitativa più larga di uno schermo da 512 px in portoghese.** Il testo vuoto del
+  pannello Grafici («Ainda não há nada para exibir no gráfico: execute Calcular primeiro.») non
+  andava a capo, e la sua larghezza su una riga diventava la larghezza minima del dock: con il
+  solo DejaVu Sans, come sul runner `ubuntu-latest`, la finestra arrivava a 529 px nello stadio
+  dei risultati. L'etichetta va ora a capo; la larghezza minima scende a 363 px. Con Liberation
+  Sans, il sostituto di Arial su molte installazioni Linux, il testo stava appena nei 512 px, e
+  per questo il test passava in locale. Preesistente.
 - **Valutazione qualitativa: le risposte sparivano scorrendo le slice.** Ogni risposta era
   registrata sulla slice della reference in quel momento, quindi su una serie con più slice il
   modulo si svuotava a ogni cambio di slice e le risposte ricomparivano solo tornando su quella

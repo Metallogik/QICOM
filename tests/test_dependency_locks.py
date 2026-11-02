@@ -18,6 +18,43 @@ def test_the_locks_match_pyproject_and_hash_every_pin() -> None:
     assert LOCKS["check"]() == []
 
 
+@pytest.mark.parametrize(
+    ("marker", "flagged"), [('python_version < "3.12"', False), ('python_version >= "3.12"', True)]
+)
+def test_a_requirement_is_held_against_a_lock_only_where_its_marker_applies(
+    monkeypatch: pytest.MonkeyPatch, marker: str, flagged: bool
+) -> None:
+    """The locks are resolved for Python 3.12: an exclusion meant for 3.11 alone
+    must not fail them, and the same exclusion for 3.12 must."""
+    requirement = f"PySide6-Essentials!=6.12.0; {marker}"
+    monkeypatch.setitem(LOCKS["check"].__globals__, "_requirement_texts", lambda _: [requirement])
+
+    problems = LOCKS["check"]()
+
+    assert bool(problems) is flagged
+    assert all("pyside6-essentials==6.12.0 is outside" in p.lower() for p in problems)
+
+
+def test_python_3_11_cannot_install_the_pyside6_that_aborts_it() -> None:
+    from packaging.requirements import Requirement
+    from packaging.version import Version
+
+    gui = LOCKS["_project"]()["optional-dependencies"]["gui"]
+    pyside = [Requirement(text) for text in gui if text.startswith("PySide6-Essentials")]
+
+    def allowed(python: str, version: str) -> bool:
+        environment = {"python_version": python, "python_full_version": f"{python}.0"}
+        return any(
+            Version(version) in r.specifier
+            for r in pyside
+            if r.marker is None or r.marker.evaluate(environment)
+        )
+
+    assert not allowed("3.11", "6.12.0")
+    assert allowed("3.11", "6.11.3")
+    assert allowed("3.12", "6.12.0")
+
+
 def test_a_pin_without_a_hash_is_refused(tmp_path: Path) -> None:
     lock = tmp_path / "lock.txt"
     lock.write_text("numpy==2.0.0 \\\n    --hash=sha256:00\nscipy==1.12.0\n", encoding="utf-8")

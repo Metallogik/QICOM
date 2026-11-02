@@ -54,6 +54,13 @@ PLATFORMS: dict[str, str] = {
     "windows": "x86_64-pc-windows-msvc",
     "macos": "aarch64-apple-darwin",
 }
+#: The marker values of each lock's target, so a requirement whose marker
+#: excludes that target (e.g. `python_version < "3.12"`) is not held against it.
+_MARKER_ENVIRONMENTS: dict[str, dict[str, str]] = {
+    "linux": {"sys_platform": "linux", "platform_system": "Linux", "os_name": "posix"},
+    "windows": {"sys_platform": "win32", "platform_system": "Windows", "os_name": "nt"},
+    "macos": {"sys_platform": "darwin", "platform_system": "Darwin", "os_name": "posix"},
+}
 _CPU_TORCH_PLATFORMS = frozenset({"linux", "windows"})
 CPU_TORCH_INDEX = "https://download.pytorch.org/whl/cpu"
 MACOS_TARGET = "14.0"
@@ -207,8 +214,15 @@ def check() -> list[str]:
             except ValueError as exc:
                 problems.append(str(exc))
                 continue
+            environment = {
+                "python_version": PYTHON_VERSION,
+                "python_full_version": f"{PYTHON_VERSION}.0",
+                **_MARKER_ENVIRONMENTS[platform],
+            }
             for requirement in _requirements(profile):
                 if requirement.url:
+                    continue
+                if requirement.marker is not None and not requirement.marker.evaluate(environment):
                     continue
                 name = canonicalize_name(requirement.name)
                 pinned = pins.get(name)

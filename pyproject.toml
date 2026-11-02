@@ -74,7 +74,12 @@ learned = [
 gui = [
   # QICOM uses QtCore/Gui/Widgets/Svg/OpenGL only; the PySide6 meta-wheel also
   # installs the 435 MiB Addons distribution (WebEngine, Multimedia, 3D, ...).
-  "PySide6-Essentials>=6.6,<7",
+  # 6.12.0 drops a reference to None on every QGraphicsWidget size setter
+  # (setMaximumHeight, ...), which pyqtgraph calls on each resize. From
+  # Python 3.12 None is immortal and nothing happens; on 3.11 its count
+  # reaches zero and the interpreter aborts. The bundles run on 3.12.
+  "PySide6-Essentials>=6.6,<7,!=6.12.0; python_version < \"3.12\"",
+  "PySide6-Essentials>=6.6,<7; python_version >= \"3.12\"",
   "pyqtgraph>=0.13,<1",
 ]
 # PyPI's nominal 3.1.0 sdist currently exposes inconsistent package

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import tempfile
 import zipfile
 from dataclasses import dataclass, field
@@ -83,6 +84,13 @@ _NUMERIC_KINDS = "iuf"
 # 2 the same conversion would write NaN as the text "nan", so text stays an
 # object column there.
 _STR_DTYPE_KEEPS_MISSING = bool(pd.Series([np.nan], dtype=object).astype("str").isna().all())
+# pandas' default CSV float parser was a few ULP off for about one value in
+# three until 3.1, which made the exact parser the default and deprecated
+# `float_precision`.
+_PANDAS_MAJOR_MINOR = tuple(int(part) for part in re.findall(r"\d+", pd.__version__)[:2])
+_EXACT_FLOAT_PARSING: dict[str, Any] = (
+    {} if _PANDAS_MAJOR_MINOR >= (3, 1) else {"float_precision": "round_trip"}
+)
 
 
 @dataclass(frozen=True)
@@ -208,22 +216,33 @@ def read_legacy_table(source: str | Path | io.BytesIO) -> pd.DataFrame:
 
     Known text columns (_LEGACY_TEXT_COLUMNS) keep what is written in them;
     only an empty field there is missing. Everything else is parsed as
-    before - exactly (round_trip): pandas' default parser is not, and 1
-    value in 3 came back a few ULP off.
+    before - exactly (see _EXACT_FLOAT_PARSING).
+
+    The text columns are read on their own, with no missing-value markers at
+    all. A converter alone does not protect them: pandas applies its markers
+    ("NA", "null", "None", ...) to a converter's result as well - the Python
+    engine always has, the C engine since 3.1.
     """
-    if isinstance(source, io.BytesIO):
-        header = pd.read_csv(io.BytesIO(source.getvalue()), nrows=0)
-        source.seek(0)
-    else:
-        header = pd.read_csv(source, nrows=0)
+
+    def rewound() -> str | Path | io.BytesIO:
+        if isinstance(source, io.BytesIO):
+            source.seek(0)
+        return source
+
+    header = pd.read_csv(rewound(), nrows=0)
     text_columns = [column for column in header.columns if column in _LEGACY_TEXT_COLUMNS]
     frame = pd.read_csv(
-        source,
-        float_precision="round_trip",
-        converters={column: _legacy_text for column in text_columns},
+        rewound(), dtype={column: object for column in text_columns}, **_EXACT_FLOAT_PARSING
     )
-    for column in text_columns:
-        frame[column] = _as_text(frame[column].astype(object))
+    if text_columns:
+        text = pd.read_csv(
+            rewound(),
+            usecols=text_columns,
+            na_filter=False,
+            converters={column: _legacy_text for column in text_columns},
+        )
+        for column in text_columns:
+            frame[column] = _as_text(text[column].astype(object))
     return frame
 
 

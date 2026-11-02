@@ -35,6 +35,7 @@ Per verificare l'archivio prima di estrarlo:
   Linux:
 
     sha256sum -c QICOM-linux-x64.tar.gz.sha256
+    sha256sum -c QICOM-linux-x64.deb.sha256     (pacchetto Debian/Ubuntu)
 
 Il risultato deve essere True su Windows oppure OK su macOS/Linux. Dopo
 l'estrazione, SHA256SUMS contiene anche l'hash dei singoli file del bundle,
@@ -116,7 +117,21 @@ indicata per la build. Non e' garantito che un archivio costruito su una
 distribuzione recente funzioni su una piu' vecchia; la glibc del sistema
 non viene inclusa. Non sono previsti bundle Linux ARM o a 32 bit.
 
-Scompatta l'archivio mantenendo i permessi e avvia qicom dalla sua cartella.
+Su Debian e Ubuntu usa il pacchetto .deb:
+
+    sudo apt install ./QICOM-linux-x64.deb
+
+apt installa anche le librerie di sistema che servono a Qt. QICOM compare
+nel menu delle applicazioni e si avvia anche da terminale con: qicom
+I file stanno in /opt/qicom; i dati dell'utente restano nella sua cartella
+personale. Per verificare i file installati: dpkg --verify qicom
+Per disinstallare: sudo apt remove qicom
+Se apt rifiuta il pacchetto per la versione di libc6, il sistema e' piu'
+vecchio di quello su cui e' stata costruita la build: usa un sistema piu'
+recente, non forzare l'installazione.
+
+Su altre distribuzioni scompatta l'archivio .tar.gz mantenendo i permessi e
+avvia qicom dalla sua cartella.
 Se mancano librerie Qt o il driver grafico non e' compatibile, annota
 l'errore e la versione della distribuzione per il responsabile del test.
 

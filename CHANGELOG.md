@@ -27,6 +27,14 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Added
 
+- **Pacchetto Debian/Ubuntu** (`QICOM-linux-x64.deb`, con sidecar `.sha256`), prodotto dalla
+  build Linux accanto al `.tar.gz` da `packaging/build_deb.py`: lo stesso bundle, byte per byte,
+  in `/opt/qicom`, il comando `qicom`, la voce di menu e l'icona. Dichiara le librerie Qt di
+  sistema (la stessa lista che la CI installa, verificata da un test), così `apt install` le
+  porta con sé, e `libc6 (>= glibc del runner di build)`, così un sistema troppo vecchio rifiuta
+  il pacchetto invece di installare un'applicazione che non parte. `DEBIAN/md5sums` permette
+  `dpkg --verify qicom`. La CI lo installa con apt, lo avvia dal comando installato con lo smoke
+  test, ne verifica l'identità di build e lo rimuove controllando che non resti nulla.
 - **Citazione dell'articolo QICOM** (arXiv:2610.31218, doi:10.48550/arXiv.2610.31218): badge e
   frase di citazione in apertura, a metà e in fondo al README, con la voce BibTeX nella nuova
   sezione *Citing the QICOM article*; `CITATION.cff` riporta l'articolo come `preferred-citation`,

@@ -100,7 +100,7 @@ that a particular run completed successfully.
 | `test` | `ubuntu-latest` x64 / 3.12 | Full source suite, offscreen GUI tests, static gates, branch coverage, learned checkpoints and IBSI reference checks |
 | `package` — `QICOM-windows-x64` | `windows-latest` x64 / 3.12 | Native frozen build, attribution check, smoke checks and Windows executable metadata |
 | `package` — `QICOM-macos-arm64` | `macos-14` arm64 / 3.12 | Native frozen build, attribution check and smoke checks |
-| `package` — `QICOM-linux-x64` | `ubuntu-latest` x64 / 3.12 | Native frozen build, attribution check and smoke checks |
+| `package` — `QICOM-linux-x64` | `ubuntu-latest` x64 / 3.12 | Native frozen build, attribution check and smoke checks; the same bundle as a `.deb`, installed with `apt-get`, smoke-tested through the installed `qicom` command, verified with `dpkg --verify` and removed again |
 | `ibsi-gate` | `ubuntu-latest` x64 / 3.12 | Tag-only reference gate; manual package runs skip this job |
 
 Tag packaging selects all three platforms, full profile and learned libraries.
@@ -188,8 +188,13 @@ is a purchase and an identity verification rather than a code change:
 
 ### Linux
 
-- No platform-level signing requirement. If a distribution package is ever
-  produced, it is signed with the repository's own key.
+- No platform-level signing requirement. The `.deb` (`packaging/build_deb.py`)
+  is published unsigned, like the other artifacts, with a `.sha256` sidecar.
+  Signing it means an APT repository whose `Release` file is signed with the
+  repository's own key; `dpkg-sig` signatures are not checked by apt.
+- The package declares `libc6 (>= <glibc of the build runner>)`: dpkg refuses
+  it on an older system instead of installing a bundle that cannot start
+  there.
 
 ## What this repository deliberately does not do
 

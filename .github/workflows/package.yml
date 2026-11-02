@@ -567,6 +567,59 @@ jobs:
         run: |
           tar -C staging -czf "${{ matrix.artifact }}.tar.gz" "${{ matrix.artifact }}"
 
+      # The same staged directory as a Debian package, for Debian and Ubuntu:
+      # /opt/qicom, a `qicom` command, a menu entry, and the Qt system
+      # libraries declared so apt installs them. The tar.gz stays for every
+      # other distribution. Timestamps come from the commit, not the clock.
+      - name: Build the Debian package (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)" python packaging/build_deb.py \
+            "staging/${{ matrix.artifact }}" --profile "$QICOM_ATTRIBUTION_PROFILE" \
+            --output "${{ matrix.artifact }}.deb"
+          python packaging/generate_sha256sums.py "${{ matrix.artifact }}.deb" \
+            --output "${{ matrix.artifact }}.deb.sha256"
+
+      # Installed through apt, as a user would: proves every declared
+      # dependency exists under that name, that the installed command starts
+      # the bundle this commit produced, and that removal leaves nothing.
+      - name: Install and smoke-test the Debian package (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends "./${{ matrix.artifact }}.deb"
+          dpkg --verify qicom
+          rm -rf deb-home
+          mkdir -p deb-home
+          HOME="$PWD/deb-home" \
+          XDG_CACHE_HOME="$PWD/deb-home/.cache" \
+          XDG_DATA_HOME="$PWD/deb-home/.local/share" \
+          XDG_CONFIG_HOME="$PWD/deb-home/.config" \
+          QT_QPA_PLATFORM=offscreen qicom --smoke-test --smoke-output smoke-deb.json
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          import sys
+
+          payload = json.load(open("smoke-deb.json", encoding="utf-8"))
+          expected = subprocess.run(
+              ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+          ).stdout.strip()
+          if payload["revision"] != expected:
+              sys.exit(f"installed package reports {payload['revision']!r}, built {expected!r}")
+          if payload["profile"] != os.environ["QICOM_PACKAGE_PROFILE"]:
+              sys.exit(f"installed package reports profile {payload['profile']!r}")
+          print(f"Installed package verified: {payload['version']} {payload['revision']}")
+          PY
+          sudo apt-get remove -y qicom
+          if [ -e /opt/qicom ] || [ -e /usr/bin/qicom ]; then
+            echo "apt-get remove left QICOM files behind" >&2
+            exit 1
+          fi
+
       # The sidecar verifies the downloaded archive before extraction. It is
       # an integrity identifier and allow-listing aid, not proof of publisher
       # identity; that requires a future Authenticode/notarization step.

@@ -764,8 +764,12 @@ Notes:
   x64 and macOS 14 arm64 and runs `--smoke-test` on the frozen app before uploading the
   artefacts. The platforms actually produced depend on the selection and outcome of each run;
   the [verification matrix](packaging/DISTRIBUTION.md#build-and-verification-matrix) details
-  their coverage. The Windows executable embeds product name, description, author, copyright and
-  version; every bundle contains `SHA256SUMS` and every archive is published with a `.sha256`
+  their coverage. On Linux the same bundle is also published as a Debian package
+  (`QICOM-linux-x64.deb`, built by `packaging/build_deb.py`): `sudo apt install
+  ./QICOM-linux-x64.deb` puts it under `/opt/qicom` with a `qicom` command and a menu entry, and
+  installs the Qt system libraries it needs; the `.tar.gz` remains for other distributions. The
+  Windows executable embeds product name, description, author, copyright and version; every
+  bundle contains `SHA256SUMS` and every archive or package is published with a `.sha256`
   sidecar, useful for verifying and authorising exactly the build received. Checksums do not,
   however, authenticate the publisher. The artefacts remain unsigned: Windows Authenticode
   signing and Apple signing/notarisation require the distributor's certificates and credentials.

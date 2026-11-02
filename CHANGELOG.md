@@ -563,6 +563,16 @@ empty between that version and yours, re-run the analysis before comparing.
   `TypeError` (testo, byte, `Fraction`, `Decimal`), che restano accettati. Un test fissa gli esiti.
   L'errore esisteva già prima del merge della PR #4, nascosto dall'audit che falliva prima della
   fase statica; i lock fissano numpy 2.5.3, la CI installa senza lock e risolve 2.5.4.
+- **Progetti radiomici senza tabelle tipizzate: il testo "NA" tornava mancante con pandas 3.1.**
+  `read_legacy_table` proteggeva le colonne di testo note con un converter, ma pandas applica i
+  marcatori di mancante ("NA", "null", "None", …) anche al risultato del converter: il motore
+  Python lo ha sempre fatto, il motore C da pandas 3.1. Una ROI o uno stato chiamati "NA"
+  diventavano mancanti. Le colonne di testo sono ora lette a parte senza alcun marcatore, e solo un
+  campo vuoto è mancante; le altre colonne mantengono i marcatori di pandas. `float_precision`,
+  deprecato da pandas 3.1 (`Pandas4Warning`) perché il parser predefinito è diventato esatto, è
+  passato solo con pandas < 3.1, dove serve ancora per leggere i float bit per bit. Verificato con
+  pandas 2.3.3, 3.0.6 (lock) e 3.1.0. L'errore esisteva già prima del merge della PR #4: la CI,
+  senza lock, installa pandas 3.1.0.
 - **Valutazione qualitativa: le risposte sparivano scorrendo le slice.** Ogni risposta era
   registrata sulla slice della reference in quel momento, quindi su una serie con più slice il
   modulo si svuotava a ogni cambio di slice e le risposte ricomparivano solo tornando su quella

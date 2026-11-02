@@ -14,6 +14,7 @@ is installed separately without dependencies (its dependencies are in the lock).
 
     python packaging/generate_locks.py            # regenerate (needs uv and the network)
     python packaging/generate_locks.py --upgrade  # ... moving every pin to the newest allowed
+    python packaging/generate_locks.py --upgrade-package pillow  # ... moving only that pin
     python packaging/generate_locks.py --check    # offline: locks still match pyproject
     python packaging/generate_locks.py --install --profile full-learned --platform linux
 """
@@ -35,6 +36,7 @@ if TYPE_CHECKING:
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LOCK_DIR = REPO_ROOT / "requirements" / "lock"
+TOOLCHAIN_CONSTRAINTS = REPO_ROOT / "build" / "locks" / "toolchain-constraints.txt"
 PYTHON_VERSION = "3.12"
 
 #: Bundle profile -> pyproject extras. `full` adds radiomics, `-learned` torch.
@@ -62,8 +64,26 @@ def lock_path(profile: str, platform: str) -> Path:
     return LOCK_DIR / f"{profile}-{platform}.txt"
 
 
+def _pyproject() -> dict:
+    return tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+
+
 def _project() -> dict:
-    return tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    return _pyproject()["project"]
+
+
+def toolchain_requirement() -> str:
+    """The build-system setuptools range, which bootstrap_environment.py installs.
+
+    PyInstaller and torch pull setuptools into every lock, and the lock is
+    installed after the bootstrap: a pin outside this range would silently
+    replace the audited toolchain with the version the range excludes.
+    """
+    return next(
+        text
+        for text in _pyproject()["build-system"]["requires"]
+        if re.match(r"setuptools(?=[<>=!~ @;\[]|$)", text, re.IGNORECASE)
+    )
 
 
 def _requirement_texts(profile: str) -> list[str]:
@@ -103,10 +123,17 @@ def _uv() -> str:
     return candidate
 
 
-def generate(*, upgrade: bool = False) -> None:
-    """Regenerate every lock. Existing pins are kept unless `upgrade`: adding
-    a dependency should not silently move every other version too."""
+def generate(*, upgrade: bool = False, upgrade_packages: tuple[str, ...] = ()) -> None:
+    """Regenerate every lock. Existing pins are kept unless `upgrade` or named
+    in `upgrade_packages`: adding a dependency, or fixing one advisory, should
+    not silently move every other version too."""
     LOCK_DIR.mkdir(parents=True, exist_ok=True)
+    # Written from pyproject on every run, at a fixed relative path: uv records
+    # the constraint file in each lock's annotations, so a temporary directory
+    # would make two regenerations of unchanged locks differ.
+    TOOLCHAIN_CONSTRAINTS.parent.mkdir(parents=True, exist_ok=True)
+    TOOLCHAIN_CONSTRAINTS.write_text(toolchain_requirement() + "\n", encoding="utf-8")
+    constraints = TOOLCHAIN_CONSTRAINTS.relative_to(REPO_ROOT).as_posix()
     for profile, extras in PROFILES.items():
         for platform, target in PLATFORMS.items():
             command = [
@@ -120,9 +147,11 @@ def generate(*, upgrade: bool = False) -> None:
                 "--generate-hashes",
                 "--custom-compile-command=python packaging/generate_locks.py",
                 f"--output-file={lock_path(profile, platform).relative_to(REPO_ROOT)}",
+                f"--constraints={constraints}",
             ]
             if upgrade:
                 command.append("--upgrade")
+            command += [f"--upgrade-package={name}" for name in upgrade_packages]
             command += [f"--no-emit-package={_name(text)}" for text in vcs_requirements(profile)]
             if "learned" in extras and platform in _CPU_TORCH_PLATFORMS:
                 # The lock names the CPU index too, so pip finds the "+cpu"
@@ -160,9 +189,12 @@ def pinned_versions(path: Path) -> dict[str, str]:
 
 def check() -> list[str]:
     """Every lock exists, hashes every pin and satisfies pyproject's ranges."""
+    from packaging.requirements import Requirement
     from packaging.utils import canonicalize_name
     from packaging.version import Version
 
+    toolchain_text = toolchain_requirement()
+    toolchain = Requirement(toolchain_text)
     problems: list[str] = []
     for profile in PROFILES:
         for platform in PLATFORMS:
@@ -186,6 +218,12 @@ def check() -> list[str]:
                     problems.append(
                         f"{path.name}: {requirement.name}=={pinned} is outside {requirement}"
                     )
+            setuptools = pins.get("setuptools")
+            if setuptools is not None and Version(setuptools) not in toolchain.specifier:
+                problems.append(
+                    f"{path.name}: setuptools=={setuptools} is outside the build-system "
+                    f"{toolchain_text}"
+                )
     return problems
 
 
@@ -210,6 +248,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--upgrade", action="store_true", help="Move every pin to the newest allowed version."
     )
+    parser.add_argument(
+        "--upgrade-package",
+        action="append",
+        default=[],
+        metavar="NAME",
+        help="Move only this pin to the newest allowed version (repeatable).",
+    )
     args = parser.parse_args(argv)
     if args.check:
         problems = check()
@@ -222,7 +267,7 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("--install needs --profile and --platform")
         install(args.profile, args.platform)
         return 0
-    generate(upgrade=args.upgrade)
+    generate(upgrade=args.upgrade, upgrade_packages=tuple(args.upgrade_package))
     return 0
 
 

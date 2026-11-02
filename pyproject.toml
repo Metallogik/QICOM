@@ -1,7 +1,9 @@
 [build-system]
 # Capped at the next major: setuptools is installed into the build environment
 # and frozen into the bundle, so an untested major must not arrive unannounced.
-requires = ["setuptools>=83,<85", "wheel"]
+# The floor is the audited minimum (84.0.0 carries GHSA-xmj3-9gf7-h52w), and
+# every bundle lock pins a setuptools inside this range.
+requires = ["setuptools>=84.1,<85", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -42,7 +44,8 @@ dependencies = [
   "python-gdcm>=3.0.10,<4",
   "dicom-anonymizer>=2.0,<3",
   "nibabel>=5.2,<6",
-  "Pillow>=12.3,<13",
+  # 13.0 is the first release outside the PYSEC-2026-43xx advisories.
+  "Pillow>=13.0,<14",
   "PyYAML>=6.0,<7",
   "platformdirs>=4.0,<5",
   "threadpoolctl>=3.6,<4",

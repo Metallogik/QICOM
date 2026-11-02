@@ -1,15 +1,15 @@
-"""Image.fromarray must not use the deprecated `mode=` parameter.
+"""Image.fromarray must not use the `mode=` parameter Pillow 13 no longer honours.
 
-Pillow deprecated passing `mode` to reinterpret an array's data type, and
-removes it in Pillow 13 (2026-10-15). QICOM's own pin is `Pillow>=12.3,<13`,
-so the calls still work - but every one of them is code that stops working the
-moment that bound is raised, and one of them was already emitting a warning on
-every test run.
+Pillow 11.3 deprecated passing `mode` to reinterpret an array's data type, and
+Pillow 13 (2026-10-15) refuses it. QICOM requires `Pillow>=13.0`: the 12.x
+line carries the PYSEC-2026-43xx advisories, so the parameter was removed from
+every call site before the bound was raised, not after.
 
 The array's dtype and shape determine the mode correctly for every image QICOM
 writes, so the parameter was redundant everywhere it appeared. These tests pin
 that equivalence - the same bytes, not merely the same mode - for the four
-modes QICOM produces, and that no call site reintroduces the parameter.
+modes QICOM produces, against a construction that states the mode explicitly
+(`Image.frombytes`), and that no call site reintroduces the parameter.
 """
 
 from __future__ import annotations
@@ -47,9 +47,10 @@ class TestModeIsInferred:
     @pytest.mark.parametrize("mode", sorted(_CASES))
     def test_the_encoded_file_is_byte_identical_either_way(self, mode: str) -> None:
         array = _CASES[mode]
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            explicit = _png_bytes(Image.fromarray(array, mode=mode))
+        # I;16 is little-endian whatever the host: state the byte order.
+        raw = array.astype("<u2").tobytes() if mode == "I;16" else array.tobytes()
+        size = (array.shape[1], array.shape[0])
+        explicit = _png_bytes(Image.frombytes(mode, size, raw))
 
         inferred = _png_bytes(Image.fromarray(array))
 
@@ -73,10 +74,10 @@ class TestModeIsInferred:
             for array in _CASES.values():
                 Image.fromarray(array)
 
-    def test_the_explicit_form_is_what_pillow_13_removes(self) -> None:
-        """Documents why this matters rather than assuming it: raising the
-        Pillow bound past 13 has to be preceded by this change, not follow it."""
-        with pytest.warns(DeprecationWarning, match="Pillow 13"):
+    def test_the_explicit_form_fails_on_the_required_pillow(self) -> None:
+        """Documents why this matters rather than assuming it: the call that
+        used to warn on every test run is an error on Pillow 13."""
+        with pytest.raises(ValueError):
             Image.fromarray(_CASES["I;16"], mode="I;16")
 
 

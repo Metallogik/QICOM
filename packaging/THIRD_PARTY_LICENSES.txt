@@ -3814,7 +3814,7 @@ https://opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
   terms specified in this license.
 
 pillow
-12.3.0
+13.0.0
 MIT-CMU
 https://python-pillow.github.io
 Python Imaging Library (fork)

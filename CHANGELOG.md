@@ -524,6 +524,22 @@ empty between that version and yours, re-run the analysis before comparing.
 - **Bootstrap dell'installer**: pip aggiornato a ≥26.2 prima di ogni dipendenza,
   in CI e nel packaging. La revisione auditata girava con pip 24.0 e sette
   vulnerabilità note. L'ambiente che produce il bundle è ora auditato anch'esso.
+- **Dipendenze fuori dagli avvisi di sicurezza**: l'audit del packaging trovava 57 vulnerabilità
+  note in tre pacchetti dei lock. Pillow passa a `>=13.0,<14` (12.3.0: 39 avvisi PYSEC-2026-43xx;
+  le chiamate `Image.fromarray(..., mode=...)` che Pillow 13 rifiuta erano già state rimosse),
+  filelock a 4.2.6 (4.1.0, via torch: 17 CVE) e setuptools a 84.2.1 (84.0.0:
+  GHSA-xmj3-9gf7-h52w), con il minimo del build-system alzato a `>=84.1`. Il lock installato dopo
+  il bootstrap non può più riportare setuptools sotto quel minimo: `generate_locks.py` vincola la
+  risoluzione al range del build-system e `--check` rifiuta un lock che ne esce. Nuova opzione
+  `--upgrade-package` per spostare solo i pin interessati da un avviso. PNG e TIFF scritti da
+  `Image.fromarray` sono byte per byte identici fra Pillow 12.3 e 13.0 nei modi L, I;16, RGB e
+  RGBA.
+- **Gate MIRP dei tag**: `pip check` (pip 26.2.2) si fermava con un `ValueError` su itk,
+  dipendenza di MIRP, i cui wheel 5.4.x scrivono `Tag: itk-5.4.7-cp311-abi3-…` invece di
+  `Tag: cp311-abi3-…`, e il job non poteva validare l'ambiente. `packaging/repair_wheel_tags.py`
+  toglie solo quel prefisso, quando è esattamente nome e versione della distribuzione stessa, e
+  gira solo in `ibsi-mirp-gate`, il cui ambiente non finisce in nessun bundle; `pip check` resta
+  completo.
 - CI: matrice Python 3.11/3.12, Action fissate a commit SHA con aggiornamento
   Dependabot, risorse IBSI in cache sull'hash del manifest, e la seconda
   esecuzione completa della suite sostituita dalla sola collection (che è ciò

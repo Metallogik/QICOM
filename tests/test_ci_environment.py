@@ -34,7 +34,7 @@ def test_bootstrap_upgrades_pip_then_the_actual_build_tools(
     monkeypatch.setitem(
         main.__globals__, "subprocess", SimpleNamespace(run=lambda *a, **kw: calls.append((a, kw)))
     )
-    monkeypatch.setitem(main.__globals__, "version", lambda _name: "84.0.0")
+    monkeypatch.setitem(main.__globals__, "version", lambda _name: "84.2.1")
 
     assert main() == 0
     build = [
@@ -48,11 +48,13 @@ def test_bootstrap_upgrades_pip_then_the_actual_build_tools(
         (([sys.executable, "-m", "pip", "install", "--upgrade", "pip>=26.2"],), {"check": True}),
         (([sys.executable, "-m", "pip", "install", "--upgrade", *build],), {"check": True}),
     ]
-    assert "setuptools>=83,<85" in build
-    assert bootstrap["toolchain_requirements"]() == ["pip>=26.2", "setuptools>=83,<85"]
+    assert "setuptools>=84.1,<85" in build
+    assert bootstrap["toolchain_requirements"]() == ["pip>=26.2", "setuptools>=84.1,<85"]
 
 
-@pytest.mark.parametrize("installed", ["79.0.1", "78.1.0", "83.0.0rc1", "85.0.0", None])
+@pytest.mark.parametrize(
+    "installed", ["79.0.1", "78.1.0", "83.0.0", "84.0.0", "84.1.0rc1", "85.0.0", None]
+)
 def test_old_or_missing_setuptools_is_rejected_before_tests(
     installed: str | None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -72,7 +74,7 @@ def test_old_or_missing_setuptools_is_rejected_before_tests(
 
 def test_corrected_toolchain_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
     check = _script("check_ci.py")["check_toolchain"]
-    versions = {"pip": "26.2", "setuptools": "83.0.0"}
+    versions = {"pip": "26.2", "setuptools": "84.1.0"}
     monkeypatch.setitem(check.__globals__, "version", versions.__getitem__)
     check()
 

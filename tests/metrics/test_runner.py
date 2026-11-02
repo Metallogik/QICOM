@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
+from fractions import Fraction
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -244,6 +247,31 @@ def test_nan_metric_outputs_are_omitted() -> None:
     assert computation.value is None
     assert computation.outcome is not None
     assert computation.outcome.status == OutcomeStatus.INVALID_INPUT
+
+
+@pytest.mark.parametrize(
+    ("result", "usable"),
+    [
+        (1.0, True),
+        (3, True),
+        (2**100, True),
+        (np.float32("nan"), False),
+        (complex("nan+1j"), False),
+        (np.datetime64("NaT", "D"), False),
+        (memoryview(np.array([np.nan])), False),
+        # isnan raises TypeError on these: kept, as before, not omitted.
+        ("nan", True),
+        (b"x", True),
+        (Fraction(1, 2), True),
+        (Decimal("NaN"), True),
+    ],
+)
+def test_scalar_results_are_judged_as_numpy_judges_them(result: object, usable: bool) -> None:
+    from qicom.metrics.runner import compute_metric
+
+    computation = compute_metric("scalar_metric", lambda: result)
+
+    assert (computation.outcome is None) is usable
 
 
 def test_an_omitted_metric_records_why_it_was_omitted(

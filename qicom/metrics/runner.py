@@ -368,8 +368,12 @@ def _metric_result_is_usable(result: Any) -> bool:
         values = np.asarray(result.per_slice, dtype=float)
         return bool(values.size) and not np.isnan(values).any() and not np.isnan(result.mean)
     if np.isscalar(result):
+        # np.isscalar also admits memoryview and any numbers.Number, which the
+        # isnan stub does not take as scalars. The ufunc converts its input
+        # exactly as np.asarray does, so converting first changes no outcome;
+        # str, bytes and object-dtype numbers still raise TypeError here.
         try:
-            return not bool(np.isnan(result))
+            return not bool(np.isnan(np.asarray(result)))
         except TypeError:
             return True
     return True

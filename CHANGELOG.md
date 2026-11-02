@@ -555,6 +555,14 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Fixed
 
+- **mypy con numpy 2.5.4**: lo stub di `np.isscalar` è passato da
+  `TypeGuard[generic | complex | str | bytes | memoryview]` a `TypeIs[… | numbers.Number]`, e la
+  chiamata `np.isnan(result)` in `qicom/metrics/runner.py` non tipizzava più (`arg-type`). Il
+  risultato scalare è ora convertito con `np.asarray` prima di `np.isnan`, la stessa conversione
+  che l'ufunc fa da sé: nessun esito cambia, compresi i tipi su cui `np.isnan` solleva
+  `TypeError` (testo, byte, `Fraction`, `Decimal`), che restano accettati. Un test fissa gli esiti.
+  L'errore esisteva già prima del merge della PR #4, nascosto dall'audit che falliva prima della
+  fase statica; i lock fissano numpy 2.5.3, la CI installa senza lock e risolve 2.5.4.
 - **Valutazione qualitativa: le risposte sparivano scorrendo le slice.** Ogni risposta era
   registrata sulla slice della reference in quel momento, quindi su una serie con più slice il
   modulo si svuotava a ogni cambio di slice e le risposte ricomparivano solo tornando su quella

@@ -1,3 +1,5 @@
 # Desktop GUI stack.
-PySide6-Essentials>=6.6,<7
+# PySide6 6.12.0 aborts Python 3.11 (see pyproject.toml, `gui` extra).
+PySide6-Essentials>=6.6,<7,!=6.12.0; python_version < "3.12"
+PySide6-Essentials>=6.6,<7; python_version >= "3.12"
 pyqtgraph>=0.13,<1

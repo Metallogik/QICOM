@@ -45,7 +45,8 @@ Conceived and developed by Fabio Mattiussi in Lugano, Switzerland. Licensed unde
 
 ## Installation (development)
 
-Requires **Python >=3.11** and, for the GUI, **PySide6-Essentials >=6.6,<7 (Qt 6)**.
+Requires **Python >=3.11** and, for the GUI, **PySide6-Essentials >=6.6,<7 (Qt 6)**; on
+Python 3.11, 6.12.0 is excluded because it aborts the interpreter.
 CI covers Python 3.11/3.12; the bundles use 3.12 and include the interpreter.
 The bundle targets are Windows x64, macOS 14 Apple Silicon and Linux x64.
 Windows 10 from 1809 and Windows 11 are expected targets, not two desktop environments

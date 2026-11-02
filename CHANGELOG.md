@@ -573,6 +573,18 @@ empty between that version and yours, re-run the analysis before comparing.
   passato solo con pandas < 3.1, dove serve ancora per leggere i float bit per bit. Verificato con
   pandas 2.3.3, 3.0.6 (lock) e 3.1.0. L'errore esisteva già prima del merge della PR #4: la CI,
   senza lock, installa pandas 3.1.0.
+- **Python 3.11: la GUI terminava con SIGABRT con PySide6 6.12.0.** Ogni chiamata ai setter di
+  dimensione di `QGraphicsWidget` (`setMaximumHeight`, `setMinimumWidth`, `setPreferredHeight`, …)
+  toglie un riferimento a `None`, e pyqtgraph li chiama a ogni ridimensionamento. Da Python 3.12
+  `None` è immortale e non succede nulla; su 3.11 il conteggio arriva a zero e l'interprete
+  abortisce (`Fatal Python error: none_dealloc`). Nel job `test-base (3.11)` la suite si fermava
+  dopo 68 test in `test_adaptive_layout.py` senza traceback né riepilogo: la cattura di pytest
+  teneva l'output di faulthandler in un file temporaneo perso con il processo, e `check_ci.py`
+  restituiva il `returncode` −6 del pytest ucciso, che `SystemExit` trasforma nel codice 250.
+  L'extra `gui` esclude ora 6.12.0 solo su Python < 3.12 (6.11.3 non ha il difetto); i bundle,
+  su 3.12, restano su 6.12.0 e i lock sono invariati. `generate_locks.py --check` valuta i marker
+  per l'interprete e la piattaforma di ogni lock. Un test misura direttamente il conteggio di
+  `None` attorno a quei setter. L'errore esisteva già prima del merge della PR #4.
 - **Valutazione qualitativa: le risposte sparivano scorrendo le slice.** Ogni risposta era
   registrata sulla slice della reference in quel momento, quindi su una serie con più slice il
   modulo si svuotava a ogni cambio di slice e le risposte ricomparivano solo tornando su quella

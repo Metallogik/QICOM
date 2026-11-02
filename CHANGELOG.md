@@ -585,6 +585,13 @@ empty between that version and yours, re-run the analysis before comparing.
   su 3.12, restano su 6.12.0 e i lock sono invariati. `generate_locks.py --check` valuta i marker
   per l'interprete e la piattaforma di ogni lock. Un test misura direttamente il conteggio di
   `None` attorno a quei setter. L'errore esisteva già prima del merge della PR #4.
+- **Finestra quantitativa più larga di uno schermo da 512 px in portoghese.** Il testo vuoto del
+  pannello Grafici («Ainda não há nada para exibir no gráfico: execute Calcular primeiro.») non
+  andava a capo, e la sua larghezza su una riga diventava la larghezza minima del dock: con il
+  solo DejaVu Sans, come sul runner `ubuntu-latest`, la finestra arrivava a 529 px nello stadio
+  dei risultati. L'etichetta va ora a capo; la larghezza minima scende a 363 px. Con Liberation
+  Sans, il sostituto di Arial su molte installazioni Linux, il testo stava appena nei 512 px, e
+  per questo il test passava in locale. Preesistente.
 - **Valutazione qualitativa: le risposte sparivano scorrendo le slice.** Ogni risposta era
   registrata sulla slice della reference in quel momento, quindi su una serie con più slice il
   modulo si svuotava a ogni cambio di slice e le risposte ricomparivano solo tornando su quella

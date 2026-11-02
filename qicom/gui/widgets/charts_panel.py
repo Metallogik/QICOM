@@ -493,6 +493,9 @@ class ChartsPanel(QWidget):
 
         self._empty_label = QLabel()
         self._empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # Unwrapped, its one-line width became the dock's minimum: the
+        # Portuguese text alone pushed the window past a 512 px screen.
+        self._empty_label.setWordWrap(True)
 
         self._charts_container = QWidget()
         self._charts_layout = QVBoxLayout(self._charts_container)

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="470" viewBox="0 0 1000 470" font-family="Helvetica, Arial, sans-serif">
+<rect width="1000" height="470" fill="#ffffff"/>
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8590c"/></marker>
+<marker id="ahk" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1d1d1b"/></marker>
+<pattern id="noise" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#9a9a9a"/><circle cx="1.5" cy="1.5" r="1" fill="#e9e9e9"/><circle cx="4.5" cy="4" r="0.9" fill="#555"/></pattern>
+<filter id="blur"><feGaussianBlur stdDeviation="2.2"/></filter>
+</defs>
+<rect x="15" y="15" width="478" height="135" rx="14" fill="#fff" stroke="#2b8a3e" stroke-width="3"/>
+<circle cx="65" cy="82" r="26" fill="#2b8a3e"/><path d="M52.0,82 l9.1,9.88 l16.900000000000002,-19.5" fill="none" stroke="#fff" stroke-width="5.72" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="110" y="77" font-size="19" font-weight="bold" text-anchor="start" fill="#1d1d1b">Research and quality control</text>
+<text x="110" y="105" font-size="15" font-weight="normal" text-anchor="start" fill="#555">compare scanners, settings, software</text>
+<rect x="507" y="15" width="478" height="135" rx="14" fill="#fff" stroke="#c92a2a" stroke-width="3"/>
+<circle cx="557" cy="82" r="26" fill="#c92a2a"/><path d="M546.08,71.08 L567.92,92.92 M567.92,71.08 L546.08,92.92" stroke="#fff" stroke-width="5.72" stroke-linecap="round"/>
+<text x="602" y="77" font-size="19" font-weight="bold" text-anchor="start" fill="#1d1d1b">Diagnosis or patient decisions</text>
+<text x="602" y="105" font-size="15" font-weight="normal" text-anchor="start" fill="#555">QICOM is not a medical device</text>
+<rect x="15" y="165" width="478" height="135" rx="14" fill="#fff" stroke="#2b8a3e" stroke-width="3"/>
+<circle cx="65" cy="232" r="26" fill="#2b8a3e"/><path d="M52.0,232 l9.1,9.88 l16.900000000000002,-19.5" fill="none" stroke="#fff" stroke-width="5.72" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="110" y="227" font-size="19" font-weight="bold" text-anchor="start" fill="#1d1d1b">Check the anonymized copy</text>
+<text x="110" y="255" font-size="15" font-weight="normal" text-anchor="start" fill="#555">open it before you share anything</text>
+<rect x="507" y="165" width="478" height="135" rx="14" fill="#fff" stroke="#c92a2a" stroke-width="3"/>
+<circle cx="557" cy="232" r="26" fill="#c92a2a"/><path d="M546.08,221.08 L567.92,242.92 M567.92,221.08 L546.08,242.92" stroke="#fff" stroke-width="5.72" stroke-linecap="round"/>
+<text x="602" y="227" font-size="16" font-weight="bold" text-anchor="start" fill="#1d1d1b">Trust that text in the pixels is gone</text>
+<text x="602" y="255" font-size="15" font-weight="normal" text-anchor="start" fill="#555">text burned into pixels is not removed</text>
+<rect x="15" y="315" width="478" height="135" rx="14" fill="#fff" stroke="#2b8a3e" stroke-width="3"/>
+<circle cx="65" cy="382" r="26" fill="#2b8a3e"/><path d="M52.0,382 l9.1,9.88 l16.900000000000002,-19.5" fill="none" stroke="#fff" stroke-width="5.72" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="110" y="377" font-size="19" font-weight="bold" text-anchor="start" fill="#1d1d1b">Keep your originals</text>
+<text x="110" y="405" font-size="15" font-weight="normal" text-anchor="start" fill="#555">QICOM always writes copies</text>
+<rect x="507" y="315" width="478" height="135" rx="14" fill="#fff" stroke="#c92a2a" stroke-width="3"/>
+<circle cx="557" cy="382" r="26" fill="#c92a2a"/><path d="M546.08,371.08 L567.92,392.92 M567.92,371.08 L546.08,392.92" stroke="#fff" stroke-width="5.72" stroke-linecap="round"/>
+<text x="602" y="377" font-size="17" font-weight="bold" text-anchor="start" fill="#1d1d1b">Compare scores from different setups</text>
+<text x="602" y="405" font-size="15" font-weight="normal" text-anchor="start" fill="#555">other profile/model = other scale</text>
+</svg>

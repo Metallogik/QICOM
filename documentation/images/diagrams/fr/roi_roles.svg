@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="380" viewBox="0 0 1000 380" font-family="Helvetica, Arial, sans-serif">
+<rect width="1000" height="380" fill="#ffffff"/>
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8590c"/></marker>
+<marker id="ahk" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1d1d1b"/></marker>
+<pattern id="noise" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#9a9a9a"/><circle cx="1.5" cy="1.5" r="1" fill="#e9e9e9"/><circle cx="4.5" cy="4" r="0.9" fill="#555"/></pattern>
+<filter id="blur"><feGaussianBlur stdDeviation="2.2"/></filter>
+</defs>
+<rect x="40" y="40" width="280" height="280" rx="6" fill="#000" stroke="#1d1d1b" stroke-width="3"/><g><ellipse cx="180.0" cy="180.0" rx="95.2" ry="123.2" fill="#f2f2f2"/><ellipse cx="180.0" cy="180.0" rx="86.8" ry="114.8" fill="url(#noise)"/><ellipse cx="180.0" cy="146.4" rx="28.0" ry="30.8" fill="#b5b5b5" opacity=".9"/><ellipse cx="152.0" cy="185.6" rx="15.4" ry="44.800000000000004" fill="#111" transform="rotate(-18 152.0 180.0)"/><ellipse cx="208.0" cy="185.6" rx="12.6" ry="39.2" fill="#111" transform="rotate(18 208.0 180.0)"/></g>
+<circle cx="180" cy="125" r="32" fill="none" stroke="#1c7ed6" stroke-width="5"/>
+<rect x="58" y="252" width="50" height="50" rx="4" fill="none" stroke="#e8590c" stroke-width="5"/>
+<line x1="215" y1="120" x2="420" y2="110" stroke="#e8590c" stroke-width="4" stroke-linecap="round" marker-end="url(#ah)"/>
+<line x1="112" y1="280" x2="420" y2="238" stroke="#e8590c" stroke-width="4" stroke-linecap="round" marker-end="url(#ah)"/>
+<text x="440" y="105" font-size="24" font-weight="bold" text-anchor="start" fill="#1c7ed6">ROI Signal</text>
+<text x="440" y="133" font-size="17" font-weight="normal" text-anchor="start" fill="#555">sur le tissu qui vous intéresse</text>
+<text x="440" y="225" font-size="24" font-weight="bold" text-anchor="start" fill="#e8590c">ROI Bruit</text>
+<text x="440" y="253" font-size="17" font-weight="normal" text-anchor="start" fill="#555">sur une zone uniforme (ou dans l'air)</text>
+<rect x="430" y="290" width="540" height="66" rx="10" fill="#f1f3f5" stroke="#adb5bd" stroke-width="1.5"/>
+<text x="700" y="318" font-size="17" font-weight="bold" text-anchor="middle" fill="#1d1d1b">SNR = à quel point le signal ressort du bruit</text>
+<text x="700" y="343" font-size="16" font-weight="normal" text-anchor="middle" fill="#555">CNR = la même chose, entre deux tissus</text>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="330" viewBox="0 0 1000 330" font-family="Helvetica, Arial, sans-serif">
+<rect width="1000" height="330" fill="#ffffff"/>
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8590c"/></marker>
+<marker id="ahk" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1d1d1b"/></marker>
+<pattern id="noise" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#9a9a9a"/><circle cx="1.5" cy="1.5" r="1" fill="#e9e9e9"/><circle cx="4.5" cy="4" r="0.9" fill="#555"/></pattern>
+<filter id="blur"><feGaussianBlur stdDeviation="2.2"/></filter>
+</defs>
+<rect x="15" y="15" width="310" height="300" rx="14" fill="#fff" stroke="#1d1d1b" stroke-width="2.5"/>
+<line x1="80" y1="230" x2="80" y2="70" stroke="#e8590c" stroke-width="8" stroke-linecap="round" marker-end="url(#ah)"/>
+<text x="200" y="70" font-size="21" font-weight="bold" text-anchor="middle" fill="#2b8a3e">Höher = besser</text>
+<text x="130" y="120" font-size="19" font-weight="normal" text-anchor="start" fill="#1d1d1b">PSNR</text>
+<text x="130" y="154" font-size="19" font-weight="normal" text-anchor="start" fill="#1d1d1b">SSIM</text>
+<text x="130" y="188" font-size="19" font-weight="normal" text-anchor="start" fill="#1d1d1b">PCC</text>
+<text x="130" y="222" font-size="19" font-weight="normal" text-anchor="start" fill="#1d1d1b">SNR, CNR</text>
+<rect x="345" y="15" width="310" height="300" rx="14" fill="#fff" stroke="#1d1d1b" stroke-width="2.5"/>
+<line x1="410" y1="70" x2="410" y2="230" stroke="#e8590c" stroke-width="8" stroke-linecap="round" marker-end="url(#ah)"/>
+<text x="530" y="70" font-size="20" font-weight="bold" text-anchor="middle" fill="#2b8a3e">Niedriger = besser</text>
+<text x="460" y="120" font-size="19" font-weight="normal" text-anchor="start" fill="#1d1d1b">MSE</text>
+<text x="460" y="154" font-size="19" font-weight="normal" text-anchor="start" fill="#1d1d1b">MAE</text>
+<text x="460" y="188" font-size="19" font-weight="normal" text-anchor="start" fill="#1d1d1b">RMSE</text>
+<text x="460" y="222" font-size="19" font-weight="normal" text-anchor="start" fill="#1d1d1b">NMSE</text>
+<rect x="675" y="15" width="310" height="300" rx="14" fill="#fff" stroke="#1d1d1b" stroke-width="2.5"/>
+<circle cx="745" cy="150" r="34" fill="none" stroke="#e8590c" stroke-width="6"/><circle cx="745" cy="150" r="10" fill="#e8590c"/>
+<text x="830" y="70" font-size="20" font-weight="bold" text-anchor="middle" fill="#2b8a3e">Näher an 0 = besser</text>
+<text x="800" y="140" font-size="19" font-weight="normal" text-anchor="start" fill="#1d1d1b">Bias</text>
+<text x="800" y="174" font-size="16" font-weight="normal" text-anchor="start" fill="#555">(mittlerer Fehler)</text>
+<text x="500" y="325" font-size="1" font-weight="normal" text-anchor="middle" fill="#1d1d1b"></text>
+</svg>

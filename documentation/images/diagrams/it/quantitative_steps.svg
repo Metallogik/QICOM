@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="170" viewBox="0 0 1000 170" font-family="Helvetica, Arial, sans-serif">
+<rect width="1000" height="170" fill="#ffffff"/>
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8590c"/></marker>
+<marker id="ahk" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1d1d1b"/></marker>
+<pattern id="noise" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#9a9a9a"/><circle cx="1.5" cy="1.5" r="1" fill="#e9e9e9"/><circle cx="4.5" cy="4" r="0.9" fill="#555"/></pattern>
+<filter id="blur"><feGaussianBlur stdDeviation="2.2"/></filter>
+</defs>
+<rect x="12" y="30" width="113" height="90" rx="12" fill="#fff" stroke="#1d1d1b" stroke-width="2.5"/>
+<circle cx="34" cy="30" r="17" fill="#1d1d1b"/><text x="34" y="36.12" font-size="17" font-weight="bold" text-anchor="middle" fill="#fff">1</text>
+<text x="68" y="78" font-size="16" font-weight="bold" text-anchor="middle" fill="#1d1d1b">Importa</text>
+<text x="68" y="102" font-size="13" font-weight="normal" text-anchor="middle" fill="#555">carica R + C</text>
+<line x1="125" y1="75" x2="135" y2="75" stroke="#adb5bd" stroke-width="2" stroke-linecap="round"/>
+<rect x="135" y="30" width="113" height="90" rx="12" fill="#fff" stroke="#1d1d1b" stroke-width="2.5"/>
+<circle cx="157" cy="30" r="17" fill="#1d1d1b"/><text x="157" y="36.12" font-size="17" font-weight="bold" text-anchor="middle" fill="#fff">2</text>
+<text x="191" y="78" font-size="16" font-weight="bold" text-anchor="middle" fill="#1d1d1b">Ispeziona</text>
+<text x="191" y="102" font-size="11" font-weight="normal" text-anchor="middle" fill="#555">scorri, contrasto</text>
+<line x1="248" y1="75" x2="258" y2="75" stroke="#adb5bd" stroke-width="2" stroke-linecap="round"/>
+<rect x="258" y="30" width="113" height="90" rx="12" fill="#fff" stroke="#1d1d1b" stroke-width="2.5"/>
+<circle cx="280" cy="30" r="17" fill="#1d1d1b"/><text x="280" y="36.12" font-size="17" font-weight="bold" text-anchor="middle" fill="#fff">3</text>
+<text x="314" y="78" font-size="16" font-weight="bold" text-anchor="middle" fill="#1d1d1b">Misura</text>
+<text x="314" y="102" font-size="13" font-weight="normal" text-anchor="middle" fill="#555">disegna ROI</text>
+<line x1="371" y1="75" x2="381" y2="75" stroke="#adb5bd" stroke-width="2" stroke-linecap="round"/>
+<rect x="381" y="30" width="113" height="90" rx="12" fill="#fff" stroke="#1d1d1b" stroke-width="2.5"/>
+<circle cx="403" cy="30" r="17" fill="#1d1d1b"/><text x="403" y="36.12" font-size="17" font-weight="bold" text-anchor="middle" fill="#fff">4</text>
+<text x="437" y="78" font-size="14" font-weight="bold" text-anchor="middle" fill="#1d1d1b">Rimuovi aria</text>
+<text x="437" y="102" font-size="13" font-weight="normal" text-anchor="middle" fill="#555">facoltativo</text>
+<line x1="494" y1="75" x2="504" y2="75" stroke="#adb5bd" stroke-width="2" stroke-linecap="round"/>
+<rect x="504" y="30" width="113" height="90" rx="12" fill="#fff" stroke="#e8590c" stroke-width="2.5"/>
+<circle cx="526" cy="30" r="17" fill="#e8590c"/><text x="526" y="36.12" font-size="17" font-weight="bold" text-anchor="middle" fill="#fff">5</text>
+<text x="560" y="78" font-size="16" font-weight="bold" text-anchor="middle" fill="#1d1d1b">Analizza</text>
+<text x="560" y="102" font-size="13" font-weight="normal" text-anchor="middle" fill="#555">scegli metriche</text>
+<line x1="617" y1="75" x2="627" y2="75" stroke="#adb5bd" stroke-width="2" stroke-linecap="round"/>
+<rect x="627" y="30" width="113" height="90" rx="12" fill="#fff" stroke="#1d1d1b" stroke-width="2.5"/>
+<circle cx="649" cy="30" r="17" fill="#1d1d1b"/><text x="649" y="36.12" font-size="17" font-weight="bold" text-anchor="middle" fill="#fff">6</text>
+<text x="683" y="78" font-size="16" font-weight="bold" text-anchor="middle" fill="#1d1d1b">Risultati</text>
+<text x="683" y="102" font-size="11" font-weight="normal" text-anchor="middle" fill="#555">tabella + grafici</text>
+<line x1="740" y1="75" x2="750" y2="75" stroke="#adb5bd" stroke-width="2" stroke-linecap="round"/>
+<rect x="750" y="30" width="113" height="90" rx="12" fill="#fff" stroke="#1d1d1b" stroke-width="2.5"/>
+<circle cx="772" cy="30" r="17" fill="#1d1d1b"/><text x="772" y="36.12" font-size="17" font-weight="bold" text-anchor="middle" fill="#fff">7</text>
+<text x="806" y="78" font-size="11" font-weight="bold" text-anchor="middle" fill="#1d1d1b">Mappe di calore</text>
+<text x="806" y="102" font-size="13" font-weight="normal" text-anchor="middle" fill="#555">dove differisce</text>
+<line x1="863" y1="75" x2="873" y2="75" stroke="#adb5bd" stroke-width="2" stroke-linecap="round"/>
+<rect x="873" y="30" width="113" height="90" rx="12" fill="#fff" stroke="#1d1d1b" stroke-width="2.5"/>
+<circle cx="895" cy="30" r="17" fill="#1d1d1b"/><text x="895" y="36.12" font-size="17" font-weight="bold" text-anchor="middle" fill="#fff">8</text>
+<text x="929" y="78" font-size="16" font-weight="bold" text-anchor="middle" fill="#1d1d1b">Esporta</text>
+<text x="929" y="102" font-size="13" font-weight="normal" text-anchor="middle" fill="#555">Excel, immagini</text>
+<text x="500" y="155" font-size="15" font-weight="normal" text-anchor="middle" fill="#555">I passi sono schede in alto nella finestra. Vai da sinistra a destra; puoi sempre tornare indietro.</text>
+</svg>

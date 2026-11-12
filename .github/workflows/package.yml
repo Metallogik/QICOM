@@ -182,7 +182,7 @@ jobs:
           SELECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.platform || 'all' }}
         run: |
           all='[
-            {"os":"macos-14","platform":"macos","artifact":"QICOM-macos-arm64","extension":".zip"},
+            {"os":"macos-15","platform":"macos","artifact":"QICOM-macos-arm64","extension":".zip"},
             {"os":"windows-latest","platform":"windows","artifact":"QICOM-windows-x64","extension":".zip"},
             {"os":"ubuntu-latest","platform":"linux","artifact":"QICOM-linux-x64","extension":".tar.gz"}
           ]'
@@ -210,10 +210,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macos-14 is pinned rather than macos-latest so the runner
+        # macos-15 is pinned rather than macos-latest so the runner
         # architecture stays predictable: it produces an Apple Silicon (arm64)
         # build, which will NOT run on an Intel Mac. Add a macos-13 entry to
-        # the `select` job if an Intel bundle is ever needed.
+        # the `select` job if an Intel bundle is ever needed. (macos-14 was
+        # retired by GitHub in October 2026.)
         include: ${{ fromJSON(needs.select.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
@@ -781,7 +782,7 @@ jobs:
           | File | Platform |
           |---|---|
           | QICOM-windows-x64.zip | Windows 10 (1809+) / 11, x64 |
-          | QICOM-macos-arm64.zip | macOS 14+, Apple Silicon only (not Intel) |
+          | QICOM-macos-arm64.zip | macOS, Apple Silicon only (not Intel) |
           | QICOM-linux-x64.deb | Debian / Ubuntu, x64 |
           | QICOM-linux-x64.tar.gz | Other Linux distributions, x64 |
 

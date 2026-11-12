@@ -361,6 +361,14 @@ if _include_learned:
     module_collection_mode["lpips"] = "py"
 else:
     excludes += _LEARNED_LIBS
+    # Without torch nothing imports setuptools at run time. PyInstaller still
+    # followed cffi's build-time helpers (cffi._shimmed_dist_utils, imported
+    # only by set_source/compile/distutils_extension) into the whole of
+    # setuptools, which then shipped unused and outside the licence
+    # inventory - check-bundle refused it.
+    # Learned bundles keep it: torch.utils.cpp_extension imports it, and
+    # there torch's own requirements put it in the inventory.
+    excludes += ["setuptools", "_distutils_hack", "pkg_resources"]
 
 a = Analysis(  # noqa: F821 - Analysis/PYZ/EXE/COLLECT are injected by PyInstaller
     [str(REPO_ROOT / "qicom" / "gui" / "app.py")],

@@ -28,7 +28,10 @@ on:
         options:
           - full
           - base
+  # A push to main builds the bundles qicom.ch offers (see publish-site).
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
@@ -44,7 +47,7 @@ jobs:
   # resources has verified nothing, and on a release that is a failure, never
   # a green skip.
   ibsi-gate:
-    if: github.event_name == 'push'
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -107,7 +110,7 @@ jobs:
   # PyRadiomics verification above keeps running on the dependency set the
   # bundle actually ships. Also without QICOM_IBSI_ALLOW_NETWORK_FAILURE.
   ibsi-mirp-gate:
-    if: github.event_name == 'push'
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -193,7 +196,7 @@ jobs:
           echo "matrix=$selected" >> "$GITHUB_OUTPUT"
 
   package:
-    # `always()` so a manual (workflow_dispatch) build still runs while the
+    # `always()` so a manual or main-branch build still runs while the
     # tag-only IBSI gates are skipped - but a *tag* build waits for both and
     # stops if either failed.
     needs: [select, ibsi-gate, ibsi-mirp-gate]
@@ -201,9 +204,9 @@ jobs:
       always() &&
       needs.select.result == 'success' &&
       (needs.ibsi-gate.result == 'success' ||
-       (github.event_name == 'workflow_dispatch' && needs.ibsi-gate.result == 'skipped')) &&
+       (!startsWith(github.ref, 'refs/tags/') && needs.ibsi-gate.result == 'skipped')) &&
       (needs.ibsi-mirp-gate.result == 'success' ||
-       (github.event_name == 'workflow_dispatch' && needs.ibsi-mirp-gate.result == 'skipped'))
+       (!startsWith(github.ref, 'refs/tags/') && needs.ibsi-mirp-gate.result == 'skipped'))
     strategy:
       fail-fast: false
       matrix:
@@ -214,10 +217,17 @@ jobs:
         include: ${{ fromJSON(needs.select.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
+    # Pushes to main come in bursts and only the newest commit is worth a
+    # bundle, so a newer push cancels the build of an older one. Tags and
+    # manual runs are never cancelled.
+    concurrency:
+      group: ${{ (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')) && format('package-main-{0}', matrix.platform) || format('package-{0}-{1}', github.run_id, matrix.platform) }}
+      cancel-in-progress: ${{ (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')) }}
     env:
-      # '0' only when a manual run explicitly unchecks the box; tag builds are
+      # '0' when a manual run explicitly unchecks the box, and for main-branch
+      # builds, which feed the lighter downloads of qicom.ch; tag builds are
       # always complete builds.
-      QICOM_INCLUDE_LEARNED_METRICS: ${{ (github.event_name == 'workflow_dispatch' && !inputs.include_learned) && '0' || '1' }}
+      QICOM_INCLUDE_LEARNED_METRICS: ${{ ((github.event_name == 'workflow_dispatch' && !inputs.include_learned) || (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/'))) && '0' || '1' }}
       # Release tags remain full; manual builds can explicitly request base.
       QICOM_PACKAGE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.profile || 'full' }}
     steps:
@@ -322,7 +332,7 @@ jobs:
       - name: Release consistency
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
+          if [ "${{ startsWith(github.ref, 'refs/tags/') }}" = "true" ]; then
             python packaging/check_release_consistency.py \
               --require-tag --expected-tag "$GITHUB_REF_NAME"
           else
@@ -337,7 +347,7 @@ jobs:
       - name: Record build identity
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
+          if [ "${{ startsWith(github.ref, 'refs/tags/') }}" = "true" ]; then
             python packaging/generate_build_identity.py --require-clean
           else
             python packaging/generate_build_identity.py
@@ -689,3 +699,96 @@ jobs:
             --repo "${{ github.repository }}" --draft --verify-tag \
             --title "QICOM ${GITHUB_REF_NAME#v}" --notes-file release-notes.md
 
+  # Every push to main refreshes one rolling release, "latest-build", whose
+  # download URLs never change: qicom.ch links straight to them, so the site
+  # always offers the newest bundles without hosting the files itself. These
+  # are development builds of main, not versioned releases: the tag only marks
+  # which commit the files on the site come from, and moves with every build.
+  # Each file is uploaded under a temporary name and swapped in only once it
+  # is complete, so a download started meanwhile never meets a missing file.
+  publish-site:
+    needs: [package]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.package.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      actions: read
+    # Never interrupted half-way through a swap; a newer build waits its turn.
+    concurrency:
+      group: publish-site
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: latest-build
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Collect the bundles of this run
+        run: |
+          gh run download "${{ github.run_id }}" --dir release-files --pattern 'QICOM-*'
+          mkdir assets
+          find release-files -type f -exec mv -t assets {} +
+          for name in QICOM-windows-x64.zip QICOM-macos-arm64.zip \
+                      QICOM-linux-x64.deb QICOM-linux-x64.tar.gz; do
+            if [ ! -s "assets/$name" ]; then
+              echo "::error::$name is missing from this run; the site keeps the previous files"
+              exit 1
+            fi
+          done
+          ls -l assets
+      - name: Point the rolling release at this commit
+        run: |
+          version=$(python3 -c 'import runpy; print(runpy.run_path("qicom/__version__.py")["__version__"])')
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --target "$GITHUB_SHA" --latest \
+              --title "QICOM $version (latest build)" --notes "First automatic build, files follow."
+          fi
+          gh api -X PATCH "repos/$GH_REPO/git/refs/tags/$TAG" \
+            -f sha="$GITHUB_SHA" -F force=true > /dev/null
+      - name: Swap in the new files
+        run: |
+          release_id=$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq .id)
+          asset_id() {
+            gh api "repos/$GH_REPO/releases/$release_id/assets?per_page=100" \
+              --jq ".[] | select(.name == \"$1\") | .id"
+          }
+          for path in assets/*; do
+            name=$(basename "$path")
+            staged="next-$name"
+            leftover=$(asset_id "$staged")
+            if [ -n "$leftover" ]; then
+              gh api -X DELETE "repos/$GH_REPO/releases/assets/$leftover"
+            fi
+            mv "$path" "assets/$staged"
+            gh release upload "$TAG" "assets/$staged"
+            old=$(asset_id "$name")
+            new=$(asset_id "$staged")
+            if [ -n "$old" ]; then
+              gh api -X DELETE "repos/$GH_REPO/releases/assets/$old"
+            fi
+            gh api -X PATCH "repos/$GH_REPO/releases/assets/$new" -f name="$name" > /dev/null
+            echo "Published $name"
+          done
+      - name: Describe the build
+        run: |
+          built=$(date -u '+%Y-%m-%d %H:%M UTC')
+          cat > notes.md <<EOF
+          Built automatically from \`main\` at commit $GITHUB_SHA ($built).
+          These files are what https://qicom.ch offers for download.
+
+          | File | Platform |
+          |---|---|
+          | QICOM-windows-x64.zip | Windows 10 (1809+) / 11, x64 |
+          | QICOM-macos-arm64.zip | macOS 14+, Apple Silicon only (not Intel) |
+          | QICOM-linux-x64.deb | Debian / Ubuntu, x64 |
+          | QICOM-linux-x64.tar.gz | Other Linux distributions, x64 |
+
+          Each archive has a \`.sha256\` checksum next to it. This is a development
+          build of main, not a versioned release; it does not include the learned
+          metrics (LPIPS, DISTS, ...), which are available from source.
+
+          Research and quality-control use only. QICOM is not a medical device.
+          EOF
+          gh release edit "$TAG" --title "QICOM $VERSION (latest build)" --notes-file notes.md

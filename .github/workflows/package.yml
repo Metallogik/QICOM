@@ -408,6 +408,23 @@ jobs:
             --inventory build/attribution/THIRD_PARTY_INVENTORY.json \
             --bundle-modules "build/attribution/bundle-modules-${QICOM_PACKAGE_PROFILE}.json"
 
+      # The smoke test starts Qt, which needs libEGL and the xcb libraries even
+      # offscreen. The ubuntu-latest image no longer provides libEGL (run #5:
+      # "libEGL.so.1: cannot open shared object file"), so install the same set
+      # the IBSI gate does. Users' desktops have them; the .deb declares them.
+      - name: Install Qt runtime dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libopengl0 \
+            libxkbcommon0 libxkbcommon-x11-0 \
+            libdbus-1-3 \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 \
+            libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 \
+            libxrender1 libxi6 libfontconfig1 libfreetype6
+
       # The smoke test prints its build identity; the bundle must report the
       # commit that produced it, resolved from the module generated above
       # rather than from a repository it does not carry.

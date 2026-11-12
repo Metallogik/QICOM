@@ -726,7 +726,12 @@ jobs:
   # is complete, so a download started meanwhile never meets a missing file.
   publish-site:
     needs: [package]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.package.result == 'success'
+    # !cancelled() rather than the implicit success(): success() also looks at
+    # the tag-only IBSI gates upstream, which a main-branch build skips, and
+    # so skipped this job even after every bundle had built (run #6).
+    if: >-
+      !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.package.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -763,8 +768,12 @@ jobs:
             gh release create "$TAG" --target "$GITHUB_SHA" --latest \
               --title "QICOM $version (latest build)" --notes "First automatic build, files follow."
           fi
-          gh api -X PATCH "repos/$GH_REPO/git/refs/tags/$TAG" \
-            -f sha="$GITHUB_SHA" -F force=true > /dev/null
+          # Best effort: the site needs the files, not the tag. If GitHub refuses
+          # to move it, the notes below still name the commit the files come from.
+          if ! gh api -X PATCH "repos/$GH_REPO/git/refs/tags/$TAG" \
+            -f sha="$GITHUB_SHA" -F force=true > /dev/null; then
+            echo "::warning::could not move $TAG to $GITHUB_SHA; the files are published anyway"
+          fi
       - name: Swap in the new files
         run: |
           release_id=$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq .id)

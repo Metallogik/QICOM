@@ -27,6 +27,11 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Added
 
+- **"Carica immagini" spiega cosa chiede.** La finestra di apertura dice in una riga come si può
+  caricare, e i tre pulsanti hanno nomi espliciti ("Carica una cartella intera...", "Carica un solo
+  file...", "Carica più file insieme...") con un tooltip ciascuno: cosa accettano e in che ordine
+  diventano slice (DICOM per posizione, le altre immagini per nome). Anche la scelta del pannello
+  di destinazione e il pulsante "Carica immagini..." del passaggio Importa hanno un tooltip.
 - **Ripristino dei valori predefiniti.** Nella pagina Mappe di calore, "Ripristina predefiniti"
   riporta la scala colori a quella della metrica, la soglia min/max all'intervallo della mappa
   mostrata e luminosità/contrasto di ogni immagine ai valori del caricamento (ognuno annullabile

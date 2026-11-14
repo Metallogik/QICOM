@@ -48,6 +48,13 @@ class OpenImagesDialog(QDialog):
         # button) - nothing to actually choose, so don't ask.
         self._target_row.setVisible(len(panels) > 1)
 
+        # "Load images" did not say whether it wanted a folder, one file or
+        # several: one line says what the three buttons are for, and each
+        # button's tooltip says what it accepts and how slices are ordered.
+        self._hint = QLabel()
+        self._hint.setObjectName("panelSectionHint")
+        self._hint.setWordWrap(True)
+
         self._folder_button = QPushButton()
         self._single_button = QPushButton()
         self._stack_button = QPushButton()
@@ -62,6 +69,7 @@ class OpenImagesDialog(QDialog):
 
         layout = QVBoxLayout(self)
         layout.addWidget(self._target_row)
+        layout.addWidget(self._hint)
         layout.addLayout(buttons_row)
 
         translator.on_language_changed(self.retranslate_ui)
@@ -70,9 +78,14 @@ class OpenImagesDialog(QDialog):
     def retranslate_ui(self) -> None:
         self.setWindowTitle(translator.tr("dialog.open_images.title"))
         self._target_label.setText(translator.tr("dialog.open_images.target_label"))
+        self._panel_combo.setToolTip(translator.tr("dialog.open_images.target_tooltip"))
+        self._hint.setText(translator.tr("dialog.open_images.hint"))
         self._folder_button.setText(translator.tr("dialog.open_images.folder_button"))
+        self._folder_button.setToolTip(translator.tr("dialog.open_images.folder_tooltip"))
         self._single_button.setText(translator.tr("dialog.open_images.single_button"))
+        self._single_button.setToolTip(translator.tr("dialog.open_images.single_tooltip"))
         self._stack_button.setText(translator.tr("dialog.open_images.stack_button"))
+        self._stack_button.setToolTip(translator.tr("dialog.open_images.stack_tooltip"))
 
     def _selected_panel(self) -> ImagePanel:
         if len(self._panels) == 1:

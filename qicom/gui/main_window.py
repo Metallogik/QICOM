@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QEvent, QObject, Qt, QTimer
 from PySide6.QtGui import (
     QAction,
     QActionGroup,
@@ -60,7 +60,12 @@ from qicom.gui.resources import app_icon
 from qicom.gui.theming import SUPPORTED_THEMES, theme_manager
 from qicom.gui.tools.workflow_menu import UtilityToolsMenu
 from qicom.gui.widgets.about_dialog import AboutDialog
-from qicom.gui.widgets.adaptive_layout import DpiIconLabel, make_panel_scrollable, place_tool_dock
+from qicom.gui.widgets.adaptive_layout import (
+    DpiIconLabel,
+    fit_window_to_screen,
+    make_panel_scrollable,
+    place_tool_dock,
+)
 from qicom.gui.widgets.analysis_setup_panel import AnalysisSetupPanel
 from qicom.gui.widgets.annotation_manager import AnnotationManagerPanel
 from qicom.gui.widgets.background_panel import BackgroundPanel
@@ -115,6 +120,10 @@ from qicom.session.storage import SessionStorage
 # used to end up squeezed by the bottom-docked panels' own sizeHint-driven
 # default share of the window - see MainWindow._apply_default_dock_sizes.
 _MIN_IMAGE_VIEW_HEIGHT_FRACTION = 0.55
+# History/Log/Errors opened from View > Panels: their share of the window
+# height, and the least they get (see _give_bottom_panel_room).
+_BOTTOM_PANEL_FRACTION = 0.33
+_BOTTOM_PANEL_MIN_HEIGHT = 220
 
 
 def _project_file_filter() -> str:
@@ -176,7 +185,7 @@ class MainWindow(QMainWindow):
         on-disk session DB) - tests pass an in-memory SessionStorage so
         they never touch the user's actual history."""
         super().__init__()
-        self.resize(1280, 800)
+        fit_window_to_screen(self, 1280, 800)
         self.setWindowIcon(app_icon())
         # File > Close Project sets this before calling close() - checked by
         # qicom.gui.app.main() after its app.exec() call returns (closing
@@ -257,6 +266,7 @@ class MainWindow(QMainWindow):
         self.dual_image_view.roi_role_changed.connect(self.roi_manager_panel.update_row_role)
         self.dual_image_view.roi_value_changed.connect(self.roi_manager_panel.update_row_value)
         self.controller.command_history_changed.connect(self._refresh_undo_redo_actions)
+        self.controller.project_state_changed.connect(self._refresh_window_title)
         # Pre-flight findings about the images themselves (see
         # AppController.analysis_warning): shown where every other
         # user-facing message already lives, so they survive the status
@@ -352,6 +362,7 @@ class MainWindow(QMainWindow):
         self.heatmap_panel.hide_requested.connect(self.dual_image_view.hide_heatmap)
         self.heatmap_panel.threshold_changed.connect(self.dual_image_view.set_heatmap_levels)
         self.heatmap_panel.color_mode_changed.connect(self.dual_image_view.set_heatmap_color_mode)
+        self.heatmap_panel.image_levels_reset_requested.connect(self._reset_image_levels)
         self.heatmap_panel.export_heatmaps_requested.connect(self._on_export_heatmaps_requested)
 
         # The Analyze step's air-exclusion control (see BackgroundPanel):
@@ -605,11 +616,18 @@ class MainWindow(QMainWindow):
         self._errors_dialog: ErrorsDialog | None = None
         self._errors_status_button = QPushButton()
         self._errors_status_button.setObjectName("errorsStatusButton")
-        self._errors_status_button.setFlat(True)
         self._errors_status_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self._errors_status_button.clicked.connect(self._open_errors_dialog)
         self._errors_status_button.hide()
         self.errors_panel.errors_changed.connect(self._on_errors_changed)
+        self.errors_panel.open_all_requested.connect(self._open_errors_dialog)
+        # The error just reported, shown at the bottom left, opens the same
+        # window when clicked - it did not look clickable, and was not.
+        self._status_message_is_error = False
+        status_bar = self.statusBar()
+        assert status_bar is not None
+        status_bar.messageChanged.connect(self._on_status_message_changed)
+        status_bar.installEventFilter(self)
         # An exception escaping a slot lands here too (see
         # qicom.gui.error_reporting.install_exception_hook), instead of only
         # in a console nobody is watching.
@@ -635,7 +653,9 @@ class MainWindow(QMainWindow):
         self._save_project_folder_action: QAction
         self._open_project_folder_action: QAction
         self._concat_action: QAction
-        self._reset_all_action: QAction
+        self._new_project_action: QAction
+        self._save_project_action: QAction
+        self._save_project_as_action: QAction
         self._close_project_action: QAction
         self._undo_action: QAction
         self._redo_action: QAction
@@ -777,6 +797,9 @@ class MainWindow(QMainWindow):
             self._clear_background_preview()
         elif self._background_detection_requested:
             self._refresh_background_preview()
+        # After the preview is off the canvas: the two share its overlay.
+        if stage == "heatmaps":
+            self._show_default_heatmap()
 
         # Qt rebuilds a tabified dock's visible tabs when siblings are
         # hidden/shown. Re-apply icons and the live error badge after that
@@ -1621,6 +1644,30 @@ class MainWindow(QMainWindow):
             message = f"{message} {translator.tr('results_table.normalization_hint')}"
         self._report_error(message, timeout=12000)
 
+    def _show_default_heatmap(self) -> None:
+        """Entering the Heatmaps step with nothing on screen shows the
+        whole-image map of the selected metric, instead of an empty page
+        waiting for a click on a small Show button. When there is nothing
+        to show, the panel's status line says why; that is not an error."""
+        if self.heatmap_panel.has_active_targets:
+            return
+        if any(panel.image is None for panel in self.dual_image_view.list_panels()[:2]):
+            self.heatmap_panel.show_status_message(translator.tr("heatmap.status_no_images"))
+            return
+        try:
+            low, high = self.dual_image_view.show_heatmap(
+                self.heatmap_panel.current_metric_id(),
+                self.results_panel.data_range(),
+                self.heatmap_panel.current_pair_label(),
+            )
+        except ValueError as exc:
+            self.heatmap_panel.show_status_message(
+                translator.tr("heatmap.status_unavailable", reason=str(exc))
+            )
+            return
+        self.heatmap_panel.set_legend_range(low, high)
+        self.heatmap_panel.set_active_targets(None)
+
     def _on_heatmap_show_requested(self, metric_id: str, roi_ids: object) -> None:
         assert roi_ids is None or isinstance(roi_ids, list)
         try:
@@ -1632,6 +1679,9 @@ class MainWindow(QMainWindow):
             )
         except ValueError as exc:
             self._report_error(explained_error("errors.summary.heatmap", exc))
+            self.heatmap_panel.show_status_message(
+                translator.tr("heatmap.status_unavailable", reason=str(exc))
+            )
             return
         self.heatmap_panel.set_legend_range(low, high)
         self.heatmap_panel.set_active_targets(roi_ids)
@@ -1973,8 +2023,46 @@ class MainWindow(QMainWindow):
         status_bar = self.statusBar()
         assert status_bar is not None
         status_bar.showMessage(message, timeout)
+        self._status_message_is_error = True
+        status_bar.setCursor(Qt.CursorShape.PointingHandCursor)
+        status_bar.setToolTip(translator.tr("errors.status_tooltip"))
         self.errors_panel.add_error(message)
         self._increment_error_badge()
+
+    def _on_status_message_changed(self, message: str) -> None:
+        """Any later message replaces the error, and with it the click."""
+        if not self._status_message_is_error:
+            return
+        status_bar = self.statusBar()
+        assert status_bar is not None
+        latest = self.errors_panel.records()
+        if latest and message == latest[-1].message:
+            return
+        self._status_message_is_error = False
+        status_bar.unsetCursor()
+        status_bar.setToolTip("")
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
+        if (
+            watched is self.statusBar()
+            and event.type() == QEvent.Type.MouseButtonRelease
+            and self._status_message_is_error
+        ):
+            self._open_errors_dialog()
+            return True
+        return super().eventFilter(watched, event)
+
+    def _on_bottom_panel_toggled(self, dock: QDockWidget, opened: bool) -> None:
+        if opened:
+            self._give_bottom_panel_room(dock)
+
+    def _give_bottom_panel_room(self, dock: QDockWidget) -> None:
+        """A History/Log/Errors panel opened from View > Panels got whatever
+        height the bottom dock area had left - a single table row on most
+        steps. Opening one now gives it a third of the window; its border
+        can still be dragged afterwards."""
+        target = max(_BOTTOM_PANEL_MIN_HEIGHT, round(self.height() * _BOTTOM_PANEL_FRACTION))
+        QTimer.singleShot(0, lambda: self.resizeDocks([dock], [target], Qt.Orientation.Vertical))
 
     def _report_recovered_session_database(self) -> None:
         recovered = self.controller.storage.recovered_from
@@ -2029,6 +2117,7 @@ class MainWindow(QMainWindow):
         the Errors *window* instead (see _open_errors_dialog)."""
         self._errors_dock.show()
         self._errors_dock.raise_()
+        self._give_bottom_panel_room(self._errors_dock)
         # A dock shown after the tab group was rebuilt has no badge
         # attached yet.
         QTimer.singleShot(0, self._refresh_visible_dock_chrome)
@@ -2068,6 +2157,10 @@ class MainWindow(QMainWindow):
             self._errors_status_button.hide()
             return
         self._errors_status_button.setText(translator.tr("errors.status", count=count))
+        self._errors_status_button.setToolTip(translator.tr("errors.status_tooltip"))
+        self._errors_status_button.setIcon(
+            paint_icon("errors_panel", ink_color(theme_manager.theme))
+        )
         self._errors_status_button.show()
 
     def _refresh_error_badge_text(self) -> None:
@@ -2157,31 +2250,45 @@ class MainWindow(QMainWindow):
         menu_bar = self._build_brand_bar()
 
         self._file_menu = self._add_menu(menu_bar)
+        # The project commands come first and are always visible, with the
+        # shortcuts every desktop application uses: a tester could not find
+        # how to start a new project, nor how to save one, because saving
+        # appeared only on the Export step and starting over was called
+        # "Reset All".
+        self._new_project_action = QAction(self)
+        self._new_project_action.setShortcut(QKeySequence.StandardKey.New)
+        self._new_project_action.triggered.connect(self._on_new_project)
+        self._open_project_folder_action = QAction(self)
+        self._open_project_folder_action.setShortcut(QKeySequence.StandardKey.Open)
+        self._open_project_folder_action.triggered.connect(self._on_open_project_folder)
+        self._save_project_action = QAction(self)
+        self._save_project_action.setShortcut(QKeySequence.StandardKey.Save)
+        self._save_project_action.triggered.connect(self._on_save_project)
+        self._save_project_as_action = QAction(self)
+        self._save_project_as_action.setShortcut(QKeySequence.StandardKey.SaveAs)
+        self._save_project_as_action.triggered.connect(self._on_save_project_as)
         self._open_images_action = QAction(self)
         self._open_images_action.triggered.connect(self._on_open_images)
         self._save_analysis_action = QAction(self)
         self._save_analysis_action.triggered.connect(self._on_save_analysis)
         self._save_project_folder_action = QAction(self)
         self._save_project_folder_action.triggered.connect(self._on_save_export_requested)
-        self._open_project_folder_action = QAction(self)
-        self._open_project_folder_action.triggered.connect(self._on_open_project_folder)
         self._concat_action = QAction(self)
         self._concat_action.triggered.connect(self._on_concat_stacks)
-        self._reset_all_action = QAction(self)
-        self._reset_all_action.triggered.connect(self._on_reset_all)
         self._close_project_action = QAction(self)
         self._close_project_action.triggered.connect(self._on_close_project)
         self._exit_action = QAction(self)
         self._exit_action.triggered.connect(self.close)
-        self._file_menu.addAction(self._open_images_action)
-        self._file_menu.addAction(self._save_analysis_action)
-        self._file_menu.addSeparator()
-        self._file_menu.addAction(self._save_project_folder_action)
+        self._file_menu.addAction(self._new_project_action)
         self._file_menu.addAction(self._open_project_folder_action)
+        self._file_menu.addAction(self._save_project_action)
+        self._file_menu.addAction(self._save_project_as_action)
         self._file_menu.addSeparator()
+        self._file_menu.addAction(self._open_images_action)
         self._file_menu.addAction(self._concat_action)
         self._file_menu.addSeparator()
-        self._file_menu.addAction(self._reset_all_action)
+        self._file_menu.addAction(self._save_analysis_action)
+        self._file_menu.addAction(self._save_project_folder_action)
         self._file_menu.addSeparator()
         self._file_menu.addAction(self._close_project_action)
         self._file_menu.addAction(self._exit_action)
@@ -2219,7 +2326,11 @@ class MainWindow(QMainWindow):
         assert panels_menu is not None
         self._panels_menu = panels_menu
         for dock in (self._history_dock, self._log_dock, self._errors_dock):
-            self._panels_menu.addAction(dock.toggleViewAction())
+            action = dock.toggleViewAction()
+            action.triggered.connect(
+                lambda checked, opened=dock: self._on_bottom_panel_toggled(opened, checked)
+            )
+            self._panels_menu.addAction(action)
 
         self._tools_menu = self._add_menu(menu_bar)
         number_format_menu = self._tools_menu.addMenu("")
@@ -2340,27 +2451,50 @@ class MainWindow(QMainWindow):
         self.dual_image_view.hide_heatmap()
         self._refresh_images_loaded_gating()
 
-    def _on_reset_all(self) -> None:
-        """File > Reset All: wipes every unsaved in-progress bit of state
-        (images, ROIs, annotations, undo/redo, calculate() results/charts/
-        heatmap) back to a just-started session - never touches anything
-        persisted (saved analysis history, the log file), the same
-        distinction an actual restart would make. Irreversible (it also
-        clears the undo stack), hence the confirmation prompt.
+    def _reset_image_levels(self) -> None:
+        """Every image's brightness/contrast back to its values at load
+        time - each one an ordinary, undoable window/level change."""
+        for panel in self.dual_image_view.list_panels():
+            if panel.image is not None:
+                panel.reset_levels()
+
+    def _on_new_project(self) -> None:
+        """File > New Project: start over in this window, without going back
+        to the launcher. Unsaved changes get the same Save / Don't Save /
+        Cancel choice as closing; work that is already saved only needs a
+        confirmation, and an empty window starts over without asking.
+
+        Everything on screen goes - images, ROIs, annotations, undo/redo,
+        results, charts, heatmap - but nothing persisted is touched (the
+        project file, saved analysis history, the log), and the project
+        file is forgotten, so the new project is never saved over it (see
+        AppController.reset_all).
         """
-        confirmed = (
+        if self.controller.has_unsaved_results:
+            if not self._confirm_discard_unsaved_results():
+                return
+        elif self._has_open_work() and not self._confirm_new_project():
+            return
+        self._reset_session()
+
+    def _has_open_work(self) -> bool:
+        return bool(self.dual_image_view.list_roi_pairs()) or any(
+            panel.image is not None for panel in self.dual_image_view.list_panels()
+        )
+
+    def _confirm_new_project(self) -> bool:
+        return (
             QMessageBox.question(
                 self,
-                translator.tr("menu.file.reset_all"),
-                translator.tr("menu.file.reset_all_confirm"),
+                translator.tr("menu.file.new_project"),
+                translator.tr("menu.file.new_project_confirm"),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No,
             )
             == QMessageBox.StandardButton.Yes
         )
-        if not confirmed:
-            return
 
+    def _reset_session(self) -> None:
         self.controller.reset_all()
         self.results_panel.reset()
         self.results_panel.set_default_data_range(1.0)
@@ -2501,7 +2635,16 @@ class MainWindow(QMainWindow):
         box = QMessageBox(self)
         box.setIcon(QMessageBox.Icon.Warning)
         box.setWindowTitle(translator.tr("app.title"))
-        box.setText(translator.tr("menu.file.unsaved_results_message"))
+        current = self.controller.current_project_zip
+        if current is None:
+            box.setText(translator.tr("menu.file.unsaved_results_message"))
+        else:
+            # Says which file Save writes to: it does so without asking.
+            box.setText(
+                translator.tr(
+                    "menu.file.unsaved_named_message", name=current.stem, path=str(current)
+                )
+            )
         save_button = box.addButton(
             translator.tr("menu.file.exit_save_button"), QMessageBox.ButtonRole.AcceptRole
         )
@@ -2517,27 +2660,69 @@ class MainWindow(QMainWindow):
         if clicked is cancel_button:
             return False
         if clicked is save_button:
-            project_path = self.controller.current_project_zip
+            project_path = self.controller.current_project_zip or self._ask_project_path()
             if project_path is None:
-                selected_path, _selected_filter = QFileDialog.getSaveFileName(
-                    self,
-                    translator.tr("menu.file.save_project_title"),
-                    "qicom_project.zip",
-                    "QICOM Project (*.zip)",
-                )
-                if not selected_path:
-                    return False
-                project_path = Path(selected_path)
-                if project_path.suffix.lower() != ".zip":
-                    project_path = project_path.with_suffix(".zip")
-            try:
-                if not self._save_project_zip(project_path):
-                    return False
-            except (ValueError, OSError) as exc:
-                self._report_error(explained_error("errors.summary.save_project", exc))
                 return False
-            record_recent_project(project_path, MODE_QUANTITATIVE)
+            return self._write_project(project_path)
         return True
+
+    def _on_save_project(self) -> None:
+        """File > Save Project: back into the project's own file, or asks for
+        one the first time (the same as Save Project As)."""
+        project_path = self.controller.current_project_zip or self._ask_project_path()
+        if project_path is not None:
+            self._write_project(project_path)
+
+    def _on_save_project_as(self) -> None:
+        project_path = self._ask_project_path()
+        if project_path is not None:
+            self._write_project(project_path)
+
+    def _ask_project_path(self) -> Path | None:
+        current = self.controller.current_project_zip
+        selected_path, _selected_filter = QFileDialog.getSaveFileName(
+            self,
+            translator.tr("menu.file.save_project_title"),
+            str(current) if current is not None else "qicom_project.zip",
+            "QICOM Project (*.zip)",
+        )
+        if not selected_path:
+            return None
+        project_path = Path(selected_path)
+        if project_path.suffix.lower() != ".zip":
+            project_path = project_path.with_suffix(".zip")
+        return project_path
+
+    def _write_project(self, project_path: Path) -> bool:
+        """Save the whole editable project to `project_path`; False if the
+        user declined (see _save_project_zip) or the save failed, which is
+        reported. Shows where it went in the status bar."""
+        self._show_busy_dialog(translator.tr("menu.file.saving_project"))
+        try:
+            if not self._save_project_zip(project_path):
+                return False
+        except (ValueError, OSError) as exc:
+            self._report_error(explained_error("errors.summary.save_project", exc))
+            return False
+        finally:
+            self._hide_busy_dialog()
+        record_recent_project(project_path, MODE_QUANTITATIVE, name=project_path.stem)
+        status_bar = self.statusBar()
+        assert status_bar is not None
+        status_bar.showMessage(translator.tr("menu.file.project_saved", path=str(project_path)))
+        return True
+
+    def _refresh_window_title(self) -> None:
+        """The open project's name before the application's, with Qt's own
+        modified marker while there are unsaved changes: which project is
+        open, and whether closing it would lose anything, is always shown."""
+        current = self.controller.current_project_zip
+        if current is not None:
+            name = current.stem
+        else:
+            name = translator.tr("menu.file.untitled_project")
+        self.setWindowTitle(f"{name}[*] - {translator.tr('app.title')}")
+        self.setWindowModified(self.controller.has_unsaved_results)
 
     def _save_project_zip(self, project_path: Path) -> bool:
         """controller.save_project_zip, with the one question images that
@@ -2700,7 +2885,7 @@ class MainWindow(QMainWindow):
             self.background_panel.set_air_roi_count(self.dual_image_view.air_roi_count)
 
     def retranslate_ui(self) -> None:
-        self.setWindowTitle(translator.tr("app.title"))
+        self._refresh_window_title()
         self._roi_dock.setWindowTitle(translator.tr("roi_manager.title"))
         self._line_profile_dock.setWindowTitle(translator.tr("line_profile_panel.title"))
         self._results_dock.setWindowTitle(translator.tr("results_table.title"))
@@ -2721,7 +2906,9 @@ class MainWindow(QMainWindow):
         self._save_project_folder_action.setText(translator.tr("menu.file.save_project_folder"))
         self._open_project_folder_action.setText(translator.tr("menu.file.open_project_folder"))
         self._concat_action.setText(translator.tr("menu.file.concat"))
-        self._reset_all_action.setText(translator.tr("menu.file.reset_all"))
+        self._new_project_action.setText(translator.tr("menu.file.new_project"))
+        self._save_project_action.setText(translator.tr("menu.file.save_project"))
+        self._save_project_as_action.setText(translator.tr("menu.file.save_project_as"))
         self._close_project_action.setText(translator.tr("menu.file.close_project"))
         self._exit_action.setText(translator.tr("menu.file.exit"))
         self._edit_menu.setTitle(translator.tr("menu.edit"))

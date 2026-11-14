@@ -14,6 +14,7 @@ from qicom.metrics.heatmap import (
     HEATMAP_COLOR_MODES,
     HEATMAP_DEFAULT_COLOR_MODE,
     HEATMAP_METRIC_IDS,
+    default_heatmap_color_mode,
 )
 
 
@@ -554,3 +555,50 @@ class TestHeatmapPanelExportHeatmaps:
         panel._export_heatmaps_button.click()
 
         assert received == [True]
+
+
+class TestRestoreDefaults:
+    """The heatmap page's one-click reset, asked for by a tester who had
+    dragged the sliders and had no way back."""
+
+    def test_restores_the_color_scale_the_threshold_and_asks_for_image_levels(
+        self, qtbot: QtBot
+    ) -> None:
+        panel = HeatmapPanel()
+        qtbot.addWidget(panel)
+        panel.set_legend_range(0.2, 0.8)
+        grayscale = panel._color_mode_combo.findData(HEATMAP_COLOR_MODE_GRAYSCALE)
+        panel._color_mode_combo.setCurrentIndex(grayscale)
+        panel._set_threshold(low=0.4, high=0.6)
+        level_resets: list[bool] = []
+        panel.image_levels_reset_requested.connect(lambda: level_resets.append(True))
+
+        with qtbot.waitSignal(panel.threshold_changed) as threshold:
+            panel._reset_defaults_button.click()
+
+        assert panel.current_color_mode() == default_heatmap_color_mode(panel.current_metric_id())
+        assert threshold.args == [0.2, 0.8]
+        assert panel._colorbar_item.levels() == (0.2, 0.8)
+        assert level_resets == [True]
+
+    def test_double_clicking_the_colour_bar_restores_the_maps_range(self, qtbot: QtBot) -> None:
+        panel = HeatmapPanel()
+        qtbot.addWidget(panel)
+        panel.set_legend_range(0.2, 0.8)
+        panel._set_threshold(low=0.4, high=0.6)
+
+        qtbot.mouseDClick(panel._colorbar_widget.viewport(), Qt.MouseButton.LeftButton)
+
+        assert panel._colorbar_item.levels() == (0.2, 0.8)
+
+    def test_the_tooltip_names_each_default(self, qtbot: QtBot) -> None:
+        translator.set_language("en")
+        panel = HeatmapPanel()
+        qtbot.addWidget(panel)
+        panel.set_legend_range(0.25, 0.75)
+
+        tooltip = panel._reset_defaults_button.toolTip()
+
+        default_mode = default_heatmap_color_mode(panel.current_metric_id())
+        assert translator.tr(f"heatmap.color_mode_{default_mode}") in tooltip
+        assert "0.25 - 0.75" in tooltip

@@ -69,5 +69,6 @@ class ImportPanel(QWidget):
         self._heading.setText(translator.tr("import_panel.heading"))
         self._description.setText(translator.tr("import_panel.description"))
         self._open_images_button.setText(translator.tr("import_panel.open_images"))
+        self._open_images_button.setToolTip(translator.tr("import_panel.open_images.tooltip"))
         self._import_project_button.setText(translator.tr("import_panel.import_project"))
         self._import_project_button.setToolTip(translator.tr("import_panel.import_project.tooltip"))

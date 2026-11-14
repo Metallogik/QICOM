@@ -27,6 +27,39 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Added
 
+- **"Carica immagini" spiega cosa chiede.** La finestra di apertura dice in una riga come si può
+  caricare, e i tre pulsanti hanno nomi espliciti ("Carica una cartella intera...", "Carica un solo
+  file...", "Carica più file insieme...") con un tooltip ciascuno: cosa accettano e in che ordine
+  diventano slice (DICOM per posizione, le altre immagini per nome). Anche la scelta del pannello
+  di destinazione e il pulsante "Carica immagini..." del passaggio Importa hanno un tooltip.
+- **Ripristino dei valori predefiniti.** Nella pagina Mappe di calore, "Ripristina predefiniti"
+  riporta la scala colori a quella della metrica, la soglia min/max all'intervallo della mappa
+  mostrata e luminosità/contrasto di ogni immagine ai valori del caricamento (ognuno annullabile
+  come una modifica normale); il tooltip nomina ogni valore predefinito. Un doppio clic sulla
+  barra dei colori riporta la soglia all'intervallo della mappa. Nel passaggio Rimuovi aria,
+  "Ripristina tolleranza predefinita (3)" riporta la tolleranza al valore predefinito ed elimina
+  una soglia esatta inserita a mano.
+- **Nuovo progetto, Salva progetto e Salva progetto con nome nel menu File** dell'analisi
+  quantitativa, sempre visibili e con le scorciatoie abituali (Ctrl+N, Ctrl+O, Ctrl+S,
+  Ctrl+Maiusc+S). Prima il salvataggio del progetto compariva solo nel passaggio Esporta e per
+  ricominciare c'era "Reimposta tutto", che sostituiscono. "Nuovo progetto" resta nella finestra:
+  propone di salvare le modifiche non salvate, chiede conferma se c'è lavoro già salvato aperto e
+  non chiede nulla a finestra vuota. Il titolo della finestra mostra il progetto aperto (o "Nuovo
+  progetto (non salvato)") e un asterisco quando ci sono modifiche non salvate.
+- **Installer Windows con la classica procedura guidata.** `QICOM-windows-x64.zip`, lo stesso
+  file a cui punta il sito, contiene ora `QICOM-Setup.exe` (Inno Setup 6,
+  `packaging/build_windows_installer.py` e `packaging/windows/qicom.iss`) e un README: estratto lo
+  zip, l'installer apre la procedura guidata in inglese, con il logo e l'icona di QICOM. Pagine:
+  benvenuto con la descrizione di QICOM, licenza Apache 2.0, "About QICOM" (cosa fa e a cosa
+  serve), cartella di destinazione (Program Files di default, con "Install for me only" per chi
+  non ha i permessi di amministratore), riepilogo, barra di avanzamento con percentuale e fine
+  con "Launch QICOM". Crea la voce nel menu Start e, a scelta, il collegamento sul desktop, e si
+  disinstalla con "Uninstall QICOM" nella cartella di installazione, accanto a `qicom.exe`, oppure
+  da Impostazioni > App. Lo stesso bundle entra byte per byte, e un aggiornamento
+  sostituisce `_internal` per intero. La CI lo installa in silenzio per tutti gli utenti, avvia
+  lo smoke test dalla cartella installata, ne verifica l'identità di build e lo disinstalla
+  controllando che non resti nulla. La versione senza installazione diventa
+  `QICOM-windows-x64-portable.zip`, con in cima `LEGGIMI-PRIMA.txt`.
 - **Pacchetto Debian/Ubuntu** (`QICOM-linux-x64.deb`, con sidecar `.sha256`), prodotto dalla
   build Linux accanto al `.tar.gz` da `packaging/build_deb.py`: lo stesso bundle, byte per byte,
   in `/opt/qicom`, il comando `qicom`, la voce di menu e l'icona. Dichiara le librerie Qt di
@@ -563,6 +596,56 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Fixed
 
+- **Un database occupato non viene più scambiato per danneggiato.** Con più finestre di QICOM
+  avviate insieme (per esempio dopo un primo avvio lento, a cui l'utente risponde riavviando),
+  una trovava il database delle sessioni bloccato dall'altra e lo trattava come danneggiato:
+  provava a spostarlo da parte e a crearne uno nuovo. Su Windows lo spostamento falliva sul file
+  aperto, ma il log diceva comunque che ne era stato creato uno nuovo; su Linux e macOS lo
+  spostamento sarebbe riuscito. Ora solo un file corrotto o non SQLite viene messo da parte; un
+  database occupato viene atteso (fino a 10 secondi, attesa impostata prima di ogni istruzione) e,
+  se resta occupato, l'apertura fallisce con un errore senza toccare nulla.
+- **Avvio di un flusso senza nulla sullo schermo.** Scelto un flusso nel launcher, il launcher si
+  chiudeva subito e la finestra poteva metterci molto ad apparire (al primo avvio Windows controlla
+  ogni file dell'applicazione): un tester ha creduto che QICOM si fosse chiuso e l'ha riavviato più
+  volte. Ora il logo resta sullo schermo con "Apertura in corso: Analisi quantitativa..." (o il
+  flusso scelto) e il cursore di attesa, finché la finestra non compare.
+- **Errori raggiungibili con un clic, pannelli in basso leggibili.** L'indicatore degli errori
+  nella barra di stato era testo rosso senza bordo: ora è un pulsante con icona, contorno e la
+  scritta "N errori: mostra", e il messaggio d'errore appena comparso in basso si apre anche lui
+  con un clic (cursore a mano e tooltip finché resta visibile). Aperti da Visualizza > Pannelli,
+  Cronologia, Log ed Errori ricevevano l'altezza rimasta: una sola riga in sei passaggi su otto.
+  Ora ricevono un terzo della finestra, le tabelle non scendono mai sotto quattro righe e il bordo
+  resta trascinabile; il pannello Errori ha "Mostra tutti" (anche con doppio clic su una riga) per
+  aprire l'elenco completo.
+- **Le mappe di calore sparivano dalle immagini cambiando passaggio.** L'anteprima dell'aria e le
+  mappe di calore usano lo stesso livello sopra le immagini, e a ogni cambio di passaggio fuori da
+  Rimuovi aria l'anteprima veniva tolta svuotando quel livello anche quando a occuparlo era una
+  mappa: la mappa non si vedeva più, mentre il pannello continuava a dirla mostrata. Ora si toglie
+  solo un'anteprima davvero visibile. Inoltre il passaggio Mappe di calore non si apre più vuoto:
+  mostra subito la mappa dell'immagine intera per la metrica scelta, una riga spiega cos'è la mappa,
+  che non serve Calcola e cosa salva l'export, e una riga di stato dice cosa è mostrato, oppure
+  perché non c'è nulla da mostrare (immagini mancanti, metrica non calcolabile).
+- **Un nuovo progetto non sovrascrive più quello aperto prima.** "Reimposta tutto" svuotava la
+  finestra ma ricordava il file del progetto aperto in precedenza: alla chiusura, "Salva"
+  scriveva il lavoro nuovo in quel file senza chiedere nulla. Ora iniziare da capo dimentica il
+  file e il salvataggio successivo chiede dove scrivere. La domanda alla chiusura nomina il
+  progetto e il file in cui "Salva" scriverà.
+- **Finestre più grandi dello schermo.** Le finestre si aprono massimizzate, ma "Ripristina" le
+  riportava a una dimensione fissa (1280×800, 1400×900 per Strumenti e Radiomica): più alta di un
+  portatile 1366×768 e più grande di quasi ogni schermo al 125-150% di scala. La finestra
+  ripristinata usciva dallo schermo e il bordo per ridimensionarla restava irraggiungibile. Ora la
+  dimensione iniziale è limitata al 92% dell'area disponibile dello schermo, in pixel logici, e la
+  finestra è centrata. Nella finestra Strumenti, inoltre, la larghezza minima di alcuni strumenti
+  (fino a circa 1230 pixel) diventava quella dell'intera finestra, che al 125-150% non entrava più
+  nello schermo né si poteva restringere: ogni strumento sta ora in un'area scorrevole. Un test
+  verifica ogni strumento su 1366×768 al 100%, 125% e 150%.
+- **Strumenti di utilità mancanti nell'app installata.** Il catalogo importa ogni strumento per
+  nome al primo uso (`qicom.gui.tools.converter:ConverterTool`) e nessun altro modulo li importa,
+  quindi PyInstaller non li vedeva: nell'app distribuita ogni strumento falliva con "No module
+  named qicom.gui.tools.converter". La spec raccoglie ora l'intero pacchetto `qicom.gui.tools`, lo
+  smoke test del bundle importa ogni voce del catalogo e la CI rifiuta un bundle che non ne riporta
+  nessuna. Se uno strumento manca comunque, la finestra Strumenti lo spiega a parole al posto dello
+  strumento e conserva il dettaglio per la segnalazione di bug.
 - **mypy con numpy 2.5.4**: lo stub di `np.isscalar` è passato da
   `TypeGuard[generic | complex | str | bytes | memoryview]` a `TypeIs[… | numbers.Number]`, e la
   chiamata `np.isnan(result)` in `qicom/metrics/runner.py` non tipizzava più (`arg-type`). Il

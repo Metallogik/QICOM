@@ -169,6 +169,20 @@ class TestRetranslation:
         translator.set_language("it")
         try:
             assert dialog.windowTitle() == "Apri immagini"
-            assert dialog._single_button.text() == "Immagine singola"
+            assert dialog._single_button.text() == "Carica un solo file..."
         finally:
             translator.set_language("en")
+
+    def test_every_way_in_is_explained(self, qtbot: QtBot) -> None:
+        """A tester could not tell whether "Load images" wanted a folder, one
+        file or several: the dialog says so, and each button's tooltip says
+        what it accepts."""
+        translator.set_language("en")
+        dialog = OpenImagesDialog([_make_panel("reference"), _make_panel("comparison")])
+        qtbot.addWidget(dialog)
+
+        assert "whole folder" in dialog._hint.text()
+        assert "DICOM series" in dialog._folder_button.toolTip()
+        assert "NIfTI" in dialog._single_button.toolTip()
+        assert "Ctrl" in dialog._stack_button.toolTip()
+        assert "reference" in dialog._panel_combo.toolTip()

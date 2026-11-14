@@ -48,6 +48,7 @@ from qicom.gui.widgets.launcher_dialog import (
 )
 from qicom.gui.widgets.qualitative_main_window import QualitativeMainWindow
 from qicom.gui.workers import run_in_thread, wait_for_active_jobs
+from qicom.i18n import SUPPORTED_LANGUAGES, translator
 from qicom.session.storage import SessionStorage
 
 
@@ -221,6 +222,28 @@ def test_frozen_smoke_path_checks_current_full_environment(capsys) -> None:
     assert len(payload["reference_sets"]) == 7
     assert payload["riqe_model"] == "verified"
     assert payload["lossless_jpeg"] == "verified"
+    from qicom.gui.tools.catalog import TOOLS
+
+    assert payload["tools"] == [spec.tool_id for spec in TOOLS]
+
+
+def test_the_smoke_fails_when_the_bundle_lacks_a_tool(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tools are imported by name, which PyInstaller cannot follow: the
+    converter was missing from the first tester's bundle."""
+    import importlib
+
+    real_import = importlib.import_module
+
+    def _without_converter(name: str, *args, **kwargs):
+        if name == "qicom.gui.tools.converter":
+            raise ModuleNotFoundError(f"No module named {name!r}", name=name)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr("qicom.gui.tools.catalog.importlib.import_module", _without_converter)
+    monkeypatch.setattr("qicom.gui.app._bundled_lossless_jpeg_decoder", lambda: "verified")
+
+    with pytest.raises(ModuleNotFoundError, match="converter"):
+        _run_frozen_smoke_test()
 
 
 def test_the_smoke_fails_when_the_bundle_lacks_gdcm(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -313,6 +336,38 @@ class TestSplashScreen:
             assert splash.geometry().center() == geometry.center()
         finally:
             splash.close()
+
+
+class TestOpeningScreen:
+    """Between the launcher closing and the workflow window appearing nothing
+    was on screen: a tester took QICOM for closed and started it again."""
+
+    def test_says_which_workflow_is_opening(self, qtbot: QtBot) -> None:
+        from qicom.gui.app import _show_opening_screen
+        from qicom.gui.widgets.launcher_dialog import MODE_QUANTITATIVE
+
+        translator.set_language("en")
+        app = QApplication.instance()
+        assert isinstance(app, QApplication)
+
+        splash = _show_opening_screen(app, MODE_QUANTITATIVE)
+        try:
+            assert splash.isVisible()
+            assert splash.message() == "Opening: Quantitative Analysis..."
+        finally:
+            splash.close()
+
+    def test_every_workflow_has_a_name_in_every_language(self) -> None:
+        from qicom.gui.app import _WORKFLOW_LABEL_KEYS
+
+        original = translator.language
+        try:
+            for language in SUPPORTED_LANGUAGES:
+                translator.set_language(language)
+                for key in [*_WORKFLOW_LABEL_KEYS.values(), "launcher.opening"]:
+                    assert translator.tr(key, workflow="x") != key, (language, key)
+        finally:
+            translator.set_language(original)
 
 
 class TestSessionLogging:

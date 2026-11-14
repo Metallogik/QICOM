@@ -654,6 +654,10 @@ empty between that version and yours, re-run the analysis before comparing.
   smoke test del bundle importa ogni voce del catalogo e la CI rifiuta un bundle che non ne riporta
   nessuna. Se uno strumento manca comunque, la finestra Strumenti lo spiega a parole al posto dello
   strumento e conserva il dettaglio per la segnalazione di bug.
+  Su Linux la build girava prima dell'installazione delle librerie Qt, e la raccolta del pacchetto,
+  che importa ogni modulo per trovarlo, scartava in silenzio tutti gli strumenti che importano
+  QtGui: il bundle Linux ne restava privo. Ora la spec elenca gli strumenti dai file sorgente, e su
+  Linux le librerie Qt si installano prima della build.
 - **mypy con numpy 2.5.4**: lo stub di `np.isscalar` è passato da
   `TypeGuard[generic | complex | str | bytes | memoryview]` a `TypeIs[… | numbers.Number]`, e la
   chiamata `np.isnan(result)` in `qicom/metrics/runner.py` non tipizzava più (`arg-type`). Il

@@ -395,23 +395,13 @@ jobs:
             --profile "$profile" --include-build-runtime \
             --output-dir build/attribution
 
-      - name: Build platform-native application
-        run: pyinstaller --clean --noconfirm packaging/qicom.spec
-
-      # qicom.spec records what the analysis actually collected. A bundled
-      # distribution the inventory does not describe fails the build here,
-      # before anything is uploaded.
-      - name: Verify the bundle against its licence inventory
-        shell: bash
-        run: |
-          python packaging/attribution.py check-bundle \
-            --inventory build/attribution/THIRD_PARTY_INVENTORY.json \
-            --bundle-modules "build/attribution/bundle-modules-${QICOM_PACKAGE_PROFILE}.json"
-
-      # The smoke test starts Qt, which needs libEGL and the xcb libraries even
-      # offscreen. The ubuntu-latest image no longer provides libEGL (run #5:
-      # "libEGL.so.1: cannot open shared object file"), so install the same set
-      # the IBSI gate does. Users' desktops have them; the .deb declares them.
+      # Qt needs libEGL and the xcb libraries even offscreen. The ubuntu-latest
+      # image no longer provides libEGL (run #5: "libEGL.so.1: cannot open
+      # shared object file"), so install the same set the IBSI gate does.
+      # Before the build, not just before the smoke test: PyInstaller's hooks
+      # import Qt while analysing, and a module that cannot import there is
+      # left out of the bundle (run #9). Users' desktops have them; the .deb
+      # declares them.
       - name: Install Qt runtime dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -424,6 +414,19 @@ jobs:
             libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 \
             libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 \
             libxrender1 libxi6 libfontconfig1 libfreetype6
+
+      - name: Build platform-native application
+        run: pyinstaller --clean --noconfirm packaging/qicom.spec
+
+      # qicom.spec records what the analysis actually collected. A bundled
+      # distribution the inventory does not describe fails the build here,
+      # before anything is uploaded.
+      - name: Verify the bundle against its licence inventory
+        shell: bash
+        run: |
+          python packaging/attribution.py check-bundle \
+            --inventory build/attribution/THIRD_PARTY_INVENTORY.json \
+            --bundle-modules "build/attribution/bundle-modules-${QICOM_PACKAGE_PROFILE}.json"
 
       # The smoke test prints its build identity; the bundle must report the
       # commit that produced it, resolved from the module generated above

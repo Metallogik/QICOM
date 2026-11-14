@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QEvent, QObject, Qt, QTimer
 from PySide6.QtGui import (
     QAction,
     QActionGroup,
@@ -120,6 +120,10 @@ from qicom.session.storage import SessionStorage
 # used to end up squeezed by the bottom-docked panels' own sizeHint-driven
 # default share of the window - see MainWindow._apply_default_dock_sizes.
 _MIN_IMAGE_VIEW_HEIGHT_FRACTION = 0.55
+# History/Log/Errors opened from View > Panels: their share of the window
+# height, and the least they get (see _give_bottom_panel_room).
+_BOTTOM_PANEL_FRACTION = 0.33
+_BOTTOM_PANEL_MIN_HEIGHT = 220
 
 
 def _project_file_filter() -> str:
@@ -612,11 +616,18 @@ class MainWindow(QMainWindow):
         self._errors_dialog: ErrorsDialog | None = None
         self._errors_status_button = QPushButton()
         self._errors_status_button.setObjectName("errorsStatusButton")
-        self._errors_status_button.setFlat(True)
         self._errors_status_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self._errors_status_button.clicked.connect(self._open_errors_dialog)
         self._errors_status_button.hide()
         self.errors_panel.errors_changed.connect(self._on_errors_changed)
+        self.errors_panel.open_all_requested.connect(self._open_errors_dialog)
+        # The error just reported, shown at the bottom left, opens the same
+        # window when clicked - it did not look clickable, and was not.
+        self._status_message_is_error = False
+        status_bar = self.statusBar()
+        assert status_bar is not None
+        status_bar.messageChanged.connect(self._on_status_message_changed)
+        status_bar.installEventFilter(self)
         # An exception escaping a slot lands here too (see
         # qicom.gui.error_reporting.install_exception_hook), instead of only
         # in a console nobody is watching.
@@ -2012,8 +2023,46 @@ class MainWindow(QMainWindow):
         status_bar = self.statusBar()
         assert status_bar is not None
         status_bar.showMessage(message, timeout)
+        self._status_message_is_error = True
+        status_bar.setCursor(Qt.CursorShape.PointingHandCursor)
+        status_bar.setToolTip(translator.tr("errors.status_tooltip"))
         self.errors_panel.add_error(message)
         self._increment_error_badge()
+
+    def _on_status_message_changed(self, message: str) -> None:
+        """Any later message replaces the error, and with it the click."""
+        if not self._status_message_is_error:
+            return
+        status_bar = self.statusBar()
+        assert status_bar is not None
+        latest = self.errors_panel.records()
+        if latest and message == latest[-1].message:
+            return
+        self._status_message_is_error = False
+        status_bar.unsetCursor()
+        status_bar.setToolTip("")
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
+        if (
+            watched is self.statusBar()
+            and event.type() == QEvent.Type.MouseButtonRelease
+            and self._status_message_is_error
+        ):
+            self._open_errors_dialog()
+            return True
+        return super().eventFilter(watched, event)
+
+    def _on_bottom_panel_toggled(self, dock: QDockWidget, opened: bool) -> None:
+        if opened:
+            self._give_bottom_panel_room(dock)
+
+    def _give_bottom_panel_room(self, dock: QDockWidget) -> None:
+        """A History/Log/Errors panel opened from View > Panels got whatever
+        height the bottom dock area had left - a single table row on most
+        steps. Opening one now gives it a third of the window; its border
+        can still be dragged afterwards."""
+        target = max(_BOTTOM_PANEL_MIN_HEIGHT, round(self.height() * _BOTTOM_PANEL_FRACTION))
+        QTimer.singleShot(0, lambda: self.resizeDocks([dock], [target], Qt.Orientation.Vertical))
 
     def _report_recovered_session_database(self) -> None:
         recovered = self.controller.storage.recovered_from
@@ -2068,6 +2117,7 @@ class MainWindow(QMainWindow):
         the Errors *window* instead (see _open_errors_dialog)."""
         self._errors_dock.show()
         self._errors_dock.raise_()
+        self._give_bottom_panel_room(self._errors_dock)
         # A dock shown after the tab group was rebuilt has no badge
         # attached yet.
         QTimer.singleShot(0, self._refresh_visible_dock_chrome)
@@ -2107,6 +2157,10 @@ class MainWindow(QMainWindow):
             self._errors_status_button.hide()
             return
         self._errors_status_button.setText(translator.tr("errors.status", count=count))
+        self._errors_status_button.setToolTip(translator.tr("errors.status_tooltip"))
+        self._errors_status_button.setIcon(
+            paint_icon("errors_panel", ink_color(theme_manager.theme))
+        )
         self._errors_status_button.show()
 
     def _refresh_error_badge_text(self) -> None:
@@ -2272,7 +2326,11 @@ class MainWindow(QMainWindow):
         assert panels_menu is not None
         self._panels_menu = panels_menu
         for dock in (self._history_dock, self._log_dock, self._errors_dock):
-            self._panels_menu.addAction(dock.toggleViewAction())
+            action = dock.toggleViewAction()
+            action.triggered.connect(
+                lambda checked, opened=dock: self._on_bottom_panel_toggled(opened, checked)
+            )
+            self._panels_menu.addAction(action)
 
         self._tools_menu = self._add_menu(menu_bar)
         number_format_menu = self._tools_menu.addMenu("")

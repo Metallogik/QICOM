@@ -2502,6 +2502,68 @@ class TestErrorsPanelWiring:
         assert "something failed" in window.errors_panel._table.item(0, 1).text()
 
 
+class TestErrorsAreReachable:
+    """Reported: the error messages at the bottom did not look clickable, and
+    the bottom panels showed one row at a time while the Errors window showed
+    them all."""
+
+    def test_clicking_the_error_at_the_bottom_opens_every_error(
+        self, window: MainWindow, qtbot: QtBot
+    ) -> None:
+        window.show()
+        window._report_error("first")
+        window._report_error("second")
+        status_bar = window.statusBar()
+        assert status_bar.cursor().shape() == Qt.CursorShape.PointingHandCursor
+
+        qtbot.mouseClick(status_bar, Qt.MouseButton.LeftButton)
+
+        assert window._errors_dialog is not None and window._errors_dialog.isVisible()
+        assert len(window._errors_dialog._rendered) == 2
+
+    def test_a_later_message_is_no_longer_clickable(self, window: MainWindow) -> None:
+        window._report_error("boom")
+
+        window.statusBar().showMessage("Ready")
+
+        assert window.statusBar().cursor().shape() != Qt.CursorShape.PointingHandCursor
+        assert not window._status_message_is_error
+
+    def test_the_status_indicator_is_a_button_that_says_it_opens_the_list(
+        self, window: MainWindow
+    ) -> None:
+        window._report_error("boom")
+
+        button = window._errors_status_button
+        assert not button.isFlat()
+        assert not button.icon().isNull()
+        assert button.text() == "1 error(s): show"
+        assert "full list" in button.toolTip()
+
+    def test_the_errors_panel_opens_the_whole_list(self, window: MainWindow) -> None:
+        window._report_error("boom")
+
+        window.errors_panel._open_all_button.click()
+
+        assert window._errors_dialog is not None and window._errors_dialog.isVisible()
+
+    def test_an_opened_bottom_panel_shows_several_rows(
+        self, window: MainWindow, qtbot: QtBot
+    ) -> None:
+        window.show()
+        window.resize(1366, 728)
+        for index in range(8):
+            window._report_error(f"error {index}")
+        window.workflow_rail.set_current_stage("results")
+
+        window._errors_dock.toggleViewAction().trigger()
+        window._errors_dock.raise_()
+        qtbot.wait(20)
+
+        table = window.errors_panel._table
+        assert table.viewport().height() >= 4 * table.verticalHeader().defaultSectionSize()
+
+
 class TestErrorTabBadge:
     def test_reporting_an_error_shows_a_count_of_one(self, window: MainWindow) -> None:
         window._report_error("boom")

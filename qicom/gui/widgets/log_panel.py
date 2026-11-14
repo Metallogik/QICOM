@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from qicom.gui.widgets.errors_panel import keep_rows_visible
 from qicom.i18n import translator
 from qicom.reporting.excel_safety import safe_excel_value
 from qicom.session.app_logging import LogEntry, LogTail, default_log_path
@@ -61,6 +62,7 @@ class LogPanel(QWidget):
         top_row.addWidget(self._export_button)
 
         self._table = QTableWidget(0, len(_COLUMNS))
+        keep_rows_visible(self._table)
         self._table.setHorizontalHeaderLabels(_COLUMNS)
         self._table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         header = self._table.horizontalHeader()

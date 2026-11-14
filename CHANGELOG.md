@@ -592,6 +592,14 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Fixed
 
+- **Errori raggiungibili con un clic, pannelli in basso leggibili.** L'indicatore degli errori
+  nella barra di stato era testo rosso senza bordo: ora è un pulsante con icona, contorno e la
+  scritta "N errori: mostra", e il messaggio d'errore appena comparso in basso si apre anche lui
+  con un clic (cursore a mano e tooltip finché resta visibile). Aperti da Visualizza > Pannelli,
+  Cronologia, Log ed Errori ricevevano l'altezza rimasta: una sola riga in sei passaggi su otto.
+  Ora ricevono un terzo della finestra, le tabelle non scendono mai sotto quattro righe e il bordo
+  resta trascinabile; il pannello Errori ha "Mostra tutti" (anche con doppio clic su una riga) per
+  aprire l'elenco completo.
 - **Le mappe di calore sparivano dalle immagini cambiando passaggio.** L'anteprima dell'aria e le
   mappe di calore usano lo stesso livello sopra le immagini, e a ogni cambio di passaggio fuori da
   Rimuovi aria l'anteprima veniva tolta svuotando quel livello anche quando a occuparlo era una

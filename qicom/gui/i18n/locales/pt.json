@@ -88,6 +88,7 @@
   "tools.menu.close": "Fechar ferramentas utilitárias",
   "tools.menu.inspect_current": "Inspecionar as tags DICOM da imagem atual",
   "tools.busy": "Um cabeçalho ainda está sendo lido. Tente novamente em instantes.",
+  "tools.unavailable": "{tool} não está incluído nesta instalação do QICOM e por isso não pode ser aberto ({detail}). Instale novamente a versão mais recente; se continuar acontecendo, informe pelo menu Ajuda > Relatar um erro.",
   "tools.dicom_compare.title": "Comparar cabeçalhos DICOM",
   "tools.dicom_compare.description": "Dois cabeçalhos lado a lado, elemento por elemento, para ver por que duas aquisições ou reconstruções diferem: kernel, espessura de corte, dose, parâmetros de reconstrução. Somente leitura.",
   "tools.dicom.open_file": "Abrir arquivo...",

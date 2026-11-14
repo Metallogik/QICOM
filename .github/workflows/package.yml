@@ -488,11 +488,17 @@ jobs:
               sys.exit("a full bundle carries no IBSI reference sets")
           if payload["riqe_model"] != "verified":
               sys.exit("the bundled RIQE model did not load")
+          # Imported by name from the catalog, which PyInstaller cannot
+          # follow: the smoke imports each one, and an empty list means the
+          # check itself went missing.
+          if not payload.get("tools"):
+              sys.exit("the bundle reports no utility tools")
           if payload["lossless_jpeg"] != "verified":
               sys.exit("the bundle cannot decode lossless-JPEG DICOM (GDCM)")
           print(f"Bundle identity verified: {payload['version']} {payload['revision']}")
           print(f"Learned-metric policy verified: {learned['outcome']}")
           print(f"IBSI reference sets bundled: {len(payload['reference_sets'])}")
+          print(f"Utility tools bundled: {len(payload['tools'])}")
           PY
 
       # The other half of the same policy: once the user explicitly prepares

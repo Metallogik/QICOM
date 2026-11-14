@@ -88,6 +88,7 @@
   "tools.menu.close": "ユーティリティツールを閉じる",
   "tools.menu.inspect_current": "現在の画像の DICOM タグを表示",
   "tools.busy": "ヘッダーをまだ読み込み中です。しばらくしてからもう一度お試しください。",
+  "tools.unavailable": "{tool} はこの QICOM のインストールに含まれていないため、開けません（{detail}）。最新版を再インストールしてください。それでも発生する場合は、[ヘルプ] > [バグを報告] から報告してください。",
   "tools.dicom_compare.title": "DICOM ヘッダーを比較",
   "tools.dicom_compare.description": "2 つのヘッダーを要素ごとに並べて、2 つの撮像や再構成がなぜ異なるのかを確認します：カーネル、スライス厚、線量、再構成パラメータ。読み取り専用です。",
   "tools.dicom.open_file": "ファイルを開く...",

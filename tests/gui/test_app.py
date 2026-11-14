@@ -221,6 +221,28 @@ def test_frozen_smoke_path_checks_current_full_environment(capsys) -> None:
     assert len(payload["reference_sets"]) == 7
     assert payload["riqe_model"] == "verified"
     assert payload["lossless_jpeg"] == "verified"
+    from qicom.gui.tools.catalog import TOOLS
+
+    assert payload["tools"] == [spec.tool_id for spec in TOOLS]
+
+
+def test_the_smoke_fails_when_the_bundle_lacks_a_tool(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tools are imported by name, which PyInstaller cannot follow: the
+    converter was missing from the first tester's bundle."""
+    import importlib
+
+    real_import = importlib.import_module
+
+    def _without_converter(name: str, *args, **kwargs):
+        if name == "qicom.gui.tools.converter":
+            raise ModuleNotFoundError(f"No module named {name!r}", name=name)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr("qicom.gui.tools.catalog.importlib.import_module", _without_converter)
+    monkeypatch.setattr("qicom.gui.app._bundled_lossless_jpeg_decoder", lambda: "verified")
+
+    with pytest.raises(ModuleNotFoundError, match="converter"):
+        _run_frozen_smoke_test()
 
 
 def test_the_smoke_fails_when_the_bundle_lacks_gdcm(monkeypatch: pytest.MonkeyPatch) -> None:

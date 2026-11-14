@@ -88,6 +88,7 @@
   "tools.menu.close": "Fermer les outils utilitaires",
   "tools.menu.inspect_current": "Inspecter les balises DICOM de l'image actuelle",
   "tools.busy": "Un en-tête est encore en cours de lecture. Réessayez dans un instant.",
+  "tools.unavailable": "{tool} n'est pas inclus dans cette installation de QICOM et ne peut donc pas s'ouvrir ({detail}). Réinstallez la dernière version ; si le problème persiste, signalez-le depuis Aide > Signaler un bug.",
   "tools.dicom_compare.title": "Comparer des en-têtes DICOM",
   "tools.dicom_compare.description": "Deux en-têtes côte à côte, élément par élément, pour voir pourquoi deux acquisitions ou reconstructions diffèrent : noyau, épaisseur de coupe, dose, paramètres de reconstruction. Lecture seule.",
   "tools.dicom.open_file": "Ouvrir un fichier...",

@@ -18,6 +18,8 @@ status bar.
 
 from __future__ import annotations
 
+import logging
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QActionGroup, QCloseEvent
 from PySide6.QtWidgets import (
@@ -48,6 +50,8 @@ from qicom.gui.widgets.errors_panel import ErrorRecord, as_reported_errors, new_
 from qicom.gui.widgets.settings_dialog import SettingsDialog
 from qicom.gui.workers import has_active_jobs
 from qicom.i18n import SUPPORTED_LANGUAGES, translator
+
+_logger = logging.getLogger(__name__)
 
 
 class ToolsMainWindow(QMainWindow):
@@ -128,7 +132,13 @@ class ToolsMainWindow(QMainWindow):
     def _page(self, spec: ToolSpec) -> QWidget:
         page = self._pages.get(spec.tool_id)
         if page is None:
-            page = spec.create_widget()
+            try:
+                page = spec.create_widget()
+            except ImportError as exc:
+                page = self._unavailable_page(spec, exc)
+                self._pages[spec.tool_id] = page
+                self._stack.addWidget(page)
+                return page
             error_signal = getattr(page, "error_occurred", None)
             if error_signal is not None:
                 error_signal.connect(self._show_error)
@@ -141,6 +151,29 @@ class ToolsMainWindow(QMainWindow):
             self._pages[spec.tool_id] = page
             self._stack.addWidget(page)
         return page
+
+    def _unavailable_page(self, spec: ToolSpec, exc: ImportError) -> QWidget:
+        """A tool whose code is missing from this installation.
+
+        Says so in words, in place of the tool, instead of letting
+        "No module named ..." escape as an unhandled error and leave an
+        empty page. The technical detail is kept for the bug report.
+        """
+        _logger.error("Tool %s could not be loaded: %s", spec.tool_id, exc)
+        detail = str(exc)
+        self._error_records.append(new_error_record(detail))
+        label = QLabel(
+            translator.tr(
+                "tools.unavailable",
+                tool=translator.tr(spec.title_key),
+                detail=detail,
+            )
+        )
+        label.setObjectName("toolUnavailable")
+        label.setWordWrap(True)
+        label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        return label
 
     def _show(self, spec: ToolSpec) -> None:
         self._stack.setCurrentWidget(self._page(spec))

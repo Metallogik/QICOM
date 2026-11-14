@@ -14,7 +14,7 @@ from message_box_stubs import stub_message_box
 from pydicom.dataset import Dataset, FileDataset, FileMetaDataset
 from pydicom.sequence import Sequence
 from pydicom.uid import CTImageStorage, ExplicitVRLittleEndian, generate_uid
-from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QWidget
+from PySide6.QtWidgets import QLabel, QTreeWidget, QTreeWidgetItem, QWidget
 from pytestqt.qtbot import QtBot
 
 from qicom.gui.tools import dicom_tags, tools_window
@@ -190,6 +190,34 @@ class TestToolsWindow:
 
         assert shown == ["it failed"]
         assert [record.message for record in window.error_records()] == ["it failed"]
+
+    def test_a_tool_missing_from_the_installation_says_so(
+        self, qtbot: QtBot, monkeypatch: pytest.MonkeyPatch, english: None
+    ) -> None:
+        """The first tester's bundle lacked the converter module: picking it
+        must explain that in words, not raise "No module named ..."."""
+        original = ToolSpec.create_widget
+
+        def _missing_converter(spec: ToolSpec) -> QWidget:
+            if spec.tool_id == "converter":
+                raise ModuleNotFoundError("No module named 'qicom.gui.tools.converter'")
+            return original(spec)
+
+        monkeypatch.setattr(ToolSpec, "create_widget", _missing_converter)
+        window = ToolsMainWindow(initial_tool="converter")
+        qtbot.addWidget(window)
+
+        page = window.tool_widget("converter")
+
+        assert isinstance(page, QLabel)
+        assert page.objectName() == "toolUnavailable"
+        assert translator.tr("tools.converter.title") in page.text()
+        assert "qicom.gui.tools.converter" in page.text()
+        assert [record.message for record in window.error_records()] == [
+            "No module named 'qicom.gui.tools.converter'"
+        ]
+        window.open_tool("dicom_editor")
+        assert isinstance(window.tool_widget("dicom_editor"), DicomTagEditor)
 
     def test_a_tool_status_message_reaches_the_status_bar(self, qtbot: QtBot) -> None:
         window = ToolsMainWindow(initial_tool="dicom_editor")

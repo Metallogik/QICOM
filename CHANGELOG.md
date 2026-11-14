@@ -563,6 +563,13 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Fixed
 
+- **Strumenti di utilità mancanti nell'app installata.** Il catalogo importa ogni strumento per
+  nome al primo uso (`qicom.gui.tools.converter:ConverterTool`) e nessun altro modulo li importa,
+  quindi PyInstaller non li vedeva: nell'app distribuita ogni strumento falliva con "No module
+  named qicom.gui.tools.converter". La spec raccoglie ora l'intero pacchetto `qicom.gui.tools`, lo
+  smoke test del bundle importa ogni voce del catalogo e la CI rifiuta un bundle che non ne riporta
+  nessuna. Se uno strumento manca comunque, la finestra Strumenti lo spiega a parole al posto dello
+  strumento e conserva il dettaglio per la segnalazione di bug.
 - **mypy con numpy 2.5.4**: lo stub di `np.isscalar` è passato da
   `TypeGuard[generic | complex | str | bytes | memoryview]` a `TypeIs[… | numbers.Number]`, e la
   chiamata `np.isnan(result)` in `qicom/metrics/runner.py` non tipizzava più (`arg-type`). Il

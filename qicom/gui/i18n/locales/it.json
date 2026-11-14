@@ -88,6 +88,7 @@
   "tools.menu.close": "Chiudi Strumenti di utilità",
   "tools.menu.inspect_current": "Ispeziona i tag DICOM dell'immagine corrente",
   "tools.busy": "È ancora in corso la lettura di un header. Riprova tra un istante.",
+  "tools.unavailable": "{tool} non è incluso in questa installazione di QICOM, quindi non si può aprire ({detail}). Reinstalla l'ultima versione; se succede ancora, segnalalo da Aiuto > Segnala un bug.",
   "tools.dicom_compare.title": "Confronta header DICOM",
   "tools.dicom_compare.description": "Due header affiancati, elemento per elemento, per capire perché due acquisizioni o ricostruzioni differiscono: kernel, spessore di strato, dose, parametri di ricostruzione. Sola lettura.",
   "tools.dicom.open_file": "Apri file...",

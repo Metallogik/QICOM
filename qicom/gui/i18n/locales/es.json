@@ -88,6 +88,7 @@
   "tools.menu.close": "Cerrar herramientas de utilidad",
   "tools.menu.inspect_current": "Inspeccionar las etiquetas DICOM de la imagen actual",
   "tools.busy": "Todavía se está leyendo una cabecera. Vuelva a intentarlo en un momento.",
+  "tools.unavailable": "{tool} no está incluido en esta instalación de QICOM, por lo que no se puede abrir ({detail}). Vuelva a instalar la última versión; si sigue ocurriendo, notifíquelo desde Ayuda > Informar de un error.",
   "tools.dicom_compare.title": "Comparar cabeceras DICOM",
   "tools.dicom_compare.description": "Dos cabeceras lado a lado, elemento por elemento, para ver por qué difieren dos adquisiciones o reconstrucciones: kernel, grosor de corte, dosis, parámetros de reconstrucción. Solo lectura.",
   "tools.dicom.open_file": "Abrir archivo...",

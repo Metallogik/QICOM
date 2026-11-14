@@ -88,6 +88,7 @@
   "tools.menu.close": "Close Utility Tools",
   "tools.menu.inspect_current": "Inspect DICOM tags of the current image",
   "tools.busy": "A header is still being read. Try again in a moment.",
+  "tools.unavailable": "{tool} is not included in this QICOM installation, so it cannot open ({detail}). Install the latest version again; if it still happens, report it from Help > Report a Bug.",
   "tools.dicom_compare.title": "Compare DICOM headers",
   "tools.dicom_compare.description": "Two headers side by side, element by element, to see why two acquisitions or reconstructions differ: kernel, slice thickness, dose, reconstruction parameters. Read-only.",
   "tools.dicom.open_file": "Open File...",

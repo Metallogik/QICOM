@@ -88,6 +88,7 @@
   "tools.menu.close": "关闭实用工具",
   "tools.menu.inspect_current": "查看当前图像的 DICOM 标签",
   "tools.busy": "仍在读取头信息，请稍后再试。",
+  "tools.unavailable": "此 QICOM 安装中未包含{tool}，因此无法打开（{detail}）。请重新安装最新版本；如果问题仍然存在，请通过“帮助 > 报告错误”报告。",
   "tools.dicom_compare.title": "比较 DICOM 头信息",
   "tools.dicom_compare.description": "逐个元素并排比较两份头信息，查看两次采集或重建为何不同：卷积核、层厚、剂量、重建参数。只读。",
   "tools.dicom.open_file": "打开文件...",

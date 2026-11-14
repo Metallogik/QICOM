@@ -114,6 +114,19 @@ def _bundled_reference_sets() -> list[str]:
     return identifiers
 
 
+def _bundled_tools() -> list[str]:
+    """Import every utility tool's widget, as the Tools window does on first use.
+
+    The catalog addresses each tool by import path, which PyInstaller cannot
+    follow: a bundle that left one out failed only when a user picked it.
+    """
+    from qicom.gui.tools.catalog import TOOLS
+
+    for spec in TOOLS:
+        spec.widget_class()
+    return [spec.tool_id for spec in TOOLS]
+
+
 #: One 4x4 12-bit frame in lossless JPEG (SV1), the syntax most CT and MRI
 #: exports use, and the pixels it decodes to. Only GDCM decodes it: a bundle
 #: that lost GDCM would refuse those studies with nothing else failing.
@@ -199,6 +212,7 @@ def _run_frozen_smoke_test(output_path: Path | None = None) -> int:
 
     riqe_model.load_model()
     lossless_jpeg = _bundled_lossless_jpeg_decoder()
+    tools = _bundled_tools()
 
     # The build identity travels in the smoke output so the packaging
     # workflow can assert that a bundle knows which commit produced it -
@@ -214,6 +228,7 @@ def _run_frozen_smoke_test(output_path: Path | None = None) -> int:
             "lossless_jpeg": lossless_jpeg,
             "reference_sets": reference_sets,
             "riqe_model": "verified",
+            "tools": tools,
             "version": identity.version,
             "revision": identity.revision,
             "source_dirty": identity.source_dirty,

@@ -276,7 +276,18 @@ hiddenimports += ["pydicom.pixels.decoders.gdcm", "gdcm"]
 # failed in the installed application with "No module named
 # qicom.gui.tools.converter". Collect the whole package; the frozen smoke
 # test then imports every catalog entry.
-hiddenimports += collect_submodules("qicom.gui.tools")
+# Listed from the source files, not with collect_submodules: that imports each
+# module to find it and silently drops any whose import fails. On the Linux
+# runner the build ran before the Qt libraries were installed, so every tool
+# that imports QtGui was left out (run #9: "No module named
+# qicom.gui.tools.segmenter"). A file name cannot fail to import.
+_TOOLS_DIR = REPO_ROOT / "qicom" / "gui" / "tools"
+_tool_modules = sorted(
+    f"qicom.gui.tools.{path.stem}" for path in _TOOLS_DIR.glob("*.py") if path.stem != "__init__"
+)
+if not _tool_modules:
+    raise RuntimeError(f"qicom.spec: no utility tool modules found in {_TOOLS_DIR}")
+hiddenimports += ["qicom.gui.tools", *_tool_modules]
 excludes: list[str] = list(_UNUSED_OPTIONAL_LIBS) + [
     "PySide6.QtTest",
     "openpyxl.tests",

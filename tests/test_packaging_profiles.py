@@ -81,11 +81,34 @@ def test_notice_and_about_name_files_that_exist_where_they_are_read() -> None:
 
 def test_every_utility_tool_is_collected_into_the_bundle() -> None:
     """The catalog imports each tool by name on first use, which PyInstaller
-    cannot follow: the spec has to collect the package explicitly, and every
-    catalog entry has to live inside it."""
+    cannot follow: the spec has to list the package's modules explicitly, and
+    every catalog entry has to be one of them.
+
+    The list comes from the source files, never from collect_submodules: that
+    imports each module to find it and silently drops the ones that fail, which
+    on a runner without Qt's system libraries was every tool (run #9)."""
     from qicom.gui.tools.catalog import TOOLS
 
     spec = (REPO_ROOT / "packaging" / "qicom.spec").read_text(encoding="utf-8")
-    assert 'hiddenimports += collect_submodules("qicom.gui.tools")' in spec
+    assert 'collect_submodules("qicom.gui.tools")' not in spec
+    assert '_TOOLS_DIR = REPO_ROOT / "qicom" / "gui" / "tools"' in spec
+    assert 'hiddenimports += ["qicom.gui.tools", *_tool_modules]' in spec
+    tools_dir = REPO_ROOT / "qicom" / "gui" / "tools"
     for tool in TOOLS:
-        assert tool.widget.startswith("qicom.gui.tools."), tool.widget
+        module = tool.widget.partition(":")[0]
+        package, _, name = module.rpartition(".")
+        assert package == "qicom.gui.tools", tool.widget
+        assert (tools_dir / f"{name}.py").is_file(), tool.widget
+
+
+def test_linux_qt_libraries_are_installed_before_the_bundle_is_built() -> None:
+    """PyInstaller imports Qt while it analyses the application; on a runner
+    without libEGL that import fails and the modules depending on it are left
+    out of the bundle instead of failing the build."""
+    import yaml
+
+    workflow = (REPO_ROOT / ".github" / "workflows" / "package.yml").read_text(encoding="utf-8")
+    names = [step.get("name", "") for step in yaml.safe_load(workflow)["jobs"]["package"]["steps"]]
+    install = names.index("Install Qt runtime dependencies (Linux)")
+    build = names.index("Build platform-native application")
+    assert install < build

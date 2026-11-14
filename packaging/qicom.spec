@@ -270,6 +270,13 @@ else:
 # as well because a bundle without GDCM would refuse lossless JPEG - most CT
 # and MRI exports - with nothing else failing. The smoke test decodes a frame.
 hiddenimports += ["pydicom.pixels.decoders.gdcm", "gdcm"]
+# The utility tools are imported by name, on first use, from
+# qicom.gui.tools.catalog ("qicom.gui.tools.converter:ConverterTool"), and no
+# other module imports them - so PyInstaller never saw them, and every tool
+# failed in the installed application with "No module named
+# qicom.gui.tools.converter". Collect the whole package; the frozen smoke
+# test then imports every catalog entry.
+hiddenimports += collect_submodules("qicom.gui.tools")
 excludes: list[str] = list(_UNUSED_OPTIONAL_LIBS) + [
     "PySide6.QtTest",
     "openpyxl.tests",

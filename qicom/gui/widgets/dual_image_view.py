@@ -4236,11 +4236,21 @@ class DualImageView(QWidget):
         Heatmaps steps never show both at once anyway.
         """
         if mask is None:
+            # Only a preview that is actually on screen is taken off it.
+            # MainWindow clears the preview on every step change outside
+            # Remove air, and this used to empty the shared overlay
+            # unconditionally: a heatmap shown on the Heatmaps step vanished
+            # from the images on the next step change while its panel still
+            # said it was shown.
+            showing_preview = (
+                self._background_preview_mask is not None and self._active_heatmap is None
+            )
             self._background_preview_mask = None
             self._background_excluded_count = None
             self._air_preview_refresh_pending = False
-            for panel in self._panels:
-                panel.set_heatmap(None)
+            if showing_preview:
+                for panel in self._panels:
+                    panel.set_heatmap(None)
             return
         self.hide_heatmap()
         self._background_preview_mask = np.asarray(mask, dtype=bool)

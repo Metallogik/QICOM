@@ -438,3 +438,36 @@ class TestBackgroundPanelReadout:
         qtbot.addWidget(panel)
 
         assert panel._summary.text() == translator.tr("background.disabled_hint")
+
+
+class TestToleranceReset:
+    def test_restores_the_default_tolerance_and_drops_an_exact_threshold(
+        self, qtbot: QtBot
+    ) -> None:
+        panel = _detected(qtbot)
+        panel._tolerance_spin.setValue(DEFAULT_TOLERANCE_FACTOR + 4)
+        panel._threshold_spin.setValue(panel._threshold_spin.value() + 50)
+        assert panel.settings().tolerance is not None
+
+        panel._tolerance_reset_button.click()
+
+        assert panel.settings().tolerance_factor == DEFAULT_TOLERANCE_FACTOR
+        assert panel.settings().tolerance is None
+
+    def test_an_exact_threshold_alone_is_dropped_too(self, qtbot: QtBot) -> None:
+        panel = _detected(qtbot)
+        panel._threshold_spin.setValue(panel._threshold_spin.value() + 50)
+        changes: list[bool] = []
+        panel.settings_changed.connect(lambda: changes.append(True))
+
+        panel.reset_tolerance()
+
+        assert panel.settings().tolerance is None
+        assert changes == [True]
+
+    def test_the_button_names_the_default(self, qtbot: QtBot) -> None:
+        translator.set_language("en")
+        panel = _detected(qtbot)
+
+        assert f"({DEFAULT_TOLERANCE_FACTOR:g})" in panel._tolerance_reset_button.text()
+        assert panel._tolerance_reset_button.isEnabled()

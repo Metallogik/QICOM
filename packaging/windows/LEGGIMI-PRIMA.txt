@@ -1,0 +1,19 @@
+QICOM per Windows - versione portatile
+======================================
+
+Questa e' la versione che non si installa. Per installare QICOM come un
+normale programma (in Programmi, con menu Start e disinstallazione da
+Impostazioni > App) usa invece QICOM-windows-x64.zip: estrailo e fai
+doppio clic su QICOM-Setup.exe.
+
+Per usare questa versione: tasto destro sul file zip > "Estrai tutto...",
+apri la cartella QICOM-windows-x64 estratta e fai doppio clic su
+qicom.exe. Non avviare qicom.exe da dentro lo zip: Windows estrae solo
+quel file e l'applicazione non parte. Istruzioni complete:
+LEGGIMI-TESTER.txt.
+
+English: this is the portable version, which is not installed. To install
+QICOM, use QICOM-windows-x64.zip instead: extract it and run
+QICOM-Setup.exe. To use this version, right-click the zip > "Extract
+All...", then run qicom.exe from the extracted QICOM-windows-x64 folder; it
+does not start from inside the zip.

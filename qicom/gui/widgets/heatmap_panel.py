@@ -21,7 +21,7 @@ labels below it, so the user can either drag or type an exact value.
 from __future__ import annotations
 
 import pyqtgraph as pg
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QEvent, QObject, Qt, Signal
 from PySide6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
@@ -64,6 +64,9 @@ class HeatmapPanel(QWidget):
     threshold_changed = Signal(float, float)  # low, high
     export_heatmaps_requested = Signal()  # one file per currently drawn ROI
     color_mode_changed = Signal(str)  # one of HEATMAP_COLOR_MODES
+    # "Restore defaults" also covers the images' brightness/contrast, which
+    # the panels own: MainWindow resets every panel's window/level on this.
+    image_levels_reset_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -75,6 +78,21 @@ class HeatmapPanel(QWidget):
         # nothing currently shown.
         self._active_targets: set[int] = set()
         self._row_buttons: dict[int, QPushButton] = {}
+        # The value range of the heatmap currently shown, as computed (see
+        # set_legend_range): what the threshold returns to on a reset.
+        self._legend_defaults: tuple[float, float] | None = None
+        self._roi_names: dict[int, str] = {}
+
+        # A tester saw an empty page, and maps "saved" by the export, without
+        # learning how to make one appear: one line says what the map is,
+        # that it needs no Calculate, and what the export saves; the status
+        # line below the targets always says what is (or is not) shown.
+        self._intro = QLabel()
+        self._intro.setObjectName("panelSectionHint")
+        self._intro.setWordWrap(True)
+        self._status = QLabel()
+        self._status.setObjectName("heatmapStatus")
+        self._status.setWordWrap(True)
 
         self._metric_label = QLabel()
         self._metric_combo = QComboBox()
@@ -124,6 +142,9 @@ class HeatmapPanel(QWidget):
         self._colorbar_item.setLevels((0.0, 1.0))
         self._colorbar_item.sigLevelsChanged.connect(self._on_colorbar_dragged)
         self._colorbar_widget.addItem(self._colorbar_item)
+        # A double-click on the colour bar puts its handles back where the
+        # map started, the usual shortcut for "undo my dragging".
+        self._colorbar_widget.viewport().installEventFilter(self)
 
         self._min_threshold_label = EditableValueLabel()
         self._max_threshold_label = EditableValueLabel()
@@ -147,6 +168,12 @@ class HeatmapPanel(QWidget):
         self._reset_range_button = QPushButton()
         self._reset_range_button.clicked.connect(self._on_reset_range_clicked)
         threshold_row.addWidget(self._reset_range_button)
+        # Everything on this page back to how it started, in one click: the
+        # colour scale, the threshold, and the images' brightness/contrast
+        # sliders beside them. The tooltip names each default.
+        self._reset_defaults_button = QPushButton()
+        self._reset_defaults_button.setObjectName("heatmapResetDefaults")
+        self._reset_defaults_button.clicked.connect(self.reset_to_defaults)
         # Always present (never hidden/shown) - disabled instead when no
         # heatmap is active, so it doesn't visibly pop in/out of the layout
         # the instant a heatmap is shown/hidden.
@@ -155,6 +182,7 @@ class HeatmapPanel(QWidget):
         self._apply_metric_range_limits()
 
         controls = QVBoxLayout()
+        controls.addWidget(self._intro)
         row1 = QHBoxLayout()
         row1.addWidget(self._metric_label)
         row1.addWidget(self._metric_combo, 1)
@@ -170,8 +198,10 @@ class HeatmapPanel(QWidget):
         legend_row.addStretch(1)
         controls.addLayout(legend_row)
         controls.addLayout(threshold_row)
+        controls.addWidget(self._reset_defaults_button)
         controls.addWidget(self._targets_label)
         controls.addWidget(self._targets_list)
+        controls.addWidget(self._status)
         controls.addWidget(self._export_heatmaps_button)
         controls.addStretch(1)
 
@@ -238,11 +268,46 @@ class HeatmapPanel(QWidget):
         nothing is actually displayed."""
         self._active_targets = {WHOLE_IMAGE_TARGET} if roi_ids is None else set(roi_ids)
         self._refresh_all_row_button_labels()
+        self._refresh_status()
 
     def clear_active_targets(self) -> None:
         """Called by MainWindow after a heatmap was actually hidden."""
         self._active_targets = set()
         self._refresh_all_row_button_labels()
+        self._refresh_status()
+
+    @property
+    def has_active_targets(self) -> bool:
+        return bool(self._active_targets)
+
+    def show_status_message(self, message: str) -> None:
+        """Why no map is shown, when that is not the user's choice: no
+        images yet, or the map cannot be computed here (MainWindow)."""
+        self._status.setText(message)
+
+    def _refresh_status(self) -> None:
+        if not self._active_targets:
+            self._status.setText(
+                translator.tr(
+                    "heatmap.status_none",
+                    whole_image=translator.tr("heatmap.whole_image_row"),
+                    show=translator.tr("heatmap.show"),
+                )
+            )
+            return
+        if self._active_targets == {WHOLE_IMAGE_TARGET}:
+            targets = translator.tr("heatmap.whole_image_row")
+        else:
+            targets = ", ".join(
+                self._roi_names.get(target, str(target)) for target in sorted(self._active_targets)
+            )
+        self._status.setText(
+            translator.tr(
+                "heatmap.status_shown",
+                metric=self._metric_combo.currentText(),
+                targets=targets,
+            )
+        )
 
     def _refresh_all_row_button_labels(self) -> None:
         for target_id in self._row_buttons:
@@ -270,8 +335,11 @@ class HeatmapPanel(QWidget):
                 del self._row_buttons[target_id]
         for roi_id, name in rois:
             self._add_target_row(roi_id, QLabel(name))
+        self._roi_names = dict(rois)
         self._active_targets &= set(self._row_buttons)
         self._refresh_all_row_button_labels()
+        if self._active_targets:
+            self._refresh_status()
 
     def current_metric_id(self) -> str:
         return str(self._metric_combo.currentData())
@@ -328,10 +396,59 @@ class HeatmapPanel(QWidget):
         self._colorbar_item.setLevels((low, high))
         self._min_threshold_label.set_value(low)
         self._max_threshold_label.set_value(high)
+        self._legend_defaults = (low, high)
         self._set_colorbar_enabled(True)
+        self._refresh_reset_tooltip()
 
     def clear_legend(self) -> None:
+        self._legend_defaults = None
         self._set_colorbar_enabled(False)
+        self._refresh_reset_tooltip()
+
+    def reset_to_defaults(self) -> None:
+        """The page's "Restore defaults": the metric's own colour scale, the
+        threshold back to the shown map's computed range, and every image's
+        brightness/contrast back to its values at load time (see
+        image_levels_reset_requested)."""
+        default_index = self._color_mode_combo.findData(
+            default_heatmap_color_mode(self.current_metric_id())
+        )
+        if default_index >= 0:
+            self._color_mode_combo.setCurrentIndex(default_index)
+        self.reset_threshold()
+        self.image_levels_reset_requested.emit()
+
+    def reset_threshold(self) -> None:
+        """Min/max back to the range the shown map was computed with."""
+        if self._legend_defaults is not None:
+            low, high = self._legend_defaults
+            self._set_threshold(low=low, high=high)
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
+        if (
+            event.type() == QEvent.Type.MouseButtonDblClick
+            and watched is self._colorbar_widget.viewport()
+            and self._colorbar_widget.isEnabled()
+        ):
+            self.reset_threshold()
+            return True
+        return super().eventFilter(watched, event)
+
+    def _refresh_reset_tooltip(self) -> None:
+        color_mode = default_heatmap_color_mode(self.current_metric_id())
+        if self._legend_defaults is None:
+            threshold = translator.tr("heatmap.reset_defaults_no_map")
+        else:
+            low, high = self._legend_defaults
+            threshold = f"{low:.4g} - {high:.4g}"
+        self._reset_defaults_button.setToolTip(
+            translator.tr(
+                "heatmap.reset_defaults_tooltip",
+                color_mode=translator.tr(f"heatmap.color_mode_{color_mode}"),
+                threshold=threshold,
+            )
+        )
+        self._colorbar_widget.setToolTip(translator.tr("heatmap.colorbar_tooltip"))
 
     def _set_colorbar_enabled(self, enabled: bool) -> None:
         # setEnabled alone blocks interaction (dragging/double-click-to-edit)
@@ -387,6 +504,7 @@ class HeatmapPanel(QWidget):
             self._color_mode_combo.setCurrentIndex(preferred_index)
         self._refresh_colorbar_map()
         self._apply_metric_range_limits()
+        self._refresh_reset_tooltip()
         if not self._active_targets:
             return
         # A heatmap is already on screen - picking a different metric used
@@ -421,6 +539,13 @@ class HeatmapPanel(QWidget):
 
     def retranslate_ui(self) -> None:
         self._metric_label.setText(translator.tr("heatmap.metric"))
+        self._intro.setText(
+            translator.tr(
+                "heatmap.intro",
+                export_button=translator.tr("heatmap.export_heatmaps_button"),
+            )
+        )
+        self._refresh_status()
         self._color_mode_label.setText(translator.tr("heatmap.color_mode"))
         for index, color_mode in enumerate(HEATMAP_COLOR_MODES):
             self._color_mode_combo.setItemText(
@@ -430,6 +555,8 @@ class HeatmapPanel(QWidget):
         self._max_threshold_label.set_title(translator.tr("heatmap.threshold_max"))
         self._reset_range_button.setText(translator.tr("heatmap.reset_range_button"))
         self._reset_range_button.setToolTip(translator.tr("heatmap.reset_range_tooltip"))
+        self._reset_defaults_button.setText(translator.tr("heatmap.reset_defaults_button"))
+        self._refresh_reset_tooltip()
         self._targets_label.setText(translator.tr("heatmap.targets_label"))
         self._export_heatmaps_button.setText(translator.tr("heatmap.export_heatmaps_button"))
         self._whole_image_name_label.setText(translator.tr("heatmap.whole_image_row"))

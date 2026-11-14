@@ -70,7 +70,11 @@ from qicom.gui.resources import app_icon
 from qicom.gui.theming import SUPPORTED_THEMES, theme_manager
 from qicom.gui.tools.workflow_menu import UtilityToolsMenu
 from qicom.gui.widgets.about_dialog import AboutDialog
-from qicom.gui.widgets.adaptive_layout import DpiIconLabel, make_panel_scrollable
+from qicom.gui.widgets.adaptive_layout import (
+    DpiIconLabel,
+    fit_window_to_screen,
+    make_panel_scrollable,
+)
 from qicom.gui.widgets.bug_report_dialog import BugReportDialog
 from qicom.gui.widgets.dual_image_view import ImagePanel
 from qicom.gui.widgets.errors_dialog import ErrorsDialog
@@ -171,7 +175,7 @@ def _write_author_snapshot_or_refusal(
 class QualitativeMainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.resize(1280, 800)
+        fit_window_to_screen(self, 1280, 800)
         self.setWindowIcon(app_icon())
         # File > Close Project sets this before calling close() - see
         # MainWindow's own return_to_launcher for why qicom.gui.app.main()

@@ -8,11 +8,13 @@ import logging
 import os
 import platform
 import sys
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import QEventLoop, QRect, Qt, QTimer
-from PySide6.QtGui import QPixmap
+from PySide6.QtCore import QEventLoop, QRect, QRectF, Qt, QTimer
+from PySide6.QtGui import QColor, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QMessageBox, QSplashScreen
 
 from qicom.build_identity import build_identity
@@ -50,6 +52,14 @@ _logger = logging.getLogger(__name__)
 # height - "roughly 20%" per the design ask, not a pixel-exact contract.
 _SPLASH_HEIGHT_FRACTION = 0.2
 _SPLASH_MINIMUM_DURATION_MS = 1000
+#: The launcher's own name for each workflow, for the "opening" line.
+_WORKFLOW_LABEL_KEYS = {
+    MODE_QUANTITATIVE: "launcher.quantitative",
+    MODE_QUALITATIVE: "launcher.qualitative",
+    MODE_RADIOMICS: "launcher.radiomics",
+    MODE_TOOLS: "launcher.tools",
+}
+_BRAND_BLUE = "#0b5a91"
 
 
 class RadiomicsUnavailableError(RuntimeError):
@@ -112,6 +122,19 @@ def _bundled_reference_sets() -> list[str]:
     for identifier in identifiers:
         load_reference_manifest(identifier)
     return identifiers
+
+
+def _bundled_tools() -> list[str]:
+    """Import every utility tool's widget, as the Tools window does on first use.
+
+    The catalog addresses each tool by import path, which PyInstaller cannot
+    follow: a bundle that left one out failed only when a user picked it.
+    """
+    from qicom.gui.tools.catalog import TOOLS
+
+    for spec in TOOLS:
+        spec.widget_class()
+    return [spec.tool_id for spec in TOOLS]
 
 
 #: One 4x4 12-bit frame in lossless JPEG (SV1), the syntax most CT and MRI
@@ -199,6 +222,7 @@ def _run_frozen_smoke_test(output_path: Path | None = None) -> int:
 
     riqe_model.load_model()
     lossless_jpeg = _bundled_lossless_jpeg_decoder()
+    tools = _bundled_tools()
 
     # The build identity travels in the smoke output so the packaging
     # workflow can assert that a bundle knows which commit produced it -
@@ -214,6 +238,7 @@ def _run_frozen_smoke_test(output_path: Path | None = None) -> int:
             "lossless_jpeg": lossless_jpeg,
             "reference_sets": reference_sets,
             "riqe_model": "verified",
+            "tools": tools,
             "version": identity.version,
             "revision": identity.revision,
             "source_dirty": identity.source_dirty,
@@ -248,6 +273,61 @@ def _show_splash_screen(app: QApplication) -> QSplashScreen:
     splash.move(geometry.center() - splash.rect().center())
     splash.show()
     return splash
+
+
+def _show_opening_screen(app: QApplication, mode: str) -> QSplashScreen:
+    """The logo again, with a line saying which workflow is being opened.
+
+    The launcher closes the moment a workflow is picked, and the window it
+    opens can take a while to appear - on a first start Windows checks every
+    file of the application first. Nothing was on screen meanwhile: a tester
+    took QICOM for closed, started it again, and several windows then
+    opened at once. Shown until the window itself appears (see main()).
+    """
+    screen = app.primaryScreen()
+    geometry = screen.availableGeometry() if screen is not None else QRect(0, 0, 1024, 768)
+    side = max(1, int(geometry.height() * _SPLASH_HEIGHT_FRACTION))
+    band = max(28, side // 6)
+    canvas = QPixmap(side * 2, side + band)
+    canvas.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(canvas)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+    logo = QPixmap(str(LOGO_PATH)).scaled(
+        side,
+        side,
+        Qt.AspectRatioMode.KeepAspectRatio,
+        Qt.TransformationMode.SmoothTransformation,
+    )
+    painter.drawPixmap((canvas.width() - logo.width()) // 2, 0, logo)
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(QColor("white"))
+    painter.drawRoundedRect(QRectF(0, side + 4, canvas.width(), band - 4), 8, 8)
+    painter.end()
+    splash = QSplashScreen(canvas)
+    font = splash.font()
+    font.setPixelSize(max(12, int(band * 0.45)))
+    font.setBold(True)
+    splash.setFont(font)
+    workflow = translator.tr(_WORKFLOW_LABEL_KEYS.get(mode, "app.title"))
+    splash.showMessage(
+        translator.tr("launcher.opening", workflow=workflow),
+        Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter,
+        QColor(_BRAND_BLUE),
+    )
+    splash.move(geometry.center() - splash.rect().center())
+    splash.show()
+    app.processEvents()
+    return splash
+
+
+@contextmanager
+def _busy_cursor() -> Iterator[None]:
+    QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+    try:
+        yield
+    finally:
+        QApplication.restoreOverrideCursor()
 
 
 def _build_window(
@@ -369,15 +449,19 @@ def main() -> int:
         _logger.info(
             "Opening the %s window (%s)", launcher.choice.mode, launcher.choice.action or "new"
         )
+        opening = _show_opening_screen(app, launcher.choice.mode)
         try:
-            window = _build_window(launcher.choice)
+            with _busy_cursor():
+                window = _build_window(launcher.choice)
         except RadiomicsUnavailableError as exc:
+            opening.close()
             _logger.warning("Radiomics workflow unavailable: %s", exc)
             QMessageBox.critical(None, translator.tr("app.title"), str(exc))
             continue
         except Exception as exc:  # noqa: BLE001 - back to the launcher, never out of QICOM
             # Building a window opens what the launcher chose: a damaged
             # project or session database used to end the process here.
+            opening.close()
             _logger.exception("The chosen workflow could not be opened")
             QMessageBox.critical(
                 None,
@@ -395,6 +479,8 @@ def main() -> int:
         # event-loop iteration (after the window is already mapped) makes
         # it apply immediately instead.
         QTimer.singleShot(0, window.showMaximized)
+        # Off the screen once the window itself is on it.
+        opening.finish(window)
 
         app.exec()
         if not window.return_to_launcher:

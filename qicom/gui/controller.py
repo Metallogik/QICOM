@@ -238,6 +238,9 @@ class AppController(QObject):
     """
 
     command_history_changed = Signal()
+    project_state_changed = Signal()
+    """The project file this window saves to, or whether it has unsaved
+    changes, changed - MainWindow's title shows both."""
     analysis_warning = Signal(str)
     """A finding the user should see before trusting a result, but which
     must not stop the run: two DICOM images that disagree on photometric
@@ -295,10 +298,11 @@ class AppController(QObject):
         # ever affected the one panel it was made on).
         self._sync_levels_enabled = False
         # The portable project zip most recently saved to/loaded from, if
-        # any (see save_project_zip/load_project_zip) - purely
-        # informational for now (e.g. a future window-title hint), no
-        # behavior currently depends on it.
-        self._current_project_zip: Path | None = None
+        # any (see save_project_zip/load_project_zip): where Save Project
+        # and the save-before-closing prompt write without asking, and what
+        # the window title names. reset_all() forgets it, so a new project
+        # is never saved over the previous one's file.
+        self._current_project_zip = None
         # The still-alive temp directory a project zip was last extracted
         # into (see load_project_zip) - kept alive for as long as the
         # loaded project's panels might still need their own `path` to
@@ -368,6 +372,28 @@ class AppController(QObject):
         after: tuple[ImageArray, tuple[float, float]],
     ) -> None:
         self._execute(RotateFlipCommand(panel, name, description, before, after))
+
+    @property
+    def _has_unsaved_results(self) -> bool:
+        return self._unsaved_changes
+
+    @_has_unsaved_results.setter
+    def _has_unsaved_results(self, value: bool) -> None:
+        previous = getattr(self, "_unsaved_changes", None)
+        self._unsaved_changes = bool(value)
+        if previous is not None and previous != self._unsaved_changes:
+            self.project_state_changed.emit()
+
+    @property
+    def _current_project_zip(self) -> Path | None:
+        return self._project_zip_path
+
+    @_current_project_zip.setter
+    def _current_project_zip(self, value: Path | None) -> None:
+        previous = getattr(self, "_project_zip_path", False)
+        self._project_zip_path = value
+        if previous is not False and previous != value:
+            self.project_state_changed.emit()
 
     def mark_dirty(self) -> None:
         # Any user-visible state mutation invalidates results still being
@@ -465,9 +491,15 @@ class AppController(QObject):
     def reset_all(self) -> None:
         """Back to a just-started session: no images, ROIs, annotations,
         heatmap, undo/redo history, or cached calculate() results - used by
-        MainWindow's File > Reset All. Does not touch anything persisted
-        (saved analysis history, the log file) - only current, in-progress
-        work, the same distinction an actual app restart would make."""
+        MainWindow's File > New Project. Does not touch anything persisted
+        (saved analysis history, the log file, the project file itself) -
+        only current, in-progress work, the same distinction an actual app
+        restart would make.
+
+        The project file is forgotten too: the next save asks where to write
+        the new project. Keeping it meant that opening a project, starting
+        over and answering Save when closing silently overwrote the project
+        that had been opened first."""
         self._invalidate_calculation()
         self.dual_image_view.reset_all()
         self.command_history.clear()
@@ -480,6 +512,7 @@ class AppController(QObject):
         self._last_background_settings = BackgroundExclusionSettings()
         self._background_cache.clear()
         self._has_unsaved_results = False
+        self._current_project_zip = None
 
     @property
     def last_background_estimate(self) -> BackgroundEstimate | None:

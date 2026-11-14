@@ -77,3 +77,15 @@ def test_notice_and_about_name_files_that_exist_where_they_are_read() -> None:
     spec = (REPO_ROOT / "packaging" / "qicom.spec").read_text(encoding="utf-8")
     assert '(str(_licence_source), ".")' in spec  # copied next to NOTICE
     assert '(str(REPO_ROOT / "NOTICE"), ".")' in spec
+
+
+def test_every_utility_tool_is_collected_into_the_bundle() -> None:
+    """The catalog imports each tool by name on first use, which PyInstaller
+    cannot follow: the spec has to collect the package explicitly, and every
+    catalog entry has to live inside it."""
+    from qicom.gui.tools.catalog import TOOLS
+
+    spec = (REPO_ROOT / "packaging" / "qicom.spec").read_text(encoding="utf-8")
+    assert 'hiddenimports += collect_submodules("qicom.gui.tools")' in spec
+    for tool in TOOLS:
+        assert tool.widget.startswith("qicom.gui.tools."), tool.widget

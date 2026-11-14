@@ -4,14 +4,17 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QRect, QSize, Qt
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QScrollArea
+from PySide6.QtWidgets import QMainWindow, QScrollArea
 
 from qicom.gui import icons
 from qicom.gui.main_window import MainWindow
 from qicom.gui.radiomics_main_window import RadiomicsMainWindow
 from qicom.gui.theming import theme_manager
+from qicom.gui.tools.catalog import TOOLS
+from qicom.gui.tools.tools_window import ToolsMainWindow
+from qicom.gui.widgets.adaptive_layout import fit_window_to_screen
 from qicom.gui.widgets.launcher_dialog import LauncherDialog
 from qicom.gui.widgets.qualitative_main_window import QualitativeMainWindow
 from qicom.gui.widgets.settings_dialog import SettingsDialog
@@ -197,3 +200,56 @@ def test_secondary_dialogs_fit_and_their_actions_remain_reachable(qtbot, module_
     buttons = [button for button in dialog.findChildren(QPushButton) if button.isVisible()]
     assert buttons
     _scroll_to(qtbot, buttons[-1])
+
+
+class _FakeScreen:
+    def __init__(self, width: int, height: int) -> None:
+        self._geometry = QRect(0, 0, width, height)
+
+    def availableGeometry(self) -> QRect:  # noqa: N802 - mirrors QScreen
+        return self._geometry
+
+
+@pytest.mark.parametrize(
+    ("screen", "expected"),
+    [
+        # 1366x768 at 100%, 125% and 150%, less a taskbar: never larger than the screen.
+        (QSize(1366, 728), QSize(1256, 669)),
+        (QSize(1093, 574), QSize(1005, 528)),
+        (QSize(911, 472), QSize(838, 434)),
+        # A screen with room to spare gets the preferred size unchanged.
+        (QSize(2560, 1400), QSize(1280, 800)),
+    ],
+)
+def test_a_window_never_starts_larger_than_its_screen(qtbot, monkeypatch, screen, expected):
+    """The size "Restore" returns to: 1280x800 hung off a 1366x768 laptop, with
+    the edge and the grip that resize the window out of reach."""
+    window = QMainWindow()
+    qtbot.addWidget(window)
+    monkeypatch.setattr(window, "screen", lambda: _FakeScreen(screen.width(), screen.height()))
+
+    applied = fit_window_to_screen(window, 1280, 800)
+
+    assert applied == expected
+    assert window.size() == expected
+    assert window.x() == (screen.width() - expected.width()) // 2
+    assert window.y() == (screen.height() - expected.height()) // 2
+
+
+@pytest.mark.parametrize("size", [QSize(1366, 728), QSize(1093, 574), QSize(911, 472)])
+def test_the_tools_window_fits_a_small_logical_screen_with_every_tool(qtbot, size):
+    """Several tools need over 1200 logical pixels; the window holding them must
+    still shrink to a 1366x768 laptop at 100%, 125% and 150% scaling."""
+    window = ToolsMainWindow()
+    qtbot.addWidget(window)
+    window.show()
+    window.showNormal()
+    for spec in TOOLS:
+        window.open_tool(spec.tool_id)
+        window.resize(size)
+        qtbot.wait(5)
+
+        assert window.width() <= size.width(), (spec.tool_id, window.minimumSizeHint())
+        assert window.height() <= size.height(), (spec.tool_id, window.minimumSizeHint())
+        page = window.tool_widget(spec.tool_id)
+        assert page is not None and page.isVisible()

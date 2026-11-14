@@ -745,7 +745,8 @@ QListWidget#questionCardList::item:hover {
    not as a command button. */
 QPushButton#errorsStatusButton {
     background-color: transparent;
-    border: none;
+    border: 1px solid #e17262;
+    border-radius: 8px;
     color: #e17262;
     font-weight: 600;
     padding: 1px 8px;

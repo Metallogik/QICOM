@@ -98,7 +98,7 @@ that a particular run completed successfully.
 | --- | --- | --- |
 | `test-base` | `ubuntu-latest` x64 / 3.11 and 3.12 | Installed GUI/radiomics environment, dependency audit and source suite without learned libraries |
 | `test` | `ubuntu-latest` x64 / 3.12 | Full source suite, offscreen GUI tests, static gates, branch coverage, learned checkpoints and IBSI reference checks |
-| `package` — `QICOM-windows-x64` | `windows-latest` x64 / 3.12 | Native frozen build, attribution check, smoke checks and Windows executable metadata |
+| `package` — `QICOM-windows-x64` | `windows-latest` x64 / 3.12 | Native frozen build, attribution check, smoke checks and Windows executable metadata; the same bundle as an Inno Setup wizard (`QICOM-Setup.exe`, `packaging/build_windows_installer.py`, Program Files by default), installed silently for all users, smoke-tested from the installation folder and uninstalled again; `QICOM-windows-x64.zip` carries that installer and a README, `QICOM-windows-x64-portable.zip` the bundle folder itself |
 | `package` — `QICOM-macos-arm64` | `macos-14` arm64 / 3.12 | Native frozen build, attribution check and smoke checks |
 | `package` — `QICOM-linux-x64` | `ubuntu-latest` x64 / 3.12 | Native frozen build, attribution check and smoke checks; the same bundle as a `.deb`, installed with `apt-get`, smoke-tested through the installed `qicom` command, verified with `dpkg --verify` and removed again |
 | `ibsi-gate` | `ubuntu-latest` x64 / 3.12 | Tag-only reference gate; manual package runs skip this job |
@@ -176,6 +176,13 @@ is a purchase and an identity verification rather than a code change:
   certificate.
 - Until this exists, SmartScreen shows an unknown-publisher warning, and the
   reputation that suppresses it accrues per signing certificate.
+- The installer (`QICOM-Setup.exe`) and the uninstaller it writes
+  (`unins000.exe`) need the same signature: Inno Setup signs both when given a
+  `SignTool` entry. Windows 11 with Smart App Control enforcing blocks unsigned
+  executables it has no reputation for, and on such a machine the unsigned
+  uninstaller was blocked outright during a local test; uninstalling then
+  means removing the folder, the shortcuts and the Installed apps entry by
+  hand.
 
 ### macOS - Developer ID and notarization
 

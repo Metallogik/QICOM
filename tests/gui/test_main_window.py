@@ -115,7 +115,9 @@ def window(qtbot: QtBot) -> MainWindow:
 
 class TestMainWindow:
     def test_constructs_without_error(self, window: MainWindow) -> None:
-        assert window.windowTitle() == "QICOM - Quality Image Comparator"
+        assert (
+            window.windowTitle() == "New project (not saved)[*] - QICOM - Quality Image Comparator"
+        )
 
     def test_view_toolbar_is_a_top_level_toolbar_above_the_images(self, window: MainWindow) -> None:
         assert window.toolBarArea(window.view_toolbar) == Qt.ToolBarArea.TopToolBarArea
@@ -1424,7 +1426,7 @@ class TestExportHeatmapsWiring:
         assert "2" in window.statusBar().currentMessage()
 
 
-class TestResetAllWiring:
+class TestNewProjectWiring:
     def test_declining_confirmation_leaves_everything_untouched(
         self, window: MainWindow, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -1438,7 +1440,7 @@ class TestResetAllWiring:
         window.dual_image_view.add_roi("rectangle")
         window.results_panel.set_dataframe(_make_results())
 
-        window._on_reset_all()
+        window._on_new_project()
 
         assert window.dual_image_view.reference_panel.image is not None
         assert len(window.dual_image_view.list_roi_pairs()) == 1
@@ -1460,7 +1462,7 @@ class TestResetAllWiring:
             question=lambda *a, **k: QMessageBox.StandardButton.Yes,
         )
 
-        window._on_reset_all()
+        window._on_new_project()
 
         assert window.dual_image_view.reference_panel.image is None
         assert window.dual_image_view.list_roi_pairs() == []
@@ -1479,7 +1481,7 @@ class TestResetAllWiring:
             question=lambda *a, **k: QMessageBox.StandardButton.Yes,
         )
 
-        window._on_reset_all()
+        window._on_new_project()
 
         assert window.results_panel.dataframe_for_pair("AvsB") is None
         assert window.results_panel._pair_combo.isHidden()
@@ -1631,6 +1633,129 @@ class TestCloseEventWiring:
         window.closeEvent(event)
 
         assert event.isAccepted()
+
+
+class TestProjectLifecycle:
+    """New / Save / Save As in the File menu, and the title naming the project.
+
+    A tester could not start a new project from inside the window, and had a
+    project saved over without meaning to: starting over kept the opened
+    project's file, so Save on closing wrote the new work into it."""
+
+    def test_the_project_commands_are_in_the_file_menu_on_every_stage(
+        self, window: MainWindow
+    ) -> None:
+        actions = (
+            window._new_project_action,
+            window._open_project_folder_action,
+            window._save_project_action,
+            window._save_project_as_action,
+        )
+        assert [action.text() for action in actions] == [
+            "New Project",
+            "Open Project...",
+            "Save Project",
+            "Save Project As...",
+        ]
+        assert window._file_menu.actions()[:4] == list(actions)
+        assert [action.shortcut().isEmpty() for action in actions] == [False] * 4
+        for stage in window.workflow_rail.visible_stage_keys:
+            window.workflow_rail.set_current_stage(stage)
+            assert all(action.isVisible() for action in actions), stage
+
+    def test_a_new_project_on_an_empty_window_asks_nothing(
+        self, window: MainWindow, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(QMessageBox, "exec", lambda self: pytest.fail("no prompt expected"))
+        stub_message_box(
+            monkeypatch,
+            "qicom.gui.main_window",
+            question=lambda *a, **k: pytest.fail("no confirmation expected"),
+        )
+
+        window._on_new_project()
+
+        assert window.workflow_rail.current_stage == "import"
+
+    def test_a_new_project_is_never_saved_over_the_previous_one(
+        self, window: MainWindow, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        opened = tmp_path / "study.zip"
+        window.controller._current_project_zip = opened
+        window.controller._has_unsaved_results = True
+        _click_message_box_role(monkeypatch, QMessageBox.ButtonRole.DestructiveRole)
+        window._on_new_project()
+        assert window.controller.current_project_zip is None
+
+        window.controller.mark_dirty()  # new work in the new project
+        _click_message_box_role(monkeypatch, QMessageBox.ButtonRole.AcceptRole)
+        chosen = tmp_path / "second"
+        monkeypatch.setattr(
+            "qicom.gui.main_window.QFileDialog.getSaveFileName",
+            lambda *a, **k: (str(chosen), "QICOM Project (*.zip)"),
+        )
+        save_calls: list[Path] = []
+        monkeypatch.setattr(
+            window.controller, "save_project_zip", lambda path, **_kwargs: save_calls.append(path)
+        )
+        monkeypatch.setattr(main_window_module, "record_recent_project", lambda *a, **k: None)
+        event = QCloseEvent()
+        window.closeEvent(event)
+
+        assert save_calls == [tmp_path / "second.zip"]
+        assert event.isAccepted()
+
+    def test_save_project_writes_to_the_open_project_without_asking(
+        self, window: MainWindow, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        opened = tmp_path / "study.zip"
+        window.controller._current_project_zip = opened
+        monkeypatch.setattr(
+            "qicom.gui.main_window.QFileDialog.getSaveFileName",
+            lambda *a, **k: pytest.fail("Save must not ask for a file it already has"),
+        )
+        save_calls: list[Path] = []
+        monkeypatch.setattr(
+            window.controller, "save_project_zip", lambda path, **_kwargs: save_calls.append(path)
+        )
+        monkeypatch.setattr(main_window_module, "record_recent_project", lambda *a, **k: None)
+
+        window._on_save_project()
+
+        assert save_calls == [opened]
+        assert str(opened) in window.statusBar().currentMessage()
+
+    def test_save_project_as_always_asks_for_the_file(
+        self, window: MainWindow, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        window.controller._current_project_zip = tmp_path / "study.zip"
+        monkeypatch.setattr(
+            "qicom.gui.main_window.QFileDialog.getSaveFileName",
+            lambda *a, **k: (str(tmp_path / "copy.zip"), "QICOM Project (*.zip)"),
+        )
+        save_calls: list[Path] = []
+        monkeypatch.setattr(
+            window.controller, "save_project_zip", lambda path, **_kwargs: save_calls.append(path)
+        )
+        monkeypatch.setattr(main_window_module, "record_recent_project", lambda *a, **k: None)
+
+        window._on_save_project_as()
+
+        assert save_calls == [tmp_path / "copy.zip"]
+
+    def test_the_title_names_the_project_and_marks_unsaved_changes(
+        self, window: MainWindow
+    ) -> None:
+        assert window.windowTitle().startswith("New project (not saved)[*]")
+        assert not window.isWindowModified()
+
+        window.controller.mark_dirty()
+        assert window.isWindowModified()
+
+        window.controller._current_project_zip = Path("studies") / "liver.zip"
+        window.controller._has_unsaved_results = False
+        assert window.windowTitle().startswith("liver[*]")
+        assert not window.isWindowModified()
 
 
 class TestCloseProjectWiring:
@@ -2377,6 +2502,68 @@ class TestErrorsPanelWiring:
         assert "something failed" in window.errors_panel._table.item(0, 1).text()
 
 
+class TestErrorsAreReachable:
+    """Reported: the error messages at the bottom did not look clickable, and
+    the bottom panels showed one row at a time while the Errors window showed
+    them all."""
+
+    def test_clicking_the_error_at_the_bottom_opens_every_error(
+        self, window: MainWindow, qtbot: QtBot
+    ) -> None:
+        window.show()
+        window._report_error("first")
+        window._report_error("second")
+        status_bar = window.statusBar()
+        assert status_bar.cursor().shape() == Qt.CursorShape.PointingHandCursor
+
+        qtbot.mouseClick(status_bar, Qt.MouseButton.LeftButton)
+
+        assert window._errors_dialog is not None and window._errors_dialog.isVisible()
+        assert len(window._errors_dialog._rendered) == 2
+
+    def test_a_later_message_is_no_longer_clickable(self, window: MainWindow) -> None:
+        window._report_error("boom")
+
+        window.statusBar().showMessage("Ready")
+
+        assert window.statusBar().cursor().shape() != Qt.CursorShape.PointingHandCursor
+        assert not window._status_message_is_error
+
+    def test_the_status_indicator_is_a_button_that_says_it_opens_the_list(
+        self, window: MainWindow
+    ) -> None:
+        window._report_error("boom")
+
+        button = window._errors_status_button
+        assert not button.isFlat()
+        assert not button.icon().isNull()
+        assert button.text() == "1 error(s): show"
+        assert "full list" in button.toolTip()
+
+    def test_the_errors_panel_opens_the_whole_list(self, window: MainWindow) -> None:
+        window._report_error("boom")
+
+        window.errors_panel._open_all_button.click()
+
+        assert window._errors_dialog is not None and window._errors_dialog.isVisible()
+
+    def test_an_opened_bottom_panel_shows_several_rows(
+        self, window: MainWindow, qtbot: QtBot
+    ) -> None:
+        window.show()
+        window.resize(1366, 728)
+        for index in range(8):
+            window._report_error(f"error {index}")
+        window.workflow_rail.set_current_stage("results")
+
+        window._errors_dock.toggleViewAction().trigger()
+        window._errors_dock.raise_()
+        qtbot.wait(20)
+
+        table = window.errors_panel._table
+        assert table.viewport().height() >= 4 * table.verticalHeader().defaultSectionSize()
+
+
 class TestErrorTabBadge:
     def test_reporting_an_error_shows_a_count_of_one(self, window: MainWindow) -> None:
         window._report_error("boom")
@@ -2520,7 +2707,7 @@ class TestErrorTabBadge:
 
         assert window._error_badge.text() == "1"
 
-    def test_reset_all_clears_the_badge(
+    def test_new_project_clears_the_badge(
         self, window: MainWindow, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         window._report_error("boom")
@@ -2530,7 +2717,7 @@ class TestErrorTabBadge:
             question=lambda *a, **k: QMessageBox.StandardButton.Yes,
         )
 
-        window._on_reset_all()
+        window._on_new_project()
 
         assert window._error_badge.text() == ""
 
@@ -3130,6 +3317,78 @@ class TestResultsAndHeatmapSteps:
         assert window._results_dock.isHidden()
         assert window._charts_dock.isHidden()
 
+    def test_entering_the_heatmaps_step_shows_the_whole_image_map(self, window: MainWindow) -> None:
+        """Reported: the maps "do not show" and it was unclear how to make
+        one. The step used to open empty until a small Show button was
+        found; it now draws the selected metric's whole-image map over the
+        images, and says so."""
+        window.show()
+        rng = np.random.default_rng(0)
+        reference = rng.random((64, 64))
+        window.dual_image_view.reference_panel.set_image(reference)
+        window.dual_image_view.comparison_panel.set_image(reference + rng.normal(0, 0.05, (64, 64)))
+
+        window.workflow_rail.set_current_stage("heatmaps")
+
+        for panel in window.dual_image_view.list_panels():
+            assert panel._heatmap_item is not None
+            assert panel._heatmap_item.isVisible()
+            assert panel._heatmap_item.image is not None
+        assert window.heatmap_panel.has_active_targets
+        assert "Whole Image" in window.heatmap_panel._status.text()
+        assert window.errors_panel._table.rowCount() == 0
+
+    def test_a_shown_map_is_still_on_the_images_after_a_step_change(
+        self, window: MainWindow
+    ) -> None:
+        """The reported "maps do not show": every step change outside Remove
+        air cleared the air preview, and with it the shared overlay - so the
+        map left the images while the panel still said it was shown."""
+        window.show()
+        image = np.random.default_rng(2).random((64, 64))
+        window.dual_image_view.reference_panel.set_image(image)
+        window.dual_image_view.comparison_panel.set_image(image * 0.8)
+        window.workflow_rail.set_current_stage("heatmaps")
+
+        window.workflow_rail.set_current_stage("export")
+        window.workflow_rail.set_current_stage("view")
+
+        for panel in window.dual_image_view.list_panels():
+            assert panel._heatmap_item is not None
+            assert panel._heatmap_item.image is not None
+        assert window.heatmap_panel.has_active_targets
+
+    def test_without_images_the_heatmaps_step_says_what_is_missing(
+        self, window: MainWindow
+    ) -> None:
+        window.show()
+
+        window.workflow_rail.set_current_stage("heatmaps")
+
+        assert not window.heatmap_panel.has_active_targets
+        assert (
+            window.heatmap_panel._status.text()
+            == "Load the reference and a comparison image to see a heatmap."
+        )
+        assert window.errors_panel._table.rowCount() == 0
+
+    def test_a_map_hidden_on_the_step_stays_hidden_until_the_step_is_entered_again(
+        self, window: MainWindow
+    ) -> None:
+        window.show()
+        image = np.random.default_rng(1).random((64, 64))
+        window.dual_image_view.reference_panel.set_image(image)
+        window.dual_image_view.comparison_panel.set_image(image * 0.9)
+        window.workflow_rail.set_current_stage("heatmaps")
+
+        window.heatmap_panel._row_buttons[WHOLE_IMAGE_TARGET].click()  # the user's Hide
+        assert not window.heatmap_panel.has_active_targets
+        assert "No heatmap shown" in window.heatmap_panel._status.text()
+
+        window.workflow_rail.set_current_stage("results")
+        window.workflow_rail.set_current_stage("heatmaps")
+        assert window.heatmap_panel.has_active_targets
+
     def test_there_is_no_activity_step_any_more(self, window: MainWindow) -> None:
         assert "activity" not in window.workflow_rail.stage_keys
         assert window._history_dock.isHidden()
@@ -3380,3 +3639,20 @@ class TestProjectSaveDeidentificationOverride:
         assert calls[0] is None and isinstance(calls[1], list)
         messages = [record.message for record in window.errors_panel.records()]
         assert any("scan.dcm" in message for message in messages)
+
+
+class TestHeatmapRestoreDefaultsWiring:
+    def test_restore_defaults_returns_every_image_to_its_loaded_levels(
+        self, window: MainWindow
+    ) -> None:
+        pixels = np.arange(100, dtype=np.float64).reshape(10, 10)
+        panels = window.dual_image_view.list_panels()
+        for panel in panels:
+            panel.set_image(pixels)
+        loaded = [panel.get_levels() for panel in panels]
+        for panel in panels:
+            panel.set_levels((10.0, 20.0))
+
+        window.heatmap_panel._reset_defaults_button.click()
+
+        assert [panel.get_levels() for panel in panels] == loaded

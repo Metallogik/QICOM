@@ -48,8 +48,24 @@ def as_reported_errors(records: Sequence[ErrorRecord]) -> list[ReportedError]:
     return [ReportedError(record.timestamp, record.message) for record in records]
 
 
+#: Rows a bottom error/log table always shows. Opened beside the other
+#: bottom panels it used to get one row of height on most steps.
+MIN_VISIBLE_ROWS = 4
+
+
+def keep_rows_visible(table: QTableWidget, rows: int = MIN_VISIBLE_ROWS) -> None:
+    """Never let `table` shrink below `rows` rows plus its header."""
+    vertical = table.verticalHeader()
+    horizontal = table.horizontalHeader()
+    row_height = vertical.defaultSectionSize() if vertical is not None else 24
+    header_height = horizontal.sizeHint().height() if horizontal is not None else 24
+    table.setMinimumHeight(header_height + rows * row_height + 2 * table.frameWidth())
+
+
 class ErrorsPanel(QWidget):
     errors_changed = Signal()
+    # The whole list, as selectable text in the Errors window (MainWindow).
+    open_all_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None, *, workflow: str | None = None) -> None:
         super().__init__(parent)
@@ -65,13 +81,19 @@ class ErrorsPanel(QWidget):
         assert header is not None
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        keep_rows_visible(self._table)
+        self._table.doubleClicked.connect(lambda _index: self.open_all_requested.emit())
 
+        self._open_all_button = QPushButton()
+        self._open_all_button.setObjectName("primary")
+        self._open_all_button.clicked.connect(self.open_all_requested.emit)
         self._save_report_button = QPushButton()
         self._save_report_button.clicked.connect(self._on_save_report)
         self._clear_button = QPushButton()
         self._clear_button.clicked.connect(self.clear)
 
         button_row = QHBoxLayout()
+        button_row.addWidget(self._open_all_button)
         button_row.addWidget(self._save_report_button)
         button_row.addStretch(1)
         button_row.addWidget(self._clear_button)
@@ -123,6 +145,9 @@ class ErrorsPanel(QWidget):
         self._table.setHorizontalHeaderLabels(
             [translator.tr(f"errors_panel.column_{column}") for column in _COLUMNS]
         )
+        self._open_all_button.setText(translator.tr("errors_panel.open_all"))
+        self._open_all_button.setToolTip(translator.tr("errors_panel.open_all_tooltip"))
+        self._table.setToolTip(translator.tr("errors_panel.open_all_tooltip"))
         self._save_report_button.setText(translator.tr("errors_dialog.save_report"))
         self._save_report_button.setToolTip(translator.tr("errors_dialog.hint"))
         self._clear_button.setText(translator.tr("errors_panel.clear"))

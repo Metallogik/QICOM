@@ -22,10 +22,21 @@ class ToolSpec:
     icon: str
     widget: str  # "package.module:ClassName", imported on first use
 
-    def create_widget(self) -> QWidget:
+    def widget_class(self) -> type:
+        """Import the tool's module and return its widget class.
+
+        Raises ImportError when the module is missing - in a packaged
+        application that means the build left it out (see the frozen smoke
+        test, which calls this for every entry).
+        """
         module_name, _separator, class_name = self.widget.partition(":")
         widget_class = getattr(importlib.import_module(module_name), class_name)
-        widget = widget_class()
+        if not isinstance(widget_class, type):
+            raise TypeError(f"{self.widget} is not a class")
+        return widget_class
+
+    def create_widget(self) -> QWidget:
+        widget = self.widget_class()()
         if not isinstance(widget, QWidget):
             raise TypeError(f"{self.widget} is not a QWidget")
         return widget

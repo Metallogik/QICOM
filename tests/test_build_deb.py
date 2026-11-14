@@ -215,4 +215,4 @@ class TestWorkflow:
         assert "--smoke-test" in steps[install]["run"]
         assert "apt-get remove" in steps[install]["run"]
         # The upload takes every "<artifact>.*" file: the package and its sidecar.
-        assert steps[upload]["with"]["path"] == "${{ matrix.artifact }}.*"
+        assert "${{ matrix.artifact }}.*" in steps[upload]["with"]["path"].splitlines()

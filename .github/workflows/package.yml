@@ -590,11 +590,74 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent \
             "staging/${{ matrix.artifact }}" "${{ matrix.artifact }}.zip"
 
+      # LEGGIMI-PRIMA.txt sits at the top of the zip, beside the folder: the
+      # first thing seen on opening it, it says to extract first (qicom.exe
+      # does not start from inside the zip) or to use the installer instead.
       - name: Stage and archive (Windows)
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          7z a -mx=1 "${{ matrix.artifact }}.zip" "./staging/${{ matrix.artifact }}"
+          cp packaging/windows/LEGGIMI-PRIMA.txt staging/
+          7z a -mx=1 "${{ matrix.artifact }}.zip" \
+            "./staging/${{ matrix.artifact }}" ./staging/LEGGIMI-PRIMA.txt
+
+      # The same staged directory as a standard installer: destination folder
+      # chosen by the user, Start-menu entry, uninstaller. Installed silently
+      # here as a user would get it, the installed copy must pass the same
+      # smoke test as the bundle and report this commit, and uninstalling
+      # must leave nothing behind. Inno Setup is not on every runner image.
+      - name: Build and smoke-test the Windows installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue) -and -not (Test-Path $iscc)) {
+            choco install innosetup --no-progress -y
+            if ($LASTEXITCODE -ne 0) { throw "choco could not install Inno Setup" }
+          }
+          $setup = "${{ matrix.artifact }}-setup.exe"
+          python packaging/build_windows_installer.py "staging/${{ matrix.artifact }}" --output $setup
+          if ($LASTEXITCODE -ne 0) { throw "the installer build failed" }
+
+          $target = Join-Path $PWD 'setup-test'
+          $install = Start-Process -FilePath ".\$setup" -Wait -PassThru -ArgumentList @(
+            '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CURRENTUSER',
+            "/DIR=`"$target`"", "/LOG=`"$PWD\setup.log`""
+          )
+          if ($install.ExitCode -ne 0) {
+            Get-Content setup.log
+            throw "the installer exited with $($install.ExitCode)"
+          }
+          $smoke = Start-Process -FilePath "$target\qicom.exe" -Wait -PassThru -ArgumentList @(
+            '--smoke-test', '--smoke-output', "`"$PWD\smoke-setup.json`""
+          )
+          if ($smoke.ExitCode -ne 0) { throw "the installed qicom.exe exited with $($smoke.ExitCode)" }
+          $payload = Get-Content smoke-setup.json -Raw | ConvertFrom-Json
+          $expected = (git rev-parse HEAD).Trim()
+          if ($payload.revision -ne $expected) {
+            throw "the installed app reports $($payload.revision), built from $expected"
+          }
+          if (-not $payload.tools) { throw "the installed app reports no utility tools" }
+
+          $uninstall = Start-Process -FilePath "$target\unins000.exe" -Wait -PassThru -ArgumentList @(
+            '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
+          )
+          if ($uninstall.ExitCode -ne 0) { throw "the uninstaller exited with $($uninstall.ExitCode)" }
+          # The uninstaller hands over to a copy of itself and may return first.
+          $deadline = (Get-Date).AddMinutes(2)
+          while ((Test-Path "$target\qicom.exe") -and (Get-Date) -lt $deadline) {
+            Start-Sleep -Milliseconds 500
+          }
+          if (Test-Path "$target\qicom.exe") { throw "uninstalling left qicom.exe behind" }
+          $uninstallKeys = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'
+          $leftover = Get-ItemProperty $uninstallKeys -ErrorAction SilentlyContinue |
+            Where-Object { $_.DisplayName -eq 'QICOM' }
+          if ($leftover) { throw "uninstalling left QICOM under Installed apps" }
+
+          python packaging/generate_sha256sums.py $setup --output "$setup.sha256"
+          if ($LASTEXITCODE -ne 0) { throw "the installer checksum failed" }
+          Write-Output "Installer verified: $setup ($($payload.version) $($payload.revision))"
 
       - name: Stage and archive (Linux)
         if: runner.os == 'Linux'
@@ -666,7 +729,10 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.artifact }}
-          path: ${{ matrix.artifact }}.*
+          # The Windows installer and its checksum travel with the zip.
+          path: |
+            ${{ matrix.artifact }}.*
+            ${{ matrix.artifact }}-setup.*
           if-no-files-found: error
           # The archive is already compressed; re-compressing a multi-GB file
           # on upload costs minutes and saves nothing.
@@ -758,8 +824,8 @@ jobs:
           gh run download "${{ github.run_id }}" --dir release-files --pattern 'QICOM-*'
           mkdir assets
           find release-files -type f -exec mv -t assets {} +
-          for name in QICOM-windows-x64.zip QICOM-macos-arm64.zip \
-                      QICOM-linux-x64.deb QICOM-linux-x64.tar.gz; do
+          for name in QICOM-windows-x64-setup.exe QICOM-windows-x64.zip \
+                      QICOM-macos-arm64.zip QICOM-linux-x64.deb QICOM-linux-x64.tar.gz; do
             if [ ! -s "assets/$name" ]; then
               echo "::error::$name is missing from this run; the site keeps the previous files"
               exit 1
@@ -813,7 +879,8 @@ jobs:
 
           | File | Platform |
           |---|---|
-          | QICOM-windows-x64.zip | Windows 10 (1809+) / 11, x64 |
+          | QICOM-windows-x64-setup.exe | Windows 10 (1809+) / 11, x64, installer (recommended) |
+          | QICOM-windows-x64.zip | Windows 10 (1809+) / 11, x64, portable: extract first |
           | QICOM-macos-arm64.zip | macOS, Apple Silicon only (not Intel) |
           | QICOM-linux-x64.deb | Debian / Ubuntu, x64 |
           | QICOM-linux-x64.tar.gz | Other Linux distributions, x64 |

@@ -27,6 +27,16 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Added
 
+- **Installer Windows** (`QICOM-windows-x64-setup.exe`, con sidecar `.sha256`), prodotto dalla
+  build Windows accanto allo zip da `packaging/build_windows_installer.py` (Inno Setup 6,
+  `packaging/windows/qicom.iss`). Chiede la cartella di destinazione, installa solo per l'utente
+  senza permessi di amministratore oppure per tutti in Program Files, crea la voce nel menu Start
+  e, a scelta, il collegamento sul desktop, e registra il programma di disinstallazione in
+  Impostazioni > App. Lo stesso bundle entra byte per byte, e un aggiornamento sostituisce
+  `_internal` per intero. La CI lo installa in silenzio, avvia lo smoke test dalla cartella
+  installata, ne verifica l'identità di build e lo disinstalla controllando che non resti nulla.
+  Lo zip ha ora in cima `LEGGIMI-PRIMA.txt`: estrarre prima di avviare, oppure usare l'installer.
+  Il sito di download punta per ora allo zip: il link all'installer va aggiunto lì.
 - **Pacchetto Debian/Ubuntu** (`QICOM-linux-x64.deb`, con sidecar `.sha256`), prodotto dalla
   build Linux accanto al `.tar.gz` da `packaging/build_deb.py`: lo stesso bundle, byte per byte,
   in `/opt/qicom`, il comando `qicom`, la voce di menu e l'icona. Dichiara le librerie Qt di

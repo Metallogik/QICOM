@@ -1,0 +1,15 @@
+QICOM per Windows - leggimi prima
+=================================
+
+Il modo piu' semplice: scarica e avvia QICOM-windows-x64-setup.exe. Chiede
+la cartella di destinazione, crea il collegamento nel menu Start (e, se
+vuoi, sul desktop) e si disinstalla da Impostazioni > App.
+
+Se usi questo zip: tasto destro sul file zip > "Estrai tutto...", apri la
+cartella QICOM-windows-x64 estratta e fai doppio clic su qicom.exe.
+Non avviare qicom.exe da dentro lo zip: Windows estrae solo quel file e
+l'applicazione non parte. Istruzioni complete: LEGGIMI-TESTER.txt.
+
+English: the easiest way is QICOM-windows-x64-setup.exe. With this zip,
+right-click it > "Extract All...", then run qicom.exe from the extracted
+QICOM-windows-x64 folder; it does not start from inside the zip.

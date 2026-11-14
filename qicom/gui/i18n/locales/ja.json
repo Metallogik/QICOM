@@ -81,6 +81,7 @@
   "launcher.load_radiomics_project_title": "ラジオミクスプロジェクトを選択",
   "launcher.radiomics_unavailable": "ラジオミクスのワークフローがインストールされていません。次のコマンドでインストールしてください：pip install 'qicom[radiomics]'",
   "launcher.open_failed": "選択したワークフローを開けませんでした：{error}",
+  "launcher.opening": "{workflow} を開いています...",
   "launcher.tools": "ユーティリティツール",
   "launcher.tools_description": "3 つのワークフローと並ぶ独立したツールです。セグメンテーション、マスク、変換、リサンプリング、DICOM ヘッダー、匿名化などがあります。",
   "launcher.tools_hint": "どのツールも、各作業ウィンドウの「ツール」メニューにもあります。",

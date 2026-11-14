@@ -81,6 +81,7 @@
   "launcher.load_radiomics_project_title": "Sélectionner un projet radiomique",
   "launcher.radiomics_unavailable": "Le flux Radiomique n'est pas installé. Installez-le avec : pip install 'qicom[radiomics]'",
   "launcher.open_failed": "Le flux choisi n'a pas pu être ouvert : {error}",
+  "launcher.opening": "Ouverture en cours : {workflow}...",
   "launcher.tools": "Outils utilitaires",
   "launcher.tools_description": "Des instruments autonomes à côté des trois flux : segmentation, masques, conversion, rééchantillonnage, en-têtes DICOM, anonymisation et plus.",
   "launcher.tools_hint": "Chaque outil se trouve aussi dans le menu Outils de chaque fenêtre de travail.",

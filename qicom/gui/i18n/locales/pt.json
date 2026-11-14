@@ -81,6 +81,7 @@
   "launcher.load_radiomics_project_title": "Selecionar projeto radiômico",
   "launcher.radiomics_unavailable": "O fluxo de trabalho de radiômica não está instalado. Instale-o com: pip install 'qicom[radiomics]'",
   "launcher.open_failed": "Não foi possível abrir o fluxo de trabalho escolhido: {error}",
+  "launcher.opening": "Abrindo: {workflow}...",
   "launcher.tools": "Ferramentas utilitárias",
   "launcher.tools_description": "Instrumentos independentes ao lado dos três fluxos de trabalho: segmentação, máscaras, conversão, reamostragem, cabeçalhos DICOM, anonimização e mais.",
   "launcher.tools_hint": "Cada ferramenta também está no menu Ferramentas de cada janela de trabalho.",

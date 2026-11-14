@@ -130,6 +130,25 @@ def _nullable_to_int(value: Any) -> int | None:
 #: database written by a newer QICOM is refused rather than guessed at.
 SESSION_DATABASE_VERSION = 1
 
+#: How long one statement waits for another QICOM window or instance to let
+#: go of the database (SQLite's busy handler), set before the first statement.
+_BUSY_TIMEOUT_MS = 10_000
+#: SQLite primary result codes meaning the file itself is unusable -
+#: SQLITE_CORRUPT and SQLITE_NOTADB - the only errors that justify setting the
+#: database aside. "Busy" or "locked" only means another QICOM window has it
+#: open, which is normal: several instances started together, or a slow first
+#: start the user answered by starting QICOM again.
+_DAMAGED_DATABASE_CODES = frozenset({11, 26})
+
+
+def _is_damaged_database_error(exc: sqlite3.DatabaseError) -> bool:
+    code = getattr(exc, "sqlite_errorcode", None)
+    if code is None:
+        # Raised by the sqlite3 module itself, not by SQLite: an
+        # OperationalError there is about using the connection, not the file.
+        return not isinstance(exc, sqlite3.OperationalError)
+    return (int(code) & 0xFF) in _DAMAGED_DATABASE_CODES
+
 
 class SessionStorage:
     """Owns one SQLite connection and every CRUD operation over the session schema.
@@ -150,23 +169,38 @@ class SessionStorage:
                 self.db_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             self._conn = self._open()
-        except sqlite3.DatabaseError:
-            if str(self.db_path) == ":memory:":
+        except sqlite3.DatabaseError as exc:
+            # A database another QICOM window is still holding is not
+            # damaged, and must not be moved: "database is locked" used to be
+            # caught here too, so several windows starting together set the
+            # session history aside (on Windows the move then failed on the
+            # open file, but the log still said a new database was created).
+            if str(self.db_path) == ":memory:" or not _is_damaged_database_error(exc):
                 raise
             # A damaged file (crash, full disk, a copy of something else)
             # used to make the whole quantitative workflow impossible to
             # open. It is kept aside, never deleted: it may still be
             # recoverable with SQLite's own tools.
             self.recovered_from = self._set_aside_damaged_database()
-            _logger.warning("The session database could not be read; a new one was created")
             self._conn = self._open()
+            _logger.warning(
+                "The session database could not be read (%s); %s",
+                exc,
+                (
+                    "it was kept aside and a new one was created"
+                    if self.recovered_from is not None
+                    else "it could not be moved aside"
+                ),
+            )
         if str(self.db_path) != ":memory:":
             self._ensure_private_database_files()
 
     def _open(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(str(self.db_path))
+        connection = sqlite3.connect(str(self.db_path), timeout=_BUSY_TIMEOUT_MS / 1000)
         try:
             connection.row_factory = sqlite3.Row
+            # First, so even switching to WAL below waits for another window.
+            connection.execute(f"PRAGMA busy_timeout = {_BUSY_TIMEOUT_MS}")
             # Write-ahead logging so a second QICOM window/instance reading this
             # same database does not block the one writing to it (and vice
             # versa) - with the default rollback journal, a reader holds a lock
@@ -176,7 +210,6 @@ class SessionStorage:
             # which WAL does not remove.
             if str(self.db_path) != ":memory:":
                 connection.execute("PRAGMA journal_mode = WAL")
-            connection.execute("PRAGMA busy_timeout = 10000")
             connection.execute("PRAGMA foreign_keys = ON")
             version = int(connection.execute("PRAGMA user_version").fetchone()[0])
             if version > SESSION_DATABASE_VERSION:

@@ -608,6 +608,53 @@ class TestDamagedOrNewerDatabase:
             SessionStorage(path)
         assert path.exists()  # never set aside: it is not damaged
 
+    def test_a_database_another_window_holds_is_never_set_aside(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Several QICOM windows started together: one found the database
+        locked by another and took it for damaged, and tried to move the
+        session history aside. A lock is waited for; it is never damage."""
+        import sqlite3
+
+        from qicom.session import storage as storage_module
+
+        path = tmp_path / "session.sqlite3"
+        SessionStorage(path).close()
+        monkeypatch.setattr(storage_module, "_BUSY_TIMEOUT_MS", 200)
+        set_aside: list[bool] = []
+        monkeypatch.setattr(
+            SessionStorage, "_set_aside_damaged_database", lambda self: set_aside.append(True)
+        )
+        holder = sqlite3.connect(path)
+        holder.execute("BEGIN EXCLUSIVE")
+        try:
+            with pytest.raises(sqlite3.OperationalError, match="locked"):
+                SessionStorage(path)
+        finally:
+            holder.rollback()
+            holder.close()
+
+        assert set_aside == []
+        assert not list(tmp_path.glob("*.damaged-*"))
+        reopened = SessionStorage(path)  # once the other window lets go
+        assert reopened.recovered_from is None
+        reopened.close()
+
+    def test_only_a_corrupt_or_foreign_file_counts_as_damaged(self, tmp_path: Path) -> None:
+        import sqlite3
+
+        from qicom.session.storage import _is_damaged_database_error
+
+        not_a_database = tmp_path / "foreign.sqlite3"
+        not_a_database.write_bytes(b"this is not a database" * 100)
+        with pytest.raises(sqlite3.DatabaseError) as foreign:
+            sqlite3.connect(not_a_database).execute("PRAGMA user_version").fetchone()
+        locked = sqlite3.OperationalError("database is locked")
+        locked.sqlite_errorcode = 5  # SQLITE_BUSY
+
+        assert _is_damaged_database_error(foreign.value)
+        assert not _is_damaged_database_error(locked)
+
     def test_a_healthy_database_reopens_without_recovery(self, tmp_path: Path) -> None:
         path = tmp_path / "session.sqlite3"
         SessionStorage(path).close()

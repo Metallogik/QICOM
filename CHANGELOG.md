@@ -596,6 +596,19 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Fixed
 
+- **Un database occupato non viene più scambiato per danneggiato.** Con più finestre di QICOM
+  avviate insieme (per esempio dopo un primo avvio lento, a cui l'utente risponde riavviando),
+  una trovava il database delle sessioni bloccato dall'altra e lo trattava come danneggiato:
+  provava a spostarlo da parte e a crearne uno nuovo. Su Windows lo spostamento falliva sul file
+  aperto, ma il log diceva comunque che ne era stato creato uno nuovo; su Linux e macOS lo
+  spostamento sarebbe riuscito. Ora solo un file corrotto o non SQLite viene messo da parte; un
+  database occupato viene atteso (fino a 10 secondi, attesa impostata prima di ogni istruzione) e,
+  se resta occupato, l'apertura fallisce con un errore senza toccare nulla.
+- **Avvio di un flusso senza nulla sullo schermo.** Scelto un flusso nel launcher, il launcher si
+  chiudeva subito e la finestra poteva metterci molto ad apparire (al primo avvio Windows controlla
+  ogni file dell'applicazione): un tester ha creduto che QICOM si fosse chiuso e l'ha riavviato più
+  volte. Ora il logo resta sullo schermo con "Apertura in corso: Analisi quantitativa..." (o il
+  flusso scelto) e il cursore di attesa, finché la finestra non compare.
 - **Errori raggiungibili con un clic, pannelli in basso leggibili.** L'indicatore degli errori
   nella barra di stato era testo rosso senza bordo: ora è un pulsante con icona, contorno e la
   scritta "N errori: mostra", e il messaggio d'errore appena comparso in basso si apre anche lui

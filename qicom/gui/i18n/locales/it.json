@@ -81,6 +81,7 @@
   "launcher.load_radiomics_project_title": "Seleziona progetto radiomico",
   "launcher.radiomics_unavailable": "Il modulo Radiomica non è installato. Installalo con: pip install 'qicom[radiomics]'",
   "launcher.open_failed": "Non è stato possibile aprire il flusso scelto: {error}",
+  "launcher.opening": "Apertura in corso: {workflow}...",
   "launcher.tools": "Strumenti di utilità",
   "launcher.tools_description": "Strumenti autonomi accanto ai tre flussi: segmentazione, maschere, conversione, ricampionamento, header DICOM, anonimizzazione e altro.",
   "launcher.tools_hint": "Ogni strumento è anche nel menu Strumenti di ciascuna finestra di lavoro.",

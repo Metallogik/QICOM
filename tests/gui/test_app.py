@@ -48,6 +48,7 @@ from qicom.gui.widgets.launcher_dialog import (
 )
 from qicom.gui.widgets.qualitative_main_window import QualitativeMainWindow
 from qicom.gui.workers import run_in_thread, wait_for_active_jobs
+from qicom.i18n import SUPPORTED_LANGUAGES, translator
 from qicom.session.storage import SessionStorage
 
 
@@ -335,6 +336,38 @@ class TestSplashScreen:
             assert splash.geometry().center() == geometry.center()
         finally:
             splash.close()
+
+
+class TestOpeningScreen:
+    """Between the launcher closing and the workflow window appearing nothing
+    was on screen: a tester took QICOM for closed and started it again."""
+
+    def test_says_which_workflow_is_opening(self, qtbot: QtBot) -> None:
+        from qicom.gui.app import _show_opening_screen
+        from qicom.gui.widgets.launcher_dialog import MODE_QUANTITATIVE
+
+        translator.set_language("en")
+        app = QApplication.instance()
+        assert isinstance(app, QApplication)
+
+        splash = _show_opening_screen(app, MODE_QUANTITATIVE)
+        try:
+            assert splash.isVisible()
+            assert splash.message() == "Opening: Quantitative Analysis..."
+        finally:
+            splash.close()
+
+    def test_every_workflow_has_a_name_in_every_language(self) -> None:
+        from qicom.gui.app import _WORKFLOW_LABEL_KEYS
+
+        original = translator.language
+        try:
+            for language in SUPPORTED_LANGUAGES:
+                translator.set_language(language)
+                for key in [*_WORKFLOW_LABEL_KEYS.values(), "launcher.opening"]:
+                    assert translator.tr(key, workflow="x") != key, (language, key)
+        finally:
+            translator.set_language(original)
 
 
 class TestSessionLogging:

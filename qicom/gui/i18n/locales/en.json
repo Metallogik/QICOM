@@ -81,6 +81,7 @@
   "launcher.load_radiomics_project_title": "Select Radiomics Project",
   "launcher.radiomics_unavailable": "The Radiomics workflow is not installed. Install it with: pip install 'qicom[radiomics]'",
   "launcher.open_failed": "The chosen workflow could not be opened: {error}",
+  "launcher.opening": "Opening: {workflow}...",
   "launcher.tools": "Utility Tools",
   "launcher.tools_description": "Standalone instruments beside the three workflows: segmentation, masks, conversion, resampling, DICOM headers, anonymization and more.",
   "launcher.tools_hint": "Every tool is also in the Tools menu of each workflow window.",

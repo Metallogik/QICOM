@@ -81,6 +81,7 @@
   "launcher.load_radiomics_project_title": "Radiomik-Projekt auswählen",
   "launcher.radiomics_unavailable": "Der Radiomik-Workflow ist nicht installiert. Installieren Sie ihn mit: pip install 'qicom[radiomics]'",
   "launcher.open_failed": "Der gewählte Arbeitsablauf konnte nicht geöffnet werden: {error}",
+  "launcher.opening": "Wird geöffnet: {workflow}...",
   "launcher.tools": "Hilfswerkzeuge",
   "launcher.tools_description": "Eigenständige Werkzeuge neben den drei Arbeitsabläufen: Segmentierung, Masken, Konvertierung, Neuabtastung, DICOM-Header, Anonymisierung und mehr.",
   "launcher.tools_hint": "Jedes Werkzeug steht auch im Menü Werkzeuge jedes Arbeitsfensters.",

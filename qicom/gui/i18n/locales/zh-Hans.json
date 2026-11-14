@@ -81,6 +81,7 @@
   "launcher.load_radiomics_project_title": "选择影像组学项目",
   "launcher.radiomics_unavailable": "未安装影像组学工作流。请使用以下命令安装：pip install 'qicom[radiomics]'",
   "launcher.open_failed": "无法打开所选工作流：{error}",
+  "launcher.opening": "正在打开：{workflow}...",
   "launcher.tools": "实用工具",
   "launcher.tools_description": "与三个工作流并列的独立工具：分割、掩膜、转换、重采样、DICOM 头信息、匿名化等。",
   "launcher.tools_hint": "每个工具也都在各工作窗口的“工具”菜单中。",

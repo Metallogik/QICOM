@@ -612,10 +612,76 @@ class TestBackgroundExclusion:
 
         assert captured == [None]
 
-    def test_a_failed_detection_reports_instead_of_calculating(
+    def test_without_the_air_circle_calculate_measures_the_whole_image(
+        self, controller: AppController, qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The air sample is optional: exclusion switched on (or restored
+        from a saved analysis, which never brings the circle back) with no
+        circle placed still calculates - on the whole image, with a
+        warning, and recorded as not excluded."""
+        self._load(controller)  # no air circle placed
+        captured: list[object] = []
+
+        def _capture(*_args, **kwargs):
+            captured.append(kwargs.get("tissue_mask"))
+            return _make_results()
+
+        monkeypatch.setattr("qicom.gui.controller.run_all_metrics", _capture)
+        warnings: list[str] = []
+        controller.analysis_warning.connect(warnings.append)
+        done: list[pd.DataFrame] = []
+
+        controller.calculate(
+            1.0,
+            on_success=done.append,
+            on_error=lambda message: pytest.fail(message),
+            background=self._enabled(),
+        )
+        qtbot.waitUntil(lambda: bool(done), timeout=5000)
+
+        assert captured == [None]
+        assert translator.tr("analysis.warning_background_skipped") in warnings
+        assert controller.last_background_estimate is None
+        assert controller._last_background_settings.enabled is False
+
+    def test_without_the_air_circle_every_pair_is_calculated(
+        self, controller: AppController, qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        image, _body = self._phantom()
+        self._load(controller)
+        controller.dual_image_view.add_comparison_panel().set_image(image.copy())
+        captured: list[object] = []
+
+        def _capture(*_args, **kwargs):
+            captured.append(kwargs.get("tissue_mask"))
+            return _make_results()
+
+        monkeypatch.setattr("qicom.gui.controller.run_all_metrics", _capture)
+        results: list[dict[str, pd.DataFrame]] = []
+
+        controller.calculate_all_pairs(
+            1.0,
+            on_success=results.append,
+            on_error=lambda message: pytest.fail(message),
+            background=self._enabled(),
+        )
+        qtbot.waitUntil(lambda: bool(results), timeout=5000)
+
+        assert len(results[0]) == 3
+        assert captured == [None, None, None]
+        assert controller._last_background_settings.enabled is False
+
+    def test_an_air_circle_off_the_image_reports_instead_of_calculating(
         self, controller: AppController, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        self._load(controller)  # no air circle placed
+        """A circle that *is* placed asks for the exclusion: one that covers
+        no pixels is a mistake to report, not a reason to quietly measure
+        the air after all."""
+        self._load(controller)
+        self._place_air_roi(controller)
+        roi = controller.dual_image_view._air_roi
+        assert roi is not None
+        roi.setPos(1000, 1000)
         monkeypatch.setattr(
             "qicom.gui.controller.run_all_metrics",
             lambda *a, **k: pytest.fail("Calculate must not run on an unusable mask"),

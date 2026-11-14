@@ -1424,6 +1424,7 @@
   "analysis.warning_irregular_spacing": "Les coupes de {image} ne sont pas régulièrement espacées ({spacing}) : la pile est malgré tout traitée comme un volume régulier.",
   "analysis.warning_wide_data_range": "La plage de données {data_range} est bien plus large que les valeurs des images (étendue {span}) : SSIM et PSNR réagiront à peine aux différences. Envisagez une plage plus proche de l'étendue.",
   "analysis.warning_memory": "Ce calcul peut nécessiter environ {needed} de mémoire, plus que les {available} disponibles : il peut échouer ou ralentir fortement l'ordinateur. Désélectionnez les métriques les plus exigeantes (Wasserstein-1, NMI, SSIM) ou travaillez sur un volume plus petit.",
+  "analysis.warning_background_skipped": "L'exclusion de l'air est activée, mais la ROI verte d'air n'a pas été placée : toutes les métriques sont calculées sur l'image entière, air compris. Pour exclure l'air, placez la ROI verte sur l'arrière-plan à l'étape « Supprimer l'air », puis relancez le calcul.",
   "dual_image_view.photometric_overlay": "{value} (affichage inversé)",
   "workflow.quantitative.heatmaps": "Cartes de chaleur",
   "workflow.quantitative.heatmaps.tooltip": "Afficher la carte spatiale d'erreur de chaque métrique sur les images en pleine taille.",

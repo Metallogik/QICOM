@@ -1424,6 +1424,7 @@
   "analysis.warning_irregular_spacing": "Die Schichten von {image} sind ungleichmäßig verteilt ({spacing}): der Stapel wird trotzdem als regelmäßiges Volumen behandelt.",
   "analysis.warning_wide_data_range": "Der Datenbereich {data_range} ist viel breiter als die Werte in den Bildern (Spanne {span}): SSIM und PSNR reagieren kaum auf Unterschiede. Erwägen Sie einen Datenbereich näher an der Spanne.",
   "analysis.warning_memory": "Diese Berechnung kann etwa {needed} Speicher benötigen, mehr als die verfügbaren {available}: Sie kann fehlschlagen oder den Computer stark verlangsamen. Wählen Sie die anspruchsvollsten Metriken ab (Wasserstein-1, NMI, SSIM) oder arbeiten Sie mit einem kleineren Volumen.",
+  "analysis.warning_background_skipped": "Der Luftausschluss ist aktiviert, aber die grüne Luft-ROI wurde nicht platziert: Alle Metriken werden auf dem gesamten Bild berechnet, Luft eingeschlossen. Um die Luft auszuschließen, legen Sie im Schritt „Luft entfernen“ die grüne ROI auf den Hintergrund und berechnen Sie erneut.",
   "dual_image_view.photometric_overlay": "{value} (invertierte Darstellung)",
   "workflow.quantitative.heatmaps": "Heatmaps",
   "workflow.quantitative.heatmaps.tooltip": "Die räumliche Fehlerkarte jeder Metrik auf den Bildern in voller Größe anzeigen.",

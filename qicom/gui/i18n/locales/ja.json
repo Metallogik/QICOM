@@ -1424,6 +1424,7 @@
   "analysis.warning_irregular_spacing": "{image} のスライスが等間隔ではありません（{spacing}）。それでもスタックは規則的なボリュームとして扱われます。",
   "analysis.warning_wide_data_range": "データ範囲 {data_range} が画像内の値（幅 {span}）よりもはるかに広いため、SSIM と PSNR は差にほとんど反応しません。幅に近いデータ範囲を検討してください。",
   "analysis.warning_memory": "この計算には約 {needed} のメモリが必要になる可能性があり、利用可能な {available} を超えています。失敗したり、コンピュータが応答しなくなったりするおそれがあります。最も負荷の高い指標（Wasserstein-1、NMI、SSIM）の選択を解除するか、より小さなボリュームで作業してください。",
+  "analysis.warning_background_skipped": "空気の除外がオンですが、緑の空気 ROI が配置されていません。すべての指標は空気を含む画像全体で計算されます。空気を除外するには、「空気を除去」ステップで緑の ROI を背景上に配置してから、再度計算してください。",
   "dual_image_view.photometric_overlay": "{value}（反転表示）",
   "workflow.quantitative.heatmaps": "ヒートマップ",
   "workflow.quantitative.heatmaps.tooltip": "各指標の空間的な誤差マップを、原寸の画像上に表示します。",

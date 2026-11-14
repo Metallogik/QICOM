@@ -1424,6 +1424,7 @@
   "analysis.warning_irregular_spacing": "Le slice di {image} non sono equispaziate ({spacing}): lo stack viene comunque trattato come un volume regolare.",
   "analysis.warning_wide_data_range": "L'intervallo dati {data_range} è molto più ampio dei valori presenti nelle immagini (ampiezza {span}): SSIM e PSNR risponderanno appena alle differenze. Valuta un intervallo dati più vicino all'ampiezza.",
   "analysis.warning_memory": "Questo calcolo può richiedere circa {needed} di memoria, più dei {available} disponibili: potrebbe fallire o rendere il computer poco reattivo. Deseleziona le metriche più esigenti (Wasserstein-1, NMI, SSIM) o lavora su un volume più piccolo.",
+  "analysis.warning_background_skipped": "L'esclusione dell'aria è attiva ma la ROI verde dell'aria non è stata posizionata: tutte le metriche vengono calcolate sull'immagine intera, aria compresa. Per escludere l'aria, posiziona la ROI verde sullo sfondo nel passaggio Rimuovi aria e ricalcola.",
   "dual_image_view.photometric_overlay": "{value} (visualizzazione invertita)",
   "workflow.quantitative.heatmaps": "Mappe di calore",
   "workflow.quantitative.heatmaps.tooltip": "Mostra la mappa spaziale dell'errore di ogni metrica sulle immagini a piena dimensione.",

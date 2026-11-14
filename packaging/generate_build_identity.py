@@ -34,6 +34,8 @@ qicom.build_identity, never imported directly.
 BUILD_REVISION = {revision!r}
 SOURCE_DIRTY = {dirty!r}
 VERSION = {version!r}
+COMMIT_TIME = {commit_time!r}
+UPDATE_CHANNEL = {update_channel!r}
 '''
 
 
@@ -72,11 +74,23 @@ def main(argv: list[str] | None = None) -> int:
             "reproducible from any commit."
         ),
     )
+    parser.add_argument(
+        "--update-channel",
+        default=None,
+        help=(
+            "The rolling release this build is offered through (for example "
+            "latest-build), which an installed copy checks for newer builds; "
+            "see qicom/updates.py. Omitted, the build never checks for updates."
+        ),
+    )
     arguments = parser.parse_args(argv)
 
     try:
         revision = _git("rev-parse", "HEAD")
         dirty = bool(_git("status", "--porcelain"))
+        # The committer date orders two builds of one channel: a newer build
+        # is one made from a later commit, whatever the version string says.
+        commit_time = _git("show", "-s", "--format=%cI", "HEAD")
     except (OSError, subprocess.CalledProcessError) as exc:
         print(f"error: cannot read the git revision of {REPO_ROOT}: {exc}", file=sys.stderr)
         return 1
@@ -92,7 +106,14 @@ def main(argv: list[str] | None = None) -> int:
     version = _package_version()
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     arguments.output.write_text(
-        _TEMPLATE.format(revision=revision, dirty=dirty, version=version), encoding="utf-8"
+        _TEMPLATE.format(
+            revision=revision,
+            dirty=dirty,
+            version=version,
+            commit_time=commit_time,
+            update_channel=arguments.update_channel,
+        ),
+        encoding="utf-8",
     )
     marker = " (modified source)" if dirty else ""
     print(f"Build identity: {version} {revision}{marker} -> {arguments.output}")

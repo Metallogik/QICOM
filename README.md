@@ -324,6 +324,16 @@ previous file intact, never a half-written report that looks complete.
   transmitted, there is no telemetry and no analysis opens network connections. The explicit
   downloads are the optional learned-metric checkpoints and the IBSI verification resources;
   both use pinned checksums.
+- Update checks happen only with consent. On first launch an installed copy asks whether it
+  may check for a newer version at startup; the answer can be changed under Help > Check for
+  Updates at Startup, and Help > Check for Updates checks on demand. The check reads
+  `latest.json` from the GitHub release qicom.ch links to and sends nothing about the user
+  or their data. An update is downloaded only when the user accepts it, verified against the
+  size and SHA-256 in that manifest, and installed once QICOM has closed its windows: the
+  Windows setup runs silently over the existing installation, the Debian package is installed
+  with the administrator password (`pkexec`), and a tar.gz folder is swapped for the new
+  one. On macOS and from the portable Windows folder, QICOM opens the download page instead.
+  Versioned releases and runs from source never check.
 - Portable projects and evaluation packages anonymise DICOM by default, remove
   private/identifying tags and regenerate UIDs consistently.
 - Detection is fail-closed: a DICOM dataset saved without the PS3.10 preamble (common in PACS

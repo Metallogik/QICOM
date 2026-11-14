@@ -71,6 +71,8 @@ QT_FREE_MODULES = (
     "provenance",
     "runtime",
     "trending",
+    "updates",
+    "verified_download",
 )
 
 _SENTENCE_END = re.compile(r"(?<=[.])\s")

@@ -156,6 +156,31 @@ Regenerate the locks with `python packaging/generate_locks.py` after changing a
 dependency (existing pins are kept), or with `--upgrade` to move every pin to the
 newest allowed version; review the diff like any other change.
 
+## Updates of an installed copy
+
+Every build of main records the `latest-build` channel and its commit date
+(`generate_build_identity.py --update-channel`), and publish-site uploads
+`latest.json` beside the files: commit, commit date, and the size and SHA-256
+of every file, written by `generate_update_manifest.py` and uploaded *after*
+the files it describes. An installed copy that the user allowed to check (or
+that is asked to, from Help > Check for Updates) reads that manifest, offers
+a build from a later commit, and verifies the one file it downloads against
+it before installing (`qicom/updates.py`, `qicom/gui/updates.py`):
+
+| Installed from | Update |
+|---|---|
+| `QICOM-Setup.exe` | Setup runs with `/SILENT /ALLUSERS` or `/CURRENTUSER` and `/DIR=` of the existing installation, then `/RELAUNCH=yes` starts QICOM again |
+| `.deb` | `pkexec apt-get install --reinstall` (every build of main has the same package version) |
+| `.tar.gz` | unpacked beside the folder, then the two are swapped; the old one is removed at the next start |
+| macOS, portable Windows folder | the download page |
+
+Release builds (tags) record no channel and never check: they are complete
+builds, and the channel only carries the lighter builds of main.
+
+The manifest proves integrity, not origin, exactly like SHA256SUMS below.
+Until the setup is signed, Smart App Control blocks an update exactly as it
+blocks a first installation.
+
 ## What it cannot prove: publisher identity
 
 **SHA256SUMS is an integrity check, not a signature.** It tells a user that

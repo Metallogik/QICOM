@@ -69,6 +69,7 @@ from qicom.gui.qualitative_controller import (
 from qicom.gui.resources import app_icon
 from qicom.gui.theming import SUPPORTED_THEMES, theme_manager
 from qicom.gui.tools.workflow_menu import UtilityToolsMenu
+from qicom.gui.updates import UpdateMenuActions
 from qicom.gui.widgets.about_dialog import AboutDialog
 from qicom.gui.widgets.adaptive_layout import (
     DpiIconLabel,
@@ -1162,6 +1163,7 @@ class QualitativeMainWindow(QMainWindow):
         self._report_bug_action = QAction(self)
         self._report_bug_action.triggered.connect(self._on_report_bug)
         self._help_menu.addAction(self._report_bug_action)
+        self._update_actions = UpdateMenuActions(self._help_menu, self)
         self._about_action = QAction(self)
         self._about_action.triggered.connect(self._on_about)
         self._help_menu.addSeparator()

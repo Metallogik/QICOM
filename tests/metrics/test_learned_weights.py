@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 
+from qicom import verified_download
 from qicom.metrics import learned_weights
 
 
@@ -32,7 +33,7 @@ def _stub_upstream(
             raise AssertionError(f"unexpected download URL: {url}")
         return io.BytesIO(payloads[url])
 
-    monkeypatch.setattr(learned_weights.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(verified_download.urllib.request, "urlopen", fake_urlopen)
 
 
 def _register_fake_checkpoint(
@@ -232,7 +233,7 @@ class TestDeclaredLength:
                 self.headers = {} if declared is None else {"Content-Length": declared}
 
         monkeypatch.setattr(
-            learned_weights.urllib.request, "urlopen", lambda *_a, **_k: _Response()
+            verified_download.urllib.request, "urlopen", lambda *_a, **_k: _Response()
         )
 
     def test_a_wrong_declared_length_is_refused_up_front(

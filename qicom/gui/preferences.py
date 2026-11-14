@@ -56,6 +56,9 @@ class UserPreferences:
     llm_export_warning_seen: bool = False
     """Whether the "read it before you upload it" notice has been shown once.
     Absent from older preferences files, which therefore see the notice."""
+    update_check: bool | None = None
+    """Whether QICOM looks for a newer build when it starts (qicom.gui.updates).
+    None until the user has been asked: nothing is checked before they answer."""
 
     def resolved_resources(self, profile: RuntimeProfile | None = None) -> RuntimeResources:
         """Resolve automatic fields for this snapshot without rewriting preferences."""
@@ -245,6 +248,12 @@ class PreferencesStore:
         if not isinstance(llm_export_warning_seen, bool):
             llm_export_warning_seen = False
 
+        # Anything but an explicit answer means "not asked yet": a damaged
+        # value must never turn into consent.
+        update_check = payload.get("update_check")
+        if not isinstance(update_check, bool):
+            update_check = None
+
         return UserPreferences(
             version=PREFERENCES_VERSION,
             language=language,
@@ -257,6 +266,7 @@ class PreferencesStore:
             radiomics_cache_mib=radiomics_cache_mib,
             pair_workers=pair_workers,
             llm_export_warning_seen=llm_export_warning_seen,
+            update_check=update_check,
         )
 
     def _save(self) -> None:

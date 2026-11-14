@@ -27,6 +27,21 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Added
 
+- **Aggiornamenti dall'app, con consenso.** Al primo avvio una copia installata da qicom.ch chiede
+  se può controllare all'avvio la presenza di una versione più recente; la scelta si cambia da
+  Aiuto > "Controlla aggiornamenti all'avvio", e Aiuto > "Controlla aggiornamenti..." controlla
+  quando lo si chiede. Il controllo legge `latest.json`, che la CI pubblica nella release
+  `latest-build` dopo tutti i file che descrive (commit, data del commit, dimensione e SHA-256 di
+  ogni file): una build è più recente se viene da un commit successivo, perché tutte le build di
+  main hanno la stessa versione. Se l'utente accetta, l'aggiornamento viene scaricato con una barra
+  di avanzamento, verificato e installato dopo la chiusura delle finestre (con la solita richiesta
+  di salvare le modifiche): su Windows il setup gira in silenzio sulla stessa cartella e per gli
+  stessi utenti e riapre QICOM (`/RELAUNCH=yes`), su Linux il `.deb` si installa con `pkexec
+  apt-get` e il `.tar.gz` scambia la cartella con quella nuova. Su macOS e dalla cartella portable
+  si apre la pagina di download. Le release con tag e le esecuzioni da sorgente non controllano mai.
+  La dichiarazione sulla privacy (finestra Informazioni, README) elenca la nuova connessione, e il
+  download verificato dei pesi learned e degli aggiornamenti è ora un solo modulo
+  (`qicom/verified_download.py`).
 - **"Carica immagini" spiega cosa chiede.** La finestra di apertura dice in una riga come si può
   caricare, e i tre pulsanti hanno nomi espliciti ("Carica una cartella intera...", "Carica un solo
   file...", "Carica più file insieme...") con un tooltip ciascuno: cosa accettano e in che ordine

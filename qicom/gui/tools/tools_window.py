@@ -45,6 +45,7 @@ from qicom.gui.preferences import remember_language, remember_theme
 from qicom.gui.resources import app_icon
 from qicom.gui.theming import SUPPORTED_THEMES, theme_manager
 from qicom.gui.tools.catalog import TOOLS, ToolSpec, tool_spec
+from qicom.gui.updates import UpdateMenuActions
 from qicom.gui.widgets.about_dialog import AboutDialog
 from qicom.gui.widgets.adaptive_layout import DpiIconLabel, fit_window_to_screen
 from qicom.gui.widgets.bug_report_dialog import BugReportDialog
@@ -272,6 +273,7 @@ class ToolsMainWindow(QMainWindow):
             ).exec()
         )
         self._help_menu.addAction(self._bug_action)
+        self._update_actions = UpdateMenuActions(self._help_menu, self)
         self._about_action = QAction(self)
         self._about_action.triggered.connect(lambda: AboutDialog(self).exec())
         self._help_menu.addSeparator()

@@ -37,17 +37,16 @@ from __future__ import annotations
 
 import hashlib
 import os
-import tempfile
-import urllib.request
 from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import NamedTuple
 
+# DownloadCancelled is re-exported: download_checkpoints() raises it, and its
+# callers catch it from here.
+from qicom.verified_download import DownloadCancelled as DownloadCancelled
+from qicom.verified_download import download_verified
+
 _DIGEST_CHUNK_BYTES = 1024 * 1024
-
-
-class DownloadCancelled(Exception):
-    """Raised by download_checkpoints() when should_cancel() returns True."""
 
 
 class Checkpoint(NamedTuple):
@@ -235,67 +234,21 @@ def download_checkpoints(
         _download_one(checkpoint, target, on_progress, should_cancel)
 
 
-def _declared_length(response: object) -> int | None:
-    """The Content-Length the server declared, or None when it declared none
-    (or something that is not a byte count)."""
-    headers = getattr(response, "headers", None)
-    value = headers.get("Content-Length") if headers is not None else None
-    try:
-        return int(value) if value is not None else None
-    except (TypeError, ValueError):
-        return None
-
-
 def _download_one(
     checkpoint: Checkpoint,
     target: Path,
     on_progress: Callable[[str, int, int], None] | None,
     should_cancel: Callable[[], bool] | None,
 ) -> None:
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{target.name}.", dir=target.parent)
-    os.close(descriptor)
-    temporary = Path(temporary_name)
-    try:
-        transferred = 0
-        digest = hashlib.sha256()
-        with (
-            urllib.request.urlopen(checkpoint.url, timeout=60) as response,
-            temporary.open("wb") as handle,
-        ):
-            declared = _declared_length(response)
-            if declared is not None and declared != checkpoint.size_bytes:
-                # Refused before a single byte is written: the exact size is
-                # known up front. The byte counter below still applies, since
-                # a server can declare one length and send another.
-                raise RuntimeError(
-                    f"{target.name} is declared as {declared} bytes, not the expected "
-                    f"{checkpoint.size_bytes}. The download was refused."
-                )
-            while chunk := response.read(_DIGEST_CHUNK_BYTES):
-                if should_cancel is not None and should_cancel():
-                    raise DownloadCancelled(target.name)
-                transferred += len(chunk)
-                if transferred > checkpoint.size_bytes:
-                    # The exact size is known up front, so anything longer
-                    # is already wrong - and the digest that would catch it
-                    # is only computed at the end, after every byte has
-                    # been written to the user's disk.
-                    raise RuntimeError(
-                        f"{target.name} is larger than its expected "
-                        f"{checkpoint.size_bytes} bytes. The download was discarded."
-                    )
-                handle.write(chunk)
-                digest.update(chunk)
-                if on_progress is not None:
-                    on_progress(target.name, transferred, checkpoint.size_bytes)
-        actual = digest.hexdigest()
-        if actual != checkpoint.sha256:
-            raise RuntimeError(
-                f"SHA-256 mismatch for {target.name}: {actual} != {checkpoint.sha256}. "
-                "The download was discarded."
-            )
-        os.replace(temporary, target)
-        if os.name == "posix":
-            target.chmod(0o600)
-    finally:
-        temporary.unlink(missing_ok=True)
+    def report(transferred: int, total: int) -> None:
+        if on_progress is not None:
+            on_progress(target.name, transferred, total)
+
+    download_verified(
+        checkpoint.url,
+        target,
+        size=checkpoint.size_bytes,
+        sha256=checkpoint.sha256,
+        on_progress=report,
+        should_cancel=should_cancel,
+    )

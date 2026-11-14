@@ -344,14 +344,17 @@ jobs:
       # it. A bundle has no .git to consult at runtime, and a version string
       # alone does not identify the source that produced a result (see
       # qicom/build_identity.py). Release builds additionally refuse a
-      # modified checkout, which no commit can reproduce.
+      # modified checkout, which no commit can reproduce. Every other build
+      # belongs to the latest-build channel qicom.ch offers, and an installed
+      # copy checks that channel for newer builds (qicom/updates.py); a
+      # release is a complete build and is never offered a lighter one.
       - name: Record build identity
         shell: bash
         run: |
           if [ "${{ startsWith(github.ref, 'refs/tags/') }}" = "true" ]; then
             python packaging/generate_build_identity.py --require-clean
           else
-            python packaging/generate_build_identity.py
+            python packaging/generate_build_identity.py --update-channel latest-build
           fi
 
       # Exact versions and VCS origins from the environment PyInstaller is about
@@ -647,6 +650,11 @@ jobs:
             throw "the installed app reports $($payload.revision), built from $expected"
           }
           if (-not $payload.tools) { throw "the installed app reports no utility tools" }
+          # An installed copy must recognise itself as one, or it could only
+          # send its user to the download page instead of updating itself.
+          if ($payload.updates.install -ne 'windows-installer') {
+            throw "the installed app reports install kind '$($payload.updates.install)'"
+          }
           # The way to uninstall from the installation folder itself.
           $uninstallLink = Join-Path $target 'Uninstall QICOM.lnk'
           if (-not (Test-Path $uninstallLink)) { throw "no Uninstall QICOM shortcut in $target" }
@@ -869,6 +877,15 @@ jobs:
             -f sha="$GITHUB_SHA" -F force=true > /dev/null; then
             echo "::warning::could not move $TAG to $GITHUB_SHA; the files are published anyway"
           fi
+      # What installed copies read to find this build and verify its files
+      # (qicom/updates.py), written from the very files about to be published.
+      - name: Write the update manifest
+        run: |
+          python3 packaging/generate_update_manifest.py assets \
+            --channel "$TAG" --version "$VERSION" --revision "$GITHUB_SHA" \
+            --commit-time "$(git show -s --format=%cI HEAD)" \
+            --output update/latest.json
+          cat update/latest.json
       - name: Swap in the new files
         run: |
           release_id=$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq .id)
@@ -876,23 +893,29 @@ jobs:
             gh api "repos/$GH_REPO/releases/$release_id/assets?per_page=100" \
               --jq ".[] | select(.name == \"$1\") | .id"
           }
-          for path in assets/*; do
-            name=$(basename "$path")
-            staged="next-$name"
-            leftover=$(asset_id "$staged")
+          publish() {
+            name=$(basename "$1")
+            staged="$(dirname "$1")/next-$name"
+            leftover=$(asset_id "next-$name")
             if [ -n "$leftover" ]; then
               gh api -X DELETE "repos/$GH_REPO/releases/assets/$leftover"
             fi
-            mv "$path" "assets/$staged"
-            gh release upload "$TAG" "assets/$staged"
+            mv "$1" "$staged"
+            gh release upload "$TAG" "$staged"
             old=$(asset_id "$name")
-            new=$(asset_id "$staged")
+            new=$(asset_id "next-$name")
             if [ -n "$old" ]; then
               gh api -X DELETE "repos/$GH_REPO/releases/assets/$old"
             fi
             gh api -X PATCH "repos/$GH_REPO/releases/assets/$new" -f name="$name" > /dev/null
             echo "Published $name"
+          }
+          for path in assets/*; do
+            publish "$path"
           done
+          # Last: an installed copy that reads the new manifest must find
+          # every file it names already in place, with the digest it states.
+          publish update/latest.json
       - name: Describe the build
         run: |
           built=$(date -u '+%Y-%m-%d %H:%M UTC')
@@ -908,8 +931,10 @@ jobs:
           | QICOM-linux-x64.deb | Debian / Ubuntu, x64 |
           | QICOM-linux-x64.tar.gz | Other Linux distributions, x64 |
 
-          Each archive has a \`.sha256\` checksum next to it. This is a development
-          build of main, not a versioned release; it does not include the learned
+          Each archive has a \`.sha256\` checksum next to it. \`latest.json\` is what
+          installed copies of QICOM read to find this build and verify it.
+
+          This is a development build of main, not a versioned release; it does not include the learned
           metrics (LPIPS, DISTS, ...), which are available from source.
 
           Research and quality-control use only. QICOM is not a medical device.

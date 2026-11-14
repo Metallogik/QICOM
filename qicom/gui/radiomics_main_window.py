@@ -47,6 +47,7 @@ from qicom.gui.radiomics_segmentation_service import refine_mask as _refine_mask
 from qicom.gui.resources import app_icon
 from qicom.gui.theming import SUPPORTED_THEMES, theme_manager
 from qicom.gui.tools.workflow_menu import UtilityToolsMenu
+from qicom.gui.updates import UpdateMenuActions
 from qicom.gui.widgets.about_dialog import AboutDialog
 from qicom.gui.widgets.adaptive_layout import (
     DpiIconLabel,
@@ -461,6 +462,7 @@ class RadiomicsMainWindow(QMainWindow):
             ).exec()
         )
         self._help_menu.addAction(self._bug_action)
+        self._update_actions = UpdateMenuActions(self._help_menu, self)
         self._about_action = QAction(self)
         self._about_action.triggered.connect(lambda: AboutDialog(self).exec())
         self._help_menu.addSeparator()

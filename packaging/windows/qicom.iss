@@ -124,8 +124,19 @@ Name: "{app}\Uninstall QICOM"; Filename: "{uninstallexe}"; Comment: "Remove QICO
 
 [Run]
 Filename: "{app}\qicom.exe"; Description: "{cm:LaunchProgram,QICOM}"; WorkingDir: "{app}"; Flags: nowait postinstall skipifsilent
+; An update started from inside QICOM (qicom/updates.py) runs Setup silently
+; with /RELAUNCH=yes: QICOM closed itself for it and starts again here, as the
+; user who started it, not elevated (the default for postinstall entries).
+; Any other silent install - an administrator's deployment, the CI test -
+; starts nothing.
+Filename: "{app}\qicom.exe"; WorkingDir: "{app}"; Flags: nowait postinstall skipifnotsilent; Check: RelaunchRequested
 
 [Code]
+function RelaunchRequested: Boolean;
+begin
+  Result := CompareText(ExpandConstant('{param:RELAUNCH|no}'), 'yes') = 0;
+end;
+
 // The percentage beside the progress bar: Inno Setup draws the bar alone.
 var
   ProgressPercent: TNewStaticText;

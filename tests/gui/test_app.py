@@ -22,6 +22,7 @@ import pytest
 from PySide6.QtWidgets import QApplication
 from pytestqt.qtbot import QtBot
 
+from qicom import updates
 from qicom.build_identity import build_identity
 from qicom.gui.app import (
     _SPLASH_MINIMUM_DURATION_MS,
@@ -290,6 +291,10 @@ def test_frozen_smoke_path_reports_the_build_identity(capsys) -> None:
     assert payload["revision"] == identity.revision
     assert payload["source_dirty"] == identity.source_dirty
     assert payload["identity_source"] == identity.resolved_from
+    # A run from source belongs to no update channel; the install kind is
+    # read from the layout alone, without any network access.
+    assert payload["updates"]["channel"] is None
+    assert payload["updates"]["install"] in {kind.value for kind in updates.InstallKind}
 
 
 class TestSplashScreen:

@@ -173,6 +173,8 @@ class TestGenerator:
                 str(REPO_ROOT / "packaging" / "generate_build_identity.py"),
                 "--output",
                 str(target),
+                "--update-channel",
+                "latest-build",
             ],
             cwd=REPO_ROOT,
             check=True,
@@ -191,6 +193,32 @@ class TestGenerator:
         assert namespace["BUILD_REVISION"] == expected
         assert namespace["VERSION"] == __version__
         assert isinstance(namespace["SOURCE_DIRTY"], bool)
+        committed = subprocess.run(
+            ["git", "show", "-s", "--format=%cI", "HEAD"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        assert namespace["COMMIT_TIME"] == committed
+        assert namespace["UPDATE_CHANNEL"] == "latest-build"
+
+    def test_without_a_channel_the_build_never_checks_for_updates(self, tmp_path: Path) -> None:
+        target = tmp_path / "_build_identity.py"
+        subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "packaging" / "generate_build_identity.py"),
+                "--output",
+                str(target),
+            ],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+        )
+        namespace: dict[str, object] = {}
+        exec(compile(target.read_text(encoding="utf-8"), str(target), "exec"), namespace)
+        assert namespace["UPDATE_CHANNEL"] is None
 
     def test_the_generated_file_is_not_committed(self) -> None:
         """It describes one build, not the repository - committing it would

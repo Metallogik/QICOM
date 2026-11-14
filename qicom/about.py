@@ -132,12 +132,15 @@ PRIVACY_SUMMARY = (
 )
 
 # Stated next to the claim rather than omitted from it: a privacy statement
-# with one declared exception is verifiable, an absolute one is not.
+# with its exceptions declared is verifiable, an absolute one is not.
 PRIVACY_NETWORK_EXCEPTION = (
-    "QICOM opens exactly one kind of network connection, and only when the "
-    "user explicitly starts it: the download of the optional learned-metric "
-    "checkpoints, each verified against a known SHA-256. No analysis ever "
-    "triggers it."
+    "QICOM opens network connections only when the user starts them or has "
+    "agreed to them, and no analysis ever triggers one: the download of the "
+    "optional learned-metric checkpoints, the download of the official IBSI "
+    "reference resources, and - if the user allowed it, or chooses Help > Check "
+    "for Updates - the check for a newer version and the download of an update "
+    "the user accepts (qicom.updates). Every checkpoint, resource and update "
+    "downloaded is verified against a known SHA-256 and size."
 )
 
 

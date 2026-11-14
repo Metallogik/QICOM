@@ -59,6 +59,23 @@ def test_preferences_round_trip_between_app_sessions(tmp_path: Path) -> None:
     assert loaded.version == 2
 
 
+def test_the_update_answer_round_trips_and_a_damaged_one_means_not_asked(
+    tmp_path: Path,
+) -> None:
+    """Consent to the update check is only ever an explicit True: anything
+    else read back is "not asked yet", never a yes."""
+    path = tmp_path / "preferences.json"
+    store = PreferencesStore(path)
+    store._active = True
+    assert store.preferences.update_check is None
+
+    store.update(update_check=True)
+    assert PreferencesStore(path)._load().update_check is True
+
+    path.write_text(json.dumps({"version": 2, "update_check": "yes"}), encoding="utf-8")
+    assert PreferencesStore(path)._load().update_check is None
+
+
 def test_invalid_preferences_fall_back_without_crashing(tmp_path: Path) -> None:
     path = tmp_path / "preferences.json"
     path.write_text(

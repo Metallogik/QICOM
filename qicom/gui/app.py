@@ -17,7 +17,9 @@ from PySide6.QtCore import QEventLoop, QRect, QRectF, Qt, QTimer
 from PySide6.QtGui import QColor, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QMessageBox, QSplashScreen
 
+from qicom import updates
 from qicom.build_identity import build_identity
+from qicom.gui import updates as gui_updates
 from qicom.gui.error_reporting import install_exception_hook
 from qicom.gui.metric_selection import metric_selection_settings
 from qicom.gui.preferences import preferences_store
@@ -243,6 +245,13 @@ def _run_frozen_smoke_test(output_path: Path | None = None) -> int:
             "revision": identity.revision,
             "source_dirty": identity.source_dirty,
             "identity_source": identity.resolved_from,
+            # Which channel this build checks and how it would update itself:
+            # the workflow asserts that an installed copy recognises itself.
+            # Read without any network access.
+            "updates": {
+                "channel": updates.local_build().channel,
+                "install": updates.detect_installation().kind.value,
+            },
         },
         sort_keys=True,
     )
@@ -434,6 +443,10 @@ def main() -> int:
     wait_loop.exec()
     splash.close()
 
+    # Nothing here touches the network unless the user has agreed to it:
+    # the one-time question comes first (see qicom.gui.updates).
+    gui_updates.start_session()
+
     # File > Close Project (both MainWindow and QualitativeMainWindow) sets
     # its own return_to_launcher flag and closes itself - closing the last
     # visible top-level window ends the app.exec() below on its own
@@ -444,6 +457,13 @@ def main() -> int:
     while True:
         launcher = LauncherDialog()
         if launcher.exec() != QDialog.DialogCode.Accepted or launcher.choice is None:
+            # An accepted update closes the launcher to be installed; if it
+            # cannot be, the launcher comes back.
+            if gui_updates.has_pending_update():
+                if gui_updates.apply_pending_update():
+                    _logger.info("QICOM exiting to install an update")
+                    return 0
+                continue
             _logger.info("QICOM exiting from the launcher")
             return 0
         _logger.info(
@@ -483,6 +503,13 @@ def main() -> int:
         opening.finish(window)
 
         app.exec()
+        # Close Project returns to the launcher even with an update waiting:
+        # the update is installed when QICOM itself closes.
+        if not window.return_to_launcher and gui_updates.has_pending_update():
+            if gui_updates.apply_pending_update():
+                _logger.info("QICOM exiting to install an update")
+                return 0
+            continue
         if not window.return_to_launcher:
             _logger.info("QICOM exiting")
             return 0

@@ -1398,6 +1398,7 @@
   "analysis.warning_irregular_spacing": "{image} 的切片间距不均匀（{spacing}）：但该堆栈仍被视为规则的体数据。",
   "analysis.warning_wide_data_range": "数据范围 {data_range} 远大于图像中的数值（跨度 {span}）：SSIM 和 PSNR 对差异几乎不会有反应。建议使用更接近该跨度的数据范围。",
   "analysis.warning_memory": "此计算可能需要约 {needed} 内存，超过可用的 {available}：可能会失败或导致计算机无响应。请取消选择最耗资源的指标（Wasserstein-1、NMI、SSIM），或使用较小的体数据。",
+  "analysis.warning_background_skipped": "已开启空气排除，但尚未放置绿色空气 ROI：所有指标都将在整幅图像（包括空气）上计算。若要排除空气，请在“去除空气”步骤中将绿色 ROI 放在背景上，然后重新计算。",
   "dual_image_view.photometric_overlay": "{value}（反转显示）",
   "workflow.quantitative.heatmaps": "热图",
   "workflow.quantitative.heatmaps.tooltip": "在全尺寸图像上显示每个指标的空间误差图。",

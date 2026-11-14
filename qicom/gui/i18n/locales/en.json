@@ -1283,6 +1283,7 @@
   "analysis.warning_irregular_spacing": "The slices of {image} are not evenly spaced ({spacing}): the stack is treated as a regular volume anyway.",
   "analysis.warning_wide_data_range": "The data range {data_range} is much wider than the values in the images (span {span}): SSIM and PSNR will barely respond to differences. Consider a data range closer to the span.",
   "analysis.warning_memory": "This calculation may need about {needed} of memory, more than the {available} available: it may fail or make the computer unresponsive. Deselect the most demanding metrics (Wasserstein-1, NMI, SSIM) or work on a smaller volume.",
+  "analysis.warning_background_skipped": "Background air exclusion is on, but no green air ROI has been placed: every metric is computed on the whole image, air included. To exclude the air, place the green ROI on the background in the Remove air step and calculate again.",
   "dual_image_view.photometric_overlay": "{value} (inverted display)",
   "workflow.quantitative.heatmaps": "Heatmaps",
   "workflow.quantitative.heatmaps.tooltip": "Show each metric's spatial error map over the full-size images.",

@@ -1398,6 +1398,7 @@
   "analysis.warning_irregular_spacing": "Os cortes de {image} não estão espaçados uniformemente ({spacing}): a pilha é tratada como um volume regular mesmo assim.",
   "analysis.warning_wide_data_range": "O intervalo de dados {data_range} é muito mais amplo do que os valores das imagens (amplitude {span}): SSIM e PSNR mal responderão às diferenças. Considere um intervalo de dados mais próximo da amplitude.",
   "analysis.warning_memory": "Este cálculo pode precisar de cerca de {needed} de memória, mais do que os {available} disponíveis: ele pode falhar ou deixar o computador sem resposta. Desmarque as métricas mais exigentes (Wasserstein-1, NMI, SSIM) ou trabalhe com um volume menor.",
+  "analysis.warning_background_skipped": "A exclusão do ar está ativada, mas a ROI de ar verde não foi posicionada: todas as métricas são calculadas sobre a imagem inteira, incluindo o ar. Para excluir o ar, posicione a ROI verde sobre o fundo na etapa Remover o ar e calcule novamente.",
   "dual_image_view.photometric_overlay": "{value} (exibição invertida)",
   "workflow.quantitative.heatmaps": "Mapas de calor",
   "workflow.quantitative.heatmaps.tooltip": "Mostra o mapa espacial de erro de cada métrica sobre as imagens em tamanho real.",

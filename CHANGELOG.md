@@ -563,6 +563,14 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Fixed
 
+- **La ROI dell'aria è di nuovo facoltativa per il calcolo.** Con "Escludi l'aria" attivo e nessuna
+  ROI verde posizionata, Calcola si fermava con "Crea prima la ROI verde dell'aria" e non produceva
+  nessuna misura. Capitava anche riaprendo un'analisi salvata con l'esclusione attiva: le
+  impostazioni tornano, ma la ROI verde no. Ora il calcolo procede sull'immagine intera, aria
+  compresa, con un avviso, e l'analisi viene registrata come "senza esclusione", in modo che
+  salvataggio ed export descrivano ciò che è stato davvero calcolato. Una ROI verde posizionata che
+  non copre alcun pixel resta un errore, e "Rileva aria" continua a chiedere la ROI. Nessun valore
+  calcolabile prima cambia.
 - **mypy con numpy 2.5.4**: lo stub di `np.isscalar` è passato da
   `TypeGuard[generic | complex | str | bytes | memoryview]` a `TypeIs[… | numbers.Number]`, e la
   chiamata `np.isnan(result)` in `qicom/metrics/runner.py` non tipizzava più (`arg-type`). Il

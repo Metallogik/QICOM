@@ -879,6 +879,32 @@ class AppController(QObject):
             return cached
         return self.remember_background_exclusion(snapshot, compute_background_exclusion(snapshot))
 
+    def _calculation_background_settings(
+        self, settings: BackgroundExclusionSettings | None
+    ) -> BackgroundExclusionSettings:
+        """The exclusion a Calculate actually applies.
+
+        The green air sample is optional for Calculate. When the exclusion
+        is on but no sample has been placed, every metric runs on the whole
+        image, air included, and a warning says so. That happens when the
+        user turns the toggle on and never places the circle, and also when
+        an analysis saved with the exclusion on is reopened, because the
+        circle is not saved with it. The run is then recorded as "not
+        excluded", so the saved analysis and the export describe what was
+        really computed.
+
+        A sample that *is* placed but covers no pixels still stops the run
+        (see prepare_background_exclusion): the user asked for air to be
+        sampled there, and quietly ignoring it would hide the mistake.
+        The Detect button (build_background_exclusion) still asks for a
+        sample, since detecting the air is all it does.
+        """
+        requested = settings or BackgroundExclusionSettings()
+        if not requested.enabled or self.dual_image_view.has_air_roi:
+            return requested
+        self._emit_warning("analysis.warning_background_skipped")
+        return replace(requested, enabled=False)
+
     def prepare_background_exclusion(
         self,
         settings: BackgroundExclusionSettings,
@@ -994,7 +1020,7 @@ class AppController(QObject):
 
         try:
             roi_masks, roi_regions = self._build_roi_inputs(resolution)
-            background_settings = background or BackgroundExclusionSettings()
+            background_settings = self._calculation_background_settings(background)
             background_snapshot = self.prepare_background_exclusion(background_settings, resolution)
             cached_exclusion = (
                 None
@@ -1142,7 +1168,7 @@ class AppController(QObject):
 
         try:
             roi_masks, roi_regions = self._build_roi_inputs(resolution)
-            background_settings = background or BackgroundExclusionSettings()
+            background_settings = self._calculation_background_settings(background)
             background_snapshot = self.prepare_background_exclusion(background_settings, resolution)
             cached_exclusion = (
                 None

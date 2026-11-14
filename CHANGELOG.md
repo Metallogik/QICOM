@@ -27,6 +27,13 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Added
 
+- **Nuovo progetto, Salva progetto e Salva progetto con nome nel menu File** dell'analisi
+  quantitativa, sempre visibili e con le scorciatoie abituali (Ctrl+N, Ctrl+O, Ctrl+S,
+  Ctrl+Maiusc+S). Prima il salvataggio del progetto compariva solo nel passaggio Esporta e per
+  ricominciare c'era "Reimposta tutto", che sostituiscono. "Nuovo progetto" resta nella finestra:
+  propone di salvare le modifiche non salvate, chiede conferma se c'è lavoro già salvato aperto e
+  non chiede nulla a finestra vuota. Il titolo della finestra mostra il progetto aperto (o "Nuovo
+  progetto (non salvato)") e un asterisco quando ci sono modifiche non salvate.
 - **Installer Windows** (`QICOM-windows-x64-setup.exe`, con sidecar `.sha256`), prodotto dalla
   build Windows accanto allo zip da `packaging/build_windows_installer.py` (Inno Setup 6,
   `packaging/windows/qicom.iss`). Chiede la cartella di destinazione, installa solo per l'utente
@@ -573,6 +580,11 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Fixed
 
+- **Un nuovo progetto non sovrascrive più quello aperto prima.** "Reimposta tutto" svuotava la
+  finestra ma ricordava il file del progetto aperto in precedenza: alla chiusura, "Salva"
+  scriveva il lavoro nuovo in quel file senza chiedere nulla. Ora iniziare da capo dimentica il
+  file e il salvataggio successivo chiede dove scrivere. La domanda alla chiusura nomina il
+  progetto e il file in cui "Salva" scriverà.
 - **Finestre più grandi dello schermo.** Le finestre si aprono massimizzate, ma "Ripristina" le
   riportava a una dimensione fissa (1280×800, 1400×900 per Strumenti e Radiomica): più alta di un
   portatile 1366×768 e più grande di quasi ogni schermo al 125-150% di scala. La finestra

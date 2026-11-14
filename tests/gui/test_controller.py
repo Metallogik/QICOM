@@ -2600,6 +2600,26 @@ class TestUnsavedResultsTracking:
 
         assert controller.has_unsaved_results is False
 
+    def test_reset_all_forgets_the_project_file(self, controller: AppController) -> None:
+        """Otherwise Save on closing writes the new project into the old file."""
+        controller._current_project_zip = Path("study.zip")
+
+        controller.reset_all()
+
+        assert controller.current_project_zip is None
+
+    def test_project_state_changes_are_signalled_once_each(self, controller: AppController) -> None:
+        changes: list[bool] = []
+        controller.project_state_changed.connect(lambda: changes.append(True))
+
+        controller.mark_dirty()
+        controller.mark_dirty()  # already dirty: nothing changed
+        controller._current_project_zip = Path("study.zip")
+        controller._current_project_zip = Path("study.zip")
+        controller.reset_all()  # clean again, and no project file
+
+        assert len(changes) == 4
+
     def test_reopen_analysis_clears_unsaved_results(
         self, controller: AppController, qtbot: QtBot, tmp_path: Path
     ) -> None:

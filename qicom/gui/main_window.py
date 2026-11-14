@@ -262,6 +262,7 @@ class MainWindow(QMainWindow):
         self.dual_image_view.roi_role_changed.connect(self.roi_manager_panel.update_row_role)
         self.dual_image_view.roi_value_changed.connect(self.roi_manager_panel.update_row_value)
         self.controller.command_history_changed.connect(self._refresh_undo_redo_actions)
+        self.controller.project_state_changed.connect(self._refresh_window_title)
         # Pre-flight findings about the images themselves (see
         # AppController.analysis_warning): shown where every other
         # user-facing message already lives, so they survive the status
@@ -640,7 +641,9 @@ class MainWindow(QMainWindow):
         self._save_project_folder_action: QAction
         self._open_project_folder_action: QAction
         self._concat_action: QAction
-        self._reset_all_action: QAction
+        self._new_project_action: QAction
+        self._save_project_action: QAction
+        self._save_project_as_action: QAction
         self._close_project_action: QAction
         self._undo_action: QAction
         self._redo_action: QAction
@@ -2162,31 +2165,45 @@ class MainWindow(QMainWindow):
         menu_bar = self._build_brand_bar()
 
         self._file_menu = self._add_menu(menu_bar)
+        # The project commands come first and are always visible, with the
+        # shortcuts every desktop application uses: a tester could not find
+        # how to start a new project, nor how to save one, because saving
+        # appeared only on the Export step and starting over was called
+        # "Reset All".
+        self._new_project_action = QAction(self)
+        self._new_project_action.setShortcut(QKeySequence.StandardKey.New)
+        self._new_project_action.triggered.connect(self._on_new_project)
+        self._open_project_folder_action = QAction(self)
+        self._open_project_folder_action.setShortcut(QKeySequence.StandardKey.Open)
+        self._open_project_folder_action.triggered.connect(self._on_open_project_folder)
+        self._save_project_action = QAction(self)
+        self._save_project_action.setShortcut(QKeySequence.StandardKey.Save)
+        self._save_project_action.triggered.connect(self._on_save_project)
+        self._save_project_as_action = QAction(self)
+        self._save_project_as_action.setShortcut(QKeySequence.StandardKey.SaveAs)
+        self._save_project_as_action.triggered.connect(self._on_save_project_as)
         self._open_images_action = QAction(self)
         self._open_images_action.triggered.connect(self._on_open_images)
         self._save_analysis_action = QAction(self)
         self._save_analysis_action.triggered.connect(self._on_save_analysis)
         self._save_project_folder_action = QAction(self)
         self._save_project_folder_action.triggered.connect(self._on_save_export_requested)
-        self._open_project_folder_action = QAction(self)
-        self._open_project_folder_action.triggered.connect(self._on_open_project_folder)
         self._concat_action = QAction(self)
         self._concat_action.triggered.connect(self._on_concat_stacks)
-        self._reset_all_action = QAction(self)
-        self._reset_all_action.triggered.connect(self._on_reset_all)
         self._close_project_action = QAction(self)
         self._close_project_action.triggered.connect(self._on_close_project)
         self._exit_action = QAction(self)
         self._exit_action.triggered.connect(self.close)
-        self._file_menu.addAction(self._open_images_action)
-        self._file_menu.addAction(self._save_analysis_action)
-        self._file_menu.addSeparator()
-        self._file_menu.addAction(self._save_project_folder_action)
+        self._file_menu.addAction(self._new_project_action)
         self._file_menu.addAction(self._open_project_folder_action)
+        self._file_menu.addAction(self._save_project_action)
+        self._file_menu.addAction(self._save_project_as_action)
         self._file_menu.addSeparator()
+        self._file_menu.addAction(self._open_images_action)
         self._file_menu.addAction(self._concat_action)
         self._file_menu.addSeparator()
-        self._file_menu.addAction(self._reset_all_action)
+        self._file_menu.addAction(self._save_analysis_action)
+        self._file_menu.addAction(self._save_project_folder_action)
         self._file_menu.addSeparator()
         self._file_menu.addAction(self._close_project_action)
         self._file_menu.addAction(self._exit_action)
@@ -2345,27 +2362,43 @@ class MainWindow(QMainWindow):
         self.dual_image_view.hide_heatmap()
         self._refresh_images_loaded_gating()
 
-    def _on_reset_all(self) -> None:
-        """File > Reset All: wipes every unsaved in-progress bit of state
-        (images, ROIs, annotations, undo/redo, calculate() results/charts/
-        heatmap) back to a just-started session - never touches anything
-        persisted (saved analysis history, the log file), the same
-        distinction an actual restart would make. Irreversible (it also
-        clears the undo stack), hence the confirmation prompt.
+    def _on_new_project(self) -> None:
+        """File > New Project: start over in this window, without going back
+        to the launcher. Unsaved changes get the same Save / Don't Save /
+        Cancel choice as closing; work that is already saved only needs a
+        confirmation, and an empty window starts over without asking.
+
+        Everything on screen goes - images, ROIs, annotations, undo/redo,
+        results, charts, heatmap - but nothing persisted is touched (the
+        project file, saved analysis history, the log), and the project
+        file is forgotten, so the new project is never saved over it (see
+        AppController.reset_all).
         """
-        confirmed = (
+        if self.controller.has_unsaved_results:
+            if not self._confirm_discard_unsaved_results():
+                return
+        elif self._has_open_work() and not self._confirm_new_project():
+            return
+        self._reset_session()
+
+    def _has_open_work(self) -> bool:
+        return bool(self.dual_image_view.list_roi_pairs()) or any(
+            panel.image is not None for panel in self.dual_image_view.list_panels()
+        )
+
+    def _confirm_new_project(self) -> bool:
+        return (
             QMessageBox.question(
                 self,
-                translator.tr("menu.file.reset_all"),
-                translator.tr("menu.file.reset_all_confirm"),
+                translator.tr("menu.file.new_project"),
+                translator.tr("menu.file.new_project_confirm"),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No,
             )
             == QMessageBox.StandardButton.Yes
         )
-        if not confirmed:
-            return
 
+    def _reset_session(self) -> None:
         self.controller.reset_all()
         self.results_panel.reset()
         self.results_panel.set_default_data_range(1.0)
@@ -2506,7 +2539,16 @@ class MainWindow(QMainWindow):
         box = QMessageBox(self)
         box.setIcon(QMessageBox.Icon.Warning)
         box.setWindowTitle(translator.tr("app.title"))
-        box.setText(translator.tr("menu.file.unsaved_results_message"))
+        current = self.controller.current_project_zip
+        if current is None:
+            box.setText(translator.tr("menu.file.unsaved_results_message"))
+        else:
+            # Says which file Save writes to: it does so without asking.
+            box.setText(
+                translator.tr(
+                    "menu.file.unsaved_named_message", name=current.stem, path=str(current)
+                )
+            )
         save_button = box.addButton(
             translator.tr("menu.file.exit_save_button"), QMessageBox.ButtonRole.AcceptRole
         )
@@ -2522,27 +2564,69 @@ class MainWindow(QMainWindow):
         if clicked is cancel_button:
             return False
         if clicked is save_button:
-            project_path = self.controller.current_project_zip
+            project_path = self.controller.current_project_zip or self._ask_project_path()
             if project_path is None:
-                selected_path, _selected_filter = QFileDialog.getSaveFileName(
-                    self,
-                    translator.tr("menu.file.save_project_title"),
-                    "qicom_project.zip",
-                    "QICOM Project (*.zip)",
-                )
-                if not selected_path:
-                    return False
-                project_path = Path(selected_path)
-                if project_path.suffix.lower() != ".zip":
-                    project_path = project_path.with_suffix(".zip")
-            try:
-                if not self._save_project_zip(project_path):
-                    return False
-            except (ValueError, OSError) as exc:
-                self._report_error(explained_error("errors.summary.save_project", exc))
                 return False
-            record_recent_project(project_path, MODE_QUANTITATIVE)
+            return self._write_project(project_path)
         return True
+
+    def _on_save_project(self) -> None:
+        """File > Save Project: back into the project's own file, or asks for
+        one the first time (the same as Save Project As)."""
+        project_path = self.controller.current_project_zip or self._ask_project_path()
+        if project_path is not None:
+            self._write_project(project_path)
+
+    def _on_save_project_as(self) -> None:
+        project_path = self._ask_project_path()
+        if project_path is not None:
+            self._write_project(project_path)
+
+    def _ask_project_path(self) -> Path | None:
+        current = self.controller.current_project_zip
+        selected_path, _selected_filter = QFileDialog.getSaveFileName(
+            self,
+            translator.tr("menu.file.save_project_title"),
+            str(current) if current is not None else "qicom_project.zip",
+            "QICOM Project (*.zip)",
+        )
+        if not selected_path:
+            return None
+        project_path = Path(selected_path)
+        if project_path.suffix.lower() != ".zip":
+            project_path = project_path.with_suffix(".zip")
+        return project_path
+
+    def _write_project(self, project_path: Path) -> bool:
+        """Save the whole editable project to `project_path`; False if the
+        user declined (see _save_project_zip) or the save failed, which is
+        reported. Shows where it went in the status bar."""
+        self._show_busy_dialog(translator.tr("menu.file.saving_project"))
+        try:
+            if not self._save_project_zip(project_path):
+                return False
+        except (ValueError, OSError) as exc:
+            self._report_error(explained_error("errors.summary.save_project", exc))
+            return False
+        finally:
+            self._hide_busy_dialog()
+        record_recent_project(project_path, MODE_QUANTITATIVE, name=project_path.stem)
+        status_bar = self.statusBar()
+        assert status_bar is not None
+        status_bar.showMessage(translator.tr("menu.file.project_saved", path=str(project_path)))
+        return True
+
+    def _refresh_window_title(self) -> None:
+        """The open project's name before the application's, with Qt's own
+        modified marker while there are unsaved changes: which project is
+        open, and whether closing it would lose anything, is always shown."""
+        current = self.controller.current_project_zip
+        if current is not None:
+            name = current.stem
+        else:
+            name = translator.tr("menu.file.untitled_project")
+        self.setWindowTitle(f"{name}[*] - {translator.tr('app.title')}")
+        self.setWindowModified(self.controller.has_unsaved_results)
 
     def _save_project_zip(self, project_path: Path) -> bool:
         """controller.save_project_zip, with the one question images that
@@ -2705,7 +2789,7 @@ class MainWindow(QMainWindow):
             self.background_panel.set_air_roi_count(self.dual_image_view.air_roi_count)
 
     def retranslate_ui(self) -> None:
-        self.setWindowTitle(translator.tr("app.title"))
+        self._refresh_window_title()
         self._roi_dock.setWindowTitle(translator.tr("roi_manager.title"))
         self._line_profile_dock.setWindowTitle(translator.tr("line_profile_panel.title"))
         self._results_dock.setWindowTitle(translator.tr("results_table.title"))
@@ -2726,7 +2810,9 @@ class MainWindow(QMainWindow):
         self._save_project_folder_action.setText(translator.tr("menu.file.save_project_folder"))
         self._open_project_folder_action.setText(translator.tr("menu.file.open_project_folder"))
         self._concat_action.setText(translator.tr("menu.file.concat"))
-        self._reset_all_action.setText(translator.tr("menu.file.reset_all"))
+        self._new_project_action.setText(translator.tr("menu.file.new_project"))
+        self._save_project_action.setText(translator.tr("menu.file.save_project"))
+        self._save_project_as_action.setText(translator.tr("menu.file.save_project_as"))
         self._close_project_action.setText(translator.tr("menu.file.close_project"))
         self._exit_action.setText(translator.tr("menu.file.exit"))
         self._edit_menu.setTitle(translator.tr("menu.edit"))

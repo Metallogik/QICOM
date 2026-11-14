@@ -115,7 +115,9 @@ def window(qtbot: QtBot) -> MainWindow:
 
 class TestMainWindow:
     def test_constructs_without_error(self, window: MainWindow) -> None:
-        assert window.windowTitle() == "QICOM - Quality Image Comparator"
+        assert (
+            window.windowTitle() == "New project (not saved)[*] - QICOM - Quality Image Comparator"
+        )
 
     def test_view_toolbar_is_a_top_level_toolbar_above_the_images(self, window: MainWindow) -> None:
         assert window.toolBarArea(window.view_toolbar) == Qt.ToolBarArea.TopToolBarArea
@@ -1424,7 +1426,7 @@ class TestExportHeatmapsWiring:
         assert "2" in window.statusBar().currentMessage()
 
 
-class TestResetAllWiring:
+class TestNewProjectWiring:
     def test_declining_confirmation_leaves_everything_untouched(
         self, window: MainWindow, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -1438,7 +1440,7 @@ class TestResetAllWiring:
         window.dual_image_view.add_roi("rectangle")
         window.results_panel.set_dataframe(_make_results())
 
-        window._on_reset_all()
+        window._on_new_project()
 
         assert window.dual_image_view.reference_panel.image is not None
         assert len(window.dual_image_view.list_roi_pairs()) == 1
@@ -1460,7 +1462,7 @@ class TestResetAllWiring:
             question=lambda *a, **k: QMessageBox.StandardButton.Yes,
         )
 
-        window._on_reset_all()
+        window._on_new_project()
 
         assert window.dual_image_view.reference_panel.image is None
         assert window.dual_image_view.list_roi_pairs() == []
@@ -1479,7 +1481,7 @@ class TestResetAllWiring:
             question=lambda *a, **k: QMessageBox.StandardButton.Yes,
         )
 
-        window._on_reset_all()
+        window._on_new_project()
 
         assert window.results_panel.dataframe_for_pair("AvsB") is None
         assert window.results_panel._pair_combo.isHidden()
@@ -1631,6 +1633,129 @@ class TestCloseEventWiring:
         window.closeEvent(event)
 
         assert event.isAccepted()
+
+
+class TestProjectLifecycle:
+    """New / Save / Save As in the File menu, and the title naming the project.
+
+    A tester could not start a new project from inside the window, and had a
+    project saved over without meaning to: starting over kept the opened
+    project's file, so Save on closing wrote the new work into it."""
+
+    def test_the_project_commands_are_in_the_file_menu_on_every_stage(
+        self, window: MainWindow
+    ) -> None:
+        actions = (
+            window._new_project_action,
+            window._open_project_folder_action,
+            window._save_project_action,
+            window._save_project_as_action,
+        )
+        assert [action.text() for action in actions] == [
+            "New Project",
+            "Open Project...",
+            "Save Project",
+            "Save Project As...",
+        ]
+        assert window._file_menu.actions()[:4] == list(actions)
+        assert [action.shortcut().isEmpty() for action in actions] == [False] * 4
+        for stage in window.workflow_rail.visible_stage_keys:
+            window.workflow_rail.set_current_stage(stage)
+            assert all(action.isVisible() for action in actions), stage
+
+    def test_a_new_project_on_an_empty_window_asks_nothing(
+        self, window: MainWindow, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(QMessageBox, "exec", lambda self: pytest.fail("no prompt expected"))
+        stub_message_box(
+            monkeypatch,
+            "qicom.gui.main_window",
+            question=lambda *a, **k: pytest.fail("no confirmation expected"),
+        )
+
+        window._on_new_project()
+
+        assert window.workflow_rail.current_stage == "import"
+
+    def test_a_new_project_is_never_saved_over_the_previous_one(
+        self, window: MainWindow, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        opened = tmp_path / "study.zip"
+        window.controller._current_project_zip = opened
+        window.controller._has_unsaved_results = True
+        _click_message_box_role(monkeypatch, QMessageBox.ButtonRole.DestructiveRole)
+        window._on_new_project()
+        assert window.controller.current_project_zip is None
+
+        window.controller.mark_dirty()  # new work in the new project
+        _click_message_box_role(monkeypatch, QMessageBox.ButtonRole.AcceptRole)
+        chosen = tmp_path / "second"
+        monkeypatch.setattr(
+            "qicom.gui.main_window.QFileDialog.getSaveFileName",
+            lambda *a, **k: (str(chosen), "QICOM Project (*.zip)"),
+        )
+        save_calls: list[Path] = []
+        monkeypatch.setattr(
+            window.controller, "save_project_zip", lambda path, **_kwargs: save_calls.append(path)
+        )
+        monkeypatch.setattr(main_window_module, "record_recent_project", lambda *a, **k: None)
+        event = QCloseEvent()
+        window.closeEvent(event)
+
+        assert save_calls == [tmp_path / "second.zip"]
+        assert event.isAccepted()
+
+    def test_save_project_writes_to_the_open_project_without_asking(
+        self, window: MainWindow, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        opened = tmp_path / "study.zip"
+        window.controller._current_project_zip = opened
+        monkeypatch.setattr(
+            "qicom.gui.main_window.QFileDialog.getSaveFileName",
+            lambda *a, **k: pytest.fail("Save must not ask for a file it already has"),
+        )
+        save_calls: list[Path] = []
+        monkeypatch.setattr(
+            window.controller, "save_project_zip", lambda path, **_kwargs: save_calls.append(path)
+        )
+        monkeypatch.setattr(main_window_module, "record_recent_project", lambda *a, **k: None)
+
+        window._on_save_project()
+
+        assert save_calls == [opened]
+        assert str(opened) in window.statusBar().currentMessage()
+
+    def test_save_project_as_always_asks_for_the_file(
+        self, window: MainWindow, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        window.controller._current_project_zip = tmp_path / "study.zip"
+        monkeypatch.setattr(
+            "qicom.gui.main_window.QFileDialog.getSaveFileName",
+            lambda *a, **k: (str(tmp_path / "copy.zip"), "QICOM Project (*.zip)"),
+        )
+        save_calls: list[Path] = []
+        monkeypatch.setattr(
+            window.controller, "save_project_zip", lambda path, **_kwargs: save_calls.append(path)
+        )
+        monkeypatch.setattr(main_window_module, "record_recent_project", lambda *a, **k: None)
+
+        window._on_save_project_as()
+
+        assert save_calls == [tmp_path / "copy.zip"]
+
+    def test_the_title_names_the_project_and_marks_unsaved_changes(
+        self, window: MainWindow
+    ) -> None:
+        assert window.windowTitle().startswith("New project (not saved)[*]")
+        assert not window.isWindowModified()
+
+        window.controller.mark_dirty()
+        assert window.isWindowModified()
+
+        window.controller._current_project_zip = Path("studies") / "liver.zip"
+        window.controller._has_unsaved_results = False
+        assert window.windowTitle().startswith("liver[*]")
+        assert not window.isWindowModified()
 
 
 class TestCloseProjectWiring:
@@ -2520,7 +2645,7 @@ class TestErrorTabBadge:
 
         assert window._error_badge.text() == "1"
 
-    def test_reset_all_clears_the_badge(
+    def test_new_project_clears_the_badge(
         self, window: MainWindow, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         window._report_error("boom")
@@ -2530,7 +2655,7 @@ class TestErrorTabBadge:
             question=lambda *a, **k: QMessageBox.StandardButton.Yes,
         )
 
-        window._on_reset_all()
+        window._on_new_project()
 
         assert window._error_badge.text() == ""
 

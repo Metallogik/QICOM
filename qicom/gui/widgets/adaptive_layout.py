@@ -6,8 +6,8 @@ Qt owns display scaling; these helpers work exclusively in logical coordinates.
 
 from __future__ import annotations
 
-from PySide6.QtCore import QEvent, QRect, QSize, Qt
-from PySide6.QtGui import QIcon, QShowEvent
+from PySide6.QtCore import QEvent, QPoint, QRect, QSize, Qt
+from PySide6.QtGui import QGuiApplication, QIcon, QShowEvent
 from PySide6.QtWidgets import (
     QDialog,
     QDockWidget,
@@ -21,6 +21,42 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+#: Share of the available screen a top-level window may take when it is not
+#: maximized: room for the title bar and the edges a user drags to resize it.
+WINDOW_SCREEN_FRACTION = 0.92
+
+
+def fit_window_to_screen(window: QWidget, width: int, height: int) -> QSize:
+    """Size a top-level window to `width` x `height`, but never beyond its screen.
+
+    The workflow windows open maximized, and "Restore" brings them back to the
+    size set here. A fixed 1280x800 (or 1400x900) is taller than a 1366x768
+    laptop, and wider and taller than any common screen at 125-150% scaling:
+    the restored window then hung off the screen, with the edge and the grip
+    that resize it out of reach. The size is in logical pixels, like the
+    screen geometry it is compared with, so display scaling is accounted for.
+    The window is centred on that screen. Returns the size applied.
+    """
+    screen = window.screen() or QGuiApplication.primaryScreen()
+    if screen is None:
+        size = QSize(width, height)
+        window.resize(size)
+        return size
+    available = screen.availableGeometry()
+    limit = QSize(
+        int(available.width() * WINDOW_SCREEN_FRACTION),
+        int(available.height() * WINDOW_SCREEN_FRACTION),
+    )
+    size = QSize(width, height).boundedTo(limit)
+    window.resize(size)
+    window.move(
+        QPoint(
+            available.x() + (available.width() - size.width()) // 2,
+            available.y() + (available.height() - size.height()) // 2,
+        )
+    )
+    return size
 
 
 def make_panel_scrollable(panel: QWidget) -> None:

@@ -24,6 +24,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QActionGroup, QCloseEvent
 from PySide6.QtWidgets import (
     QApplication,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QListWidget,
@@ -31,6 +32,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMenuBar,
     QMessageBox,
+    QScrollArea,
     QSplitter,
     QStackedWidget,
     QVBoxLayout,
@@ -44,7 +46,7 @@ from qicom.gui.resources import app_icon
 from qicom.gui.theming import SUPPORTED_THEMES, theme_manager
 from qicom.gui.tools.catalog import TOOLS, ToolSpec, tool_spec
 from qicom.gui.widgets.about_dialog import AboutDialog
-from qicom.gui.widgets.adaptive_layout import DpiIconLabel
+from qicom.gui.widgets.adaptive_layout import DpiIconLabel, fit_window_to_screen
 from qicom.gui.widgets.bug_report_dialog import BugReportDialog
 from qicom.gui.widgets.errors_panel import ErrorRecord, as_reported_errors, new_error_record
 from qicom.gui.widgets.settings_dialog import SettingsDialog
@@ -72,6 +74,7 @@ class ToolsMainWindow(QMainWindow):
         self._embedded = embedded
         self._error_records: list[ErrorRecord] = []
         self._pages: dict[str, QWidget] = {}
+        self._containers: dict[str, QScrollArea] = {}
 
         self._catalog = QListWidget()
         self._catalog.setObjectName("toolsCatalog")
@@ -107,7 +110,7 @@ class ToolsMainWindow(QMainWindow):
         self.retranslate_ui()
         self._refresh_icons(theme_manager.theme)
         self.open_tool(initial_tool or TOOLS[0].tool_id)
-        self.resize(1400, 900)
+        fit_window_to_screen(self, 1400, 900)
 
     # -- the catalog ---------------------------------------------------------
 
@@ -136,8 +139,7 @@ class ToolsMainWindow(QMainWindow):
                 page = spec.create_widget()
             except ImportError as exc:
                 page = self._unavailable_page(spec, exc)
-                self._pages[spec.tool_id] = page
-                self._stack.addWidget(page)
+                self._add_page(spec, page)
                 return page
             error_signal = getattr(page, "error_occurred", None)
             if error_signal is not None:
@@ -148,9 +150,28 @@ class ToolsMainWindow(QMainWindow):
             status_signal = getattr(page, "status_message", None)
             if status_signal is not None:
                 status_signal.connect(lambda message: self.statusBar().showMessage(message, 8000))
-            self._pages[spec.tool_id] = page
-            self._stack.addWidget(page)
+            self._add_page(spec, page)
         return page
+
+    def _add_page(self, spec: ToolSpec, page: QWidget) -> None:
+        """Put a tool's page in the window, inside a scroll area of its own.
+
+        Several tools need more width than a laptop offers at 125-150%
+        scaling (the mask tool about 1230 logical pixels, against roughly
+        1090 on a 1366-pixel screen at 125%). Placed directly in the window,
+        that minimum became the window's own: it could not be made narrower
+        than the screen, nor fit on it. Scrolled, the tool keeps its layout
+        and the window resizes freely; the page fills the area whenever it
+        fits, so nothing scrolls on a large screen.
+        """
+        scroll = QScrollArea()
+        scroll.setObjectName("toolPageScrollArea")
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(page)
+        self._pages[spec.tool_id] = page
+        self._containers[spec.tool_id] = scroll
+        self._stack.addWidget(scroll)
 
     def _unavailable_page(self, spec: ToolSpec, exc: ImportError) -> QWidget:
         """A tool whose code is missing from this installation.
@@ -176,7 +197,8 @@ class ToolsMainWindow(QMainWindow):
         return label
 
     def _show(self, spec: ToolSpec) -> None:
-        self._stack.setCurrentWidget(self._page(spec))
+        self._page(spec)
+        self._stack.setCurrentWidget(self._containers[spec.tool_id])
         self._tool_title.setText(translator.tr(spec.title_key))
         self._tool_description.setText(translator.tr(spec.description_key))
 

@@ -573,6 +573,15 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Fixed
 
+- **Finestre più grandi dello schermo.** Le finestre si aprono massimizzate, ma "Ripristina" le
+  riportava a una dimensione fissa (1280×800, 1400×900 per Strumenti e Radiomica): più alta di un
+  portatile 1366×768 e più grande di quasi ogni schermo al 125-150% di scala. La finestra
+  ripristinata usciva dallo schermo e il bordo per ridimensionarla restava irraggiungibile. Ora la
+  dimensione iniziale è limitata al 92% dell'area disponibile dello schermo, in pixel logici, e la
+  finestra è centrata. Nella finestra Strumenti, inoltre, la larghezza minima di alcuni strumenti
+  (fino a circa 1230 pixel) diventava quella dell'intera finestra, che al 125-150% non entrava più
+  nello schermo né si poteva restringere: ogni strumento sta ora in un'area scorrevole. Un test
+  verifica ogni strumento su 1366×768 al 100%, 125% e 150%.
 - **Strumenti di utilità mancanti nell'app installata.** Il catalogo importa ogni strumento per
   nome al primo uso (`qicom.gui.tools.converter:ConverterTool`) e nessun altro modulo li importa,
   quindi PyInstaller non li vedeva: nell'app distribuita ogni strumento falliva con "No module

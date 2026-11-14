@@ -60,7 +60,12 @@ from qicom.gui.resources import app_icon
 from qicom.gui.theming import SUPPORTED_THEMES, theme_manager
 from qicom.gui.tools.workflow_menu import UtilityToolsMenu
 from qicom.gui.widgets.about_dialog import AboutDialog
-from qicom.gui.widgets.adaptive_layout import DpiIconLabel, make_panel_scrollable, place_tool_dock
+from qicom.gui.widgets.adaptive_layout import (
+    DpiIconLabel,
+    fit_window_to_screen,
+    make_panel_scrollable,
+    place_tool_dock,
+)
 from qicom.gui.widgets.analysis_setup_panel import AnalysisSetupPanel
 from qicom.gui.widgets.annotation_manager import AnnotationManagerPanel
 from qicom.gui.widgets.background_panel import BackgroundPanel
@@ -176,7 +181,7 @@ class MainWindow(QMainWindow):
         on-disk session DB) - tests pass an in-memory SessionStorage so
         they never touch the user's actual history."""
         super().__init__()
-        self.resize(1280, 800)
+        fit_window_to_screen(self, 1280, 800)
         self.setWindowIcon(app_icon())
         # File > Close Project sets this before calling close() - checked by
         # qicom.gui.app.main() after its app.exec() call returns (closing

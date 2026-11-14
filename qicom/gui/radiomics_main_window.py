@@ -48,7 +48,12 @@ from qicom.gui.resources import app_icon
 from qicom.gui.theming import SUPPORTED_THEMES, theme_manager
 from qicom.gui.tools.workflow_menu import UtilityToolsMenu
 from qicom.gui.widgets.about_dialog import AboutDialog
-from qicom.gui.widgets.adaptive_layout import DpiIconLabel, make_panel_scrollable, place_tool_dock
+from qicom.gui.widgets.adaptive_layout import (
+    DpiIconLabel,
+    fit_window_to_screen,
+    make_panel_scrollable,
+    place_tool_dock,
+)
 from qicom.gui.widgets.bug_report_dialog import BugReportDialog
 from qicom.gui.widgets.dual_image_view import ROI_SHAPES, DualImageView, RoiPair
 from qicom.gui.widgets.errors_panel import ErrorRecord, as_reported_errors, new_error_record
@@ -246,7 +251,7 @@ class RadiomicsMainWindow(QMainWindow):
         self.retranslate_ui()
         unhandled_error_hub().error_raised.connect(self._report_unhandled_error)
         self.workflow_rail.set_current_stage("import")
-        self.resize(1400, 900)
+        fit_window_to_screen(self, 1400, 900)
 
     @property
     def segmentation_panel(self) -> RadiomicsSegmentationPanel:

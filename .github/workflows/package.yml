@@ -590,22 +590,27 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent \
             "staging/${{ matrix.artifact }}" "${{ matrix.artifact }}.zip"
 
-      # LEGGIMI-PRIMA.txt sits at the top of the zip, beside the folder: the
-      # first thing seen on opening it, it says to extract first (qicom.exe
-      # does not start from inside the zip) or to use the installer instead.
+      # The portable version: the bundle folder itself, for whoever cannot or
+      # will not install. LEGGIMI-PRIMA.txt sits at the top of the zip, beside
+      # the folder: extract first (qicom.exe does not start from inside the
+      # zip), or use the installer in QICOM-windows-x64.zip instead.
       - name: Stage and archive (Windows)
         if: runner.os == 'Windows'
         shell: bash
         run: |
           cp packaging/windows/LEGGIMI-PRIMA.txt staging/
-          7z a -mx=1 "${{ matrix.artifact }}.zip" \
+          7z a -mx=1 "${{ matrix.artifact }}-portable.zip" \
             "./staging/${{ matrix.artifact }}" ./staging/LEGGIMI-PRIMA.txt
+          python packaging/generate_sha256sums.py "${{ matrix.artifact }}-portable.zip" \
+            --output "${{ matrix.artifact }}-portable.zip.sha256"
 
-      # The same staged directory as a standard installer: destination folder
-      # chosen by the user, Start-menu entry, uninstaller. Installed silently
-      # here as a user would get it, the installed copy must pass the same
-      # smoke test as the bundle and report this commit, and uninstalling
-      # must leave nothing behind. Inno Setup is not on every runner image.
+      # The same staged directory as the classic setup wizard (Program Files
+      # by default, destination folder asked, Start-menu entry, uninstaller).
+      # Installed silently in that default mode, for all users, the installed
+      # copy must pass the same smoke test as the bundle and report this
+      # commit, and uninstalling must leave nothing behind. The download users
+      # get, QICOM-windows-x64.zip, then holds just QICOM-Setup.exe and a
+      # README. Inno Setup is not on every runner image.
       - name: Build and smoke-test the Windows installer
         if: runner.os == 'Windows'
         shell: pwsh
@@ -616,13 +621,13 @@ jobs:
             choco install innosetup --no-progress -y
             if ($LASTEXITCODE -ne 0) { throw "choco could not install Inno Setup" }
           }
-          $setup = "${{ matrix.artifact }}-setup.exe"
+          $setup = "installer\QICOM-Setup.exe"
           python packaging/build_windows_installer.py "staging/${{ matrix.artifact }}" --output $setup
           if ($LASTEXITCODE -ne 0) { throw "the installer build failed" }
 
           $target = Join-Path $PWD 'setup-test'
-          $install = Start-Process -FilePath ".\$setup" -Wait -PassThru -ArgumentList @(
-            '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CURRENTUSER',
+          $install = Start-Process -FilePath $setup -Wait -PassThru -ArgumentList @(
+            '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/ALLUSERS',
             "/DIR=`"$target`"", "/LOG=`"$PWD\setup.log`""
           )
           if ($install.ExitCode -ne 0) {
@@ -650,13 +655,19 @@ jobs:
             Start-Sleep -Milliseconds 500
           }
           if (Test-Path "$target\qicom.exe") { throw "uninstalling left qicom.exe behind" }
-          $uninstallKeys = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'
+          $uninstallKeys = @(
+            'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
+            'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'
+          )
           $leftover = Get-ItemProperty $uninstallKeys -ErrorAction SilentlyContinue |
-            Where-Object { $_.DisplayName -eq 'QICOM' }
+            Where-Object { $_.DisplayName -like 'QICOM*' }
           if ($leftover) { throw "uninstalling left QICOM under Installed apps" }
 
-          python packaging/generate_sha256sums.py $setup --output "$setup.sha256"
-          if ($LASTEXITCODE -ne 0) { throw "the installer checksum failed" }
+          New-Item -ItemType Directory -Force installer-zip | Out-Null
+          Copy-Item $setup installer-zip\QICOM-Setup.exe
+          Copy-Item packaging\windows\README.txt installer-zip\README.txt
+          7z a -mx=1 "${{ matrix.artifact }}.zip" .\installer-zip\*
+          if ($LASTEXITCODE -ne 0) { throw "the installer zip could not be written" }
           Write-Output "Installer verified: $setup ($($payload.version) $($payload.revision))"
 
       - name: Stage and archive (Linux)
@@ -729,10 +740,11 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.artifact }}
-          # The Windows installer and its checksum travel with the zip.
+          # On Windows the zip holds the installer; the portable zip and its
+          # checksum travel beside it.
           path: |
             ${{ matrix.artifact }}.*
-            ${{ matrix.artifact }}-setup.*
+            ${{ matrix.artifact }}-portable.*
           if-no-files-found: error
           # The archive is already compressed; re-compressing a multi-GB file
           # on upload costs minutes and saves nothing.
@@ -824,7 +836,7 @@ jobs:
           gh run download "${{ github.run_id }}" --dir release-files --pattern 'QICOM-*'
           mkdir assets
           find release-files -type f -exec mv -t assets {} +
-          for name in QICOM-windows-x64-setup.exe QICOM-windows-x64.zip \
+          for name in QICOM-windows-x64.zip QICOM-windows-x64-portable.zip \
                       QICOM-macos-arm64.zip QICOM-linux-x64.deb QICOM-linux-x64.tar.gz; do
             if [ ! -s "assets/$name" ]; then
               echo "::error::$name is missing from this run; the site keeps the previous files"
@@ -879,8 +891,8 @@ jobs:
 
           | File | Platform |
           |---|---|
-          | QICOM-windows-x64-setup.exe | Windows 10 (1809+) / 11, x64, installer (recommended) |
-          | QICOM-windows-x64.zip | Windows 10 (1809+) / 11, x64, portable: extract first |
+          | QICOM-windows-x64.zip | Windows 10 (1809+) / 11, x64: unzip and run QICOM-Setup.exe |
+          | QICOM-windows-x64-portable.zip | Windows 10 (1809+) / 11, x64, no installation: extract first |
           | QICOM-macos-arm64.zip | macOS, Apple Silicon only (not Intel) |
           | QICOM-linux-x64.deb | Debian / Ubuntu, x64 |
           | QICOM-linux-x64.tar.gz | Other Linux distributions, x64 |

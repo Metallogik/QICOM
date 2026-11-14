@@ -46,16 +46,19 @@ empty between that version and yours, re-run the analysis before comparing.
   propone di salvare le modifiche non salvate, chiede conferma se c'è lavoro già salvato aperto e
   non chiede nulla a finestra vuota. Il titolo della finestra mostra il progetto aperto (o "Nuovo
   progetto (non salvato)") e un asterisco quando ci sono modifiche non salvate.
-- **Installer Windows** (`QICOM-windows-x64-setup.exe`, con sidecar `.sha256`), prodotto dalla
-  build Windows accanto allo zip da `packaging/build_windows_installer.py` (Inno Setup 6,
-  `packaging/windows/qicom.iss`). Chiede la cartella di destinazione, installa solo per l'utente
-  senza permessi di amministratore oppure per tutti in Program Files, crea la voce nel menu Start
-  e, a scelta, il collegamento sul desktop, e registra il programma di disinstallazione in
-  Impostazioni > App. Lo stesso bundle entra byte per byte, e un aggiornamento sostituisce
-  `_internal` per intero. La CI lo installa in silenzio, avvia lo smoke test dalla cartella
-  installata, ne verifica l'identità di build e lo disinstalla controllando che non resti nulla.
-  Lo zip ha ora in cima `LEGGIMI-PRIMA.txt`: estrarre prima di avviare, oppure usare l'installer.
-  Il sito di download punta per ora allo zip: il link all'installer va aggiunto lì.
+- **Installer Windows con la classica procedura guidata.** `QICOM-windows-x64.zip`, lo stesso
+  file a cui punta il sito, contiene ora `QICOM-Setup.exe` (Inno Setup 6,
+  `packaging/build_windows_installer.py` e `packaging/windows/qicom.iss`) e un README: estratto lo
+  zip, l'installer apre la procedura guidata in inglese, con il logo e l'icona di QICOM. Pagine:
+  benvenuto con la descrizione di QICOM, licenza Apache 2.0, "About QICOM" (cosa fa e a cosa
+  serve), cartella di destinazione (Program Files di default, con "Install for me only" per chi
+  non ha i permessi di amministratore), riepilogo, barra di avanzamento con percentuale e fine
+  con "Launch QICOM". Crea la voce nel menu Start e, a scelta, il collegamento sul desktop, e si
+  disinstalla da Impostazioni > App. Lo stesso bundle entra byte per byte, e un aggiornamento
+  sostituisce `_internal` per intero. La CI lo installa in silenzio per tutti gli utenti, avvia
+  lo smoke test dalla cartella installata, ne verifica l'identità di build e lo disinstalla
+  controllando che non resti nulla. La versione senza installazione diventa
+  `QICOM-windows-x64-portable.zip`, con in cima `LEGGIMI-PRIMA.txt`.
 - **Pacchetto Debian/Ubuntu** (`QICOM-linux-x64.deb`, con sidecar `.sha256`), prodotto dalla
   build Linux accanto al `.tar.gz` da `packaging/build_deb.py`: lo stesso bundle, byte per byte,
   in `/opt/qicom`, il comando `qicom`, la voce di menu e l'icona. Dichiara le librerie Qt di

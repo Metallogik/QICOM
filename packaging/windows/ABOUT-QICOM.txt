@@ -1,0 +1,56 @@
+About QICOM
+===========
+
+QICOM - Quality Image Comparator - is a desktop application for comparing
+medical images and measuring how their quality differs. It is open-source
+software (Apache License 2.0), developed for research and quality control.
+
+
+What QICOM does
+---------------
+
+* Quantitative analysis. Load a reference image and one or more images to
+  compare: DICOM series, NIfTI volumes or common image formats. QICOM computes
+  objective image-quality metrics - full-reference metrics such as PSNR and
+  SSIM, no-reference metrics such as NIQE and BRISQUE - on the whole image or
+  on the regions of interest (ROIs) you draw. Heatmaps show where the images
+  differ, and the results are exported to Excel together with charts and
+  images.
+
+* Qualitative evaluation. Create structured, blinded image evaluations, have
+  readers complete them, and aggregate their answers.
+
+* Radiomics. Run paired ROI/VOI feature extraction on 2D and 3D images and
+  analyse how reproducible the features are.
+
+* Utility tools. Segmentation, masks, format conversion, resampling, DICOM
+  header editing and comparison, DICOM organisation and decompression, and
+  anonymisation.
+
+
+What QICOM is for
+-----------------
+
+Comparing two or more versions of the same image in a reproducible way: for
+example different reconstruction or denoising methods, a lower dose or a
+different acquisition protocol, or the opinions of several readers in a
+blinded study.
+
+Your images stay on your computer: QICOM does not send them anywhere.
+
+
+Intended use
+------------
+
+For research and quality-control use only. QICOM is not a medical device and
+is not intended for clinical diagnosis or for any decision concerning a
+patient's care.
+
+
+Citing QICOM
+------------
+
+If you use QICOM in published work, please cite:
+Mattiussi, F., & Ghotra, S. (2026). QICOM: Open-Source Software for
+Reproducible Image Quality Evaluation, Blinded Assessment, and Radiomic
+Comparison. arXiv:2610.31218 [eess.IV].

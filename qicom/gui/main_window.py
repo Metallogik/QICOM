@@ -786,6 +786,9 @@ class MainWindow(QMainWindow):
             self._clear_background_preview()
         elif self._background_detection_requested:
             self._refresh_background_preview()
+        # After the preview is off the canvas: the two share its overlay.
+        if stage == "heatmaps":
+            self._show_default_heatmap()
 
         # Qt rebuilds a tabified dock's visible tabs when siblings are
         # hidden/shown. Re-apply icons and the live error badge after that
@@ -1630,6 +1633,30 @@ class MainWindow(QMainWindow):
             message = f"{message} {translator.tr('results_table.normalization_hint')}"
         self._report_error(message, timeout=12000)
 
+    def _show_default_heatmap(self) -> None:
+        """Entering the Heatmaps step with nothing on screen shows the
+        whole-image map of the selected metric, instead of an empty page
+        waiting for a click on a small Show button. When there is nothing
+        to show, the panel's status line says why; that is not an error."""
+        if self.heatmap_panel.has_active_targets:
+            return
+        if any(panel.image is None for panel in self.dual_image_view.list_panels()[:2]):
+            self.heatmap_panel.show_status_message(translator.tr("heatmap.status_no_images"))
+            return
+        try:
+            low, high = self.dual_image_view.show_heatmap(
+                self.heatmap_panel.current_metric_id(),
+                self.results_panel.data_range(),
+                self.heatmap_panel.current_pair_label(),
+            )
+        except ValueError as exc:
+            self.heatmap_panel.show_status_message(
+                translator.tr("heatmap.status_unavailable", reason=str(exc))
+            )
+            return
+        self.heatmap_panel.set_legend_range(low, high)
+        self.heatmap_panel.set_active_targets(None)
+
     def _on_heatmap_show_requested(self, metric_id: str, roi_ids: object) -> None:
         assert roi_ids is None or isinstance(roi_ids, list)
         try:
@@ -1641,6 +1668,9 @@ class MainWindow(QMainWindow):
             )
         except ValueError as exc:
             self._report_error(explained_error("errors.summary.heatmap", exc))
+            self.heatmap_panel.show_status_message(
+                translator.tr("heatmap.status_unavailable", reason=str(exc))
+            )
             return
         self.heatmap_panel.set_legend_range(low, high)
         self.heatmap_panel.set_active_targets(roi_ids)

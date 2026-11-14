@@ -3255,6 +3255,78 @@ class TestResultsAndHeatmapSteps:
         assert window._results_dock.isHidden()
         assert window._charts_dock.isHidden()
 
+    def test_entering_the_heatmaps_step_shows_the_whole_image_map(self, window: MainWindow) -> None:
+        """Reported: the maps "do not show" and it was unclear how to make
+        one. The step used to open empty until a small Show button was
+        found; it now draws the selected metric's whole-image map over the
+        images, and says so."""
+        window.show()
+        rng = np.random.default_rng(0)
+        reference = rng.random((64, 64))
+        window.dual_image_view.reference_panel.set_image(reference)
+        window.dual_image_view.comparison_panel.set_image(reference + rng.normal(0, 0.05, (64, 64)))
+
+        window.workflow_rail.set_current_stage("heatmaps")
+
+        for panel in window.dual_image_view.list_panels():
+            assert panel._heatmap_item is not None
+            assert panel._heatmap_item.isVisible()
+            assert panel._heatmap_item.image is not None
+        assert window.heatmap_panel.has_active_targets
+        assert "Whole Image" in window.heatmap_panel._status.text()
+        assert window.errors_panel._table.rowCount() == 0
+
+    def test_a_shown_map_is_still_on_the_images_after_a_step_change(
+        self, window: MainWindow
+    ) -> None:
+        """The reported "maps do not show": every step change outside Remove
+        air cleared the air preview, and with it the shared overlay - so the
+        map left the images while the panel still said it was shown."""
+        window.show()
+        image = np.random.default_rng(2).random((64, 64))
+        window.dual_image_view.reference_panel.set_image(image)
+        window.dual_image_view.comparison_panel.set_image(image * 0.8)
+        window.workflow_rail.set_current_stage("heatmaps")
+
+        window.workflow_rail.set_current_stage("export")
+        window.workflow_rail.set_current_stage("view")
+
+        for panel in window.dual_image_view.list_panels():
+            assert panel._heatmap_item is not None
+            assert panel._heatmap_item.image is not None
+        assert window.heatmap_panel.has_active_targets
+
+    def test_without_images_the_heatmaps_step_says_what_is_missing(
+        self, window: MainWindow
+    ) -> None:
+        window.show()
+
+        window.workflow_rail.set_current_stage("heatmaps")
+
+        assert not window.heatmap_panel.has_active_targets
+        assert (
+            window.heatmap_panel._status.text()
+            == "Load the reference and a comparison image to see a heatmap."
+        )
+        assert window.errors_panel._table.rowCount() == 0
+
+    def test_a_map_hidden_on_the_step_stays_hidden_until_the_step_is_entered_again(
+        self, window: MainWindow
+    ) -> None:
+        window.show()
+        image = np.random.default_rng(1).random((64, 64))
+        window.dual_image_view.reference_panel.set_image(image)
+        window.dual_image_view.comparison_panel.set_image(image * 0.9)
+        window.workflow_rail.set_current_stage("heatmaps")
+
+        window.heatmap_panel._row_buttons[WHOLE_IMAGE_TARGET].click()  # the user's Hide
+        assert not window.heatmap_panel.has_active_targets
+        assert "No heatmap shown" in window.heatmap_panel._status.text()
+
+        window.workflow_rail.set_current_stage("results")
+        window.workflow_rail.set_current_stage("heatmaps")
+        assert window.heatmap_panel.has_active_targets
+
     def test_there_is_no_activity_step_any_more(self, window: MainWindow) -> None:
         assert "activity" not in window.workflow_rail.stage_keys
         assert window._history_dock.isHidden()

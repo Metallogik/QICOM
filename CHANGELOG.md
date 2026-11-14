@@ -592,6 +592,14 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Fixed
 
+- **Le mappe di calore sparivano dalle immagini cambiando passaggio.** L'anteprima dell'aria e le
+  mappe di calore usano lo stesso livello sopra le immagini, e a ogni cambio di passaggio fuori da
+  Rimuovi aria l'anteprima veniva tolta svuotando quel livello anche quando a occuparlo era una
+  mappa: la mappa non si vedeva più, mentre il pannello continuava a dirla mostrata. Ora si toglie
+  solo un'anteprima davvero visibile. Inoltre il passaggio Mappe di calore non si apre più vuoto:
+  mostra subito la mappa dell'immagine intera per la metrica scelta, una riga spiega cos'è la mappa,
+  che non serve Calcola e cosa salva l'export, e una riga di stato dice cosa è mostrato, oppure
+  perché non c'è nulla da mostrare (immagini mancanti, metrica non calcolabile).
 - **Un nuovo progetto non sovrascrive più quello aperto prima.** "Reimposta tutto" svuotava la
   finestra ma ricordava il file del progetto aperto in precedenza: alla chiusura, "Salva"
   scriveva il lavoro nuovo in quel file senza chiedere nulla. Ora iniziare da capo dimentica il

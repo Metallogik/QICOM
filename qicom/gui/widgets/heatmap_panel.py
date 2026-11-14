@@ -81,6 +81,18 @@ class HeatmapPanel(QWidget):
         # The value range of the heatmap currently shown, as computed (see
         # set_legend_range): what the threshold returns to on a reset.
         self._legend_defaults: tuple[float, float] | None = None
+        self._roi_names: dict[int, str] = {}
+
+        # A tester saw an empty page, and maps "saved" by the export, without
+        # learning how to make one appear: one line says what the map is,
+        # that it needs no Calculate, and what the export saves; the status
+        # line below the targets always says what is (or is not) shown.
+        self._intro = QLabel()
+        self._intro.setObjectName("panelSectionHint")
+        self._intro.setWordWrap(True)
+        self._status = QLabel()
+        self._status.setObjectName("heatmapStatus")
+        self._status.setWordWrap(True)
 
         self._metric_label = QLabel()
         self._metric_combo = QComboBox()
@@ -170,6 +182,7 @@ class HeatmapPanel(QWidget):
         self._apply_metric_range_limits()
 
         controls = QVBoxLayout()
+        controls.addWidget(self._intro)
         row1 = QHBoxLayout()
         row1.addWidget(self._metric_label)
         row1.addWidget(self._metric_combo, 1)
@@ -188,6 +201,7 @@ class HeatmapPanel(QWidget):
         controls.addWidget(self._reset_defaults_button)
         controls.addWidget(self._targets_label)
         controls.addWidget(self._targets_list)
+        controls.addWidget(self._status)
         controls.addWidget(self._export_heatmaps_button)
         controls.addStretch(1)
 
@@ -254,11 +268,46 @@ class HeatmapPanel(QWidget):
         nothing is actually displayed."""
         self._active_targets = {WHOLE_IMAGE_TARGET} if roi_ids is None else set(roi_ids)
         self._refresh_all_row_button_labels()
+        self._refresh_status()
 
     def clear_active_targets(self) -> None:
         """Called by MainWindow after a heatmap was actually hidden."""
         self._active_targets = set()
         self._refresh_all_row_button_labels()
+        self._refresh_status()
+
+    @property
+    def has_active_targets(self) -> bool:
+        return bool(self._active_targets)
+
+    def show_status_message(self, message: str) -> None:
+        """Why no map is shown, when that is not the user's choice: no
+        images yet, or the map cannot be computed here (MainWindow)."""
+        self._status.setText(message)
+
+    def _refresh_status(self) -> None:
+        if not self._active_targets:
+            self._status.setText(
+                translator.tr(
+                    "heatmap.status_none",
+                    whole_image=translator.tr("heatmap.whole_image_row"),
+                    show=translator.tr("heatmap.show"),
+                )
+            )
+            return
+        if self._active_targets == {WHOLE_IMAGE_TARGET}:
+            targets = translator.tr("heatmap.whole_image_row")
+        else:
+            targets = ", ".join(
+                self._roi_names.get(target, str(target)) for target in sorted(self._active_targets)
+            )
+        self._status.setText(
+            translator.tr(
+                "heatmap.status_shown",
+                metric=self._metric_combo.currentText(),
+                targets=targets,
+            )
+        )
 
     def _refresh_all_row_button_labels(self) -> None:
         for target_id in self._row_buttons:
@@ -286,8 +335,11 @@ class HeatmapPanel(QWidget):
                 del self._row_buttons[target_id]
         for roi_id, name in rois:
             self._add_target_row(roi_id, QLabel(name))
+        self._roi_names = dict(rois)
         self._active_targets &= set(self._row_buttons)
         self._refresh_all_row_button_labels()
+        if self._active_targets:
+            self._refresh_status()
 
     def current_metric_id(self) -> str:
         return str(self._metric_combo.currentData())
@@ -487,6 +539,13 @@ class HeatmapPanel(QWidget):
 
     def retranslate_ui(self) -> None:
         self._metric_label.setText(translator.tr("heatmap.metric"))
+        self._intro.setText(
+            translator.tr(
+                "heatmap.intro",
+                export_button=translator.tr("heatmap.export_heatmaps_button"),
+            )
+        )
+        self._refresh_status()
         self._color_mode_label.setText(translator.tr("heatmap.color_mode"))
         for index, color_mode in enumerate(HEATMAP_COLOR_MODES):
             self._color_mode_combo.setItemText(

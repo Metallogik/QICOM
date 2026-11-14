@@ -99,7 +99,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 WelcomeLabel1=Welcome to the QICOM Setup Wizard
 WelcomeLabel2=This will install [name/ver] on your computer.%n%nQICOM (Quality Image Comparator) compares medical images and measures how their quality differs: objective quality metrics on whole images and regions of interest, heatmaps of the differences, blinded reader evaluations, radiomics and DICOM utility tools.%n%nFor research and quality-control use only - not intended for clinical diagnosis.%n%nIt is recommended that you close all other applications before continuing.
 InfoBeforeLabel=Please read the following information about QICOM before continuing.
-FinishedLabel=Setup has finished installing QICOM on your computer. You can start it from the Start menu (and from the desktop, if you chose a shortcut).
+FinishedLabel=Setup has finished installing QICOM on your computer. You can start it from the Start menu (and from the desktop, if you chose a shortcut).%n%nTo remove it later, use "Uninstall QICOM" in the installation folder, or Settings > Apps.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -115,6 +115,12 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 [Icons]
 Name: "{autoprograms}\QICOM"; Filename: "{app}\qicom.exe"; WorkingDir: "{app}"; Comment: "Quality Image Comparator"
 Name: "{autodesktop}\QICOM"; Filename: "{app}\qicom.exe"; WorkingDir: "{app}"; Comment: "Quality Image Comparator"; Tasks: desktopicon
+; The uninstaller Inno Setup writes into the installation folder is called
+; unins000.exe, which nobody recognises: this shortcut beside qicom.exe lets a
+; user uninstall straight from that folder. (Renaming the uninstaller itself
+; would break how later versions find and upgrade this installation.) Removed
+; with everything else on uninstall.
+Name: "{app}\Uninstall QICOM"; Filename: "{uninstallexe}"; Comment: "Remove QICOM from this computer"
 
 [Run]
 Filename: "{app}\qicom.exe"; Description: "{cm:LaunchProgram,QICOM}"; WorkingDir: "{app}"; Flags: nowait postinstall skipifsilent

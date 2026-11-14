@@ -644,6 +644,13 @@ jobs:
             throw "the installed app reports $($payload.revision), built from $expected"
           }
           if (-not $payload.tools) { throw "the installed app reports no utility tools" }
+          # The way to uninstall from the installation folder itself.
+          $uninstallLink = Join-Path $target 'Uninstall QICOM.lnk'
+          if (-not (Test-Path $uninstallLink)) { throw "no Uninstall QICOM shortcut in $target" }
+          $linkTarget = (New-Object -ComObject WScript.Shell).CreateShortcut($uninstallLink).TargetPath
+          if ($linkTarget -ne (Join-Path $target 'unins000.exe')) {
+            throw "Uninstall QICOM points to $linkTarget, not the uninstaller"
+          }
 
           $uninstall = Start-Process -FilePath "$target\unins000.exe" -Wait -PassThru -ArgumentList @(
             '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
@@ -655,6 +662,7 @@ jobs:
             Start-Sleep -Milliseconds 500
           }
           if (Test-Path "$target\qicom.exe") { throw "uninstalling left qicom.exe behind" }
+          if (Test-Path $uninstallLink) { throw "uninstalling left the Uninstall QICOM shortcut" }
           $uninstallKeys = @(
             'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
             'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'

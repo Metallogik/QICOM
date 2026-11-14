@@ -97,6 +97,8 @@ def test_the_wizard_installs_into_program_files_and_asks_for_the_folder() -> Non
     assert "WizardImageFile={#WizardImages}" in script
     assert "WizardSmallImageFile={#WizardSmallImages}" in script
     assert "procedure CurInstallProgressChanged" in script
+    # Uninstalling straight from the installation folder, not only from Settings.
+    assert 'Name: "{app}\\Uninstall QICOM"; Filename: "{uninstallexe}"' in script
     languages = script.split("[Languages]", 1)[1].split("\n[", 1)[0]
     assert languages.strip() == 'Name: "english"; MessagesFile: "compiler:Default.isl"'
     welcome = next(line for line in script.splitlines() if line.startswith("WelcomeLabel2="))
@@ -148,6 +150,7 @@ def test_the_workflow_builds_smokes_and_publishes_the_installer() -> None:
     assert "--smoke-test" in installer["run"]
     assert "unins000.exe" in installer["run"]
     assert "/ALLUSERS" in installer["run"]  # the default, Program Files, is what is tested
+    assert "Uninstall QICOM.lnk" in installer["run"]
     # The download users get holds the installer; the portable folder is its own zip.
     assert "installer-zip\\QICOM-Setup.exe" in installer["run"]
     assert '7z a -mx=1 "${{ matrix.artifact }}.zip"' in installer["run"]

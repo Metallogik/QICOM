@@ -54,7 +54,8 @@ empty between that version and yours, re-run the analysis before comparing.
   serve), cartella di destinazione (Program Files di default, con "Install for me only" per chi
   non ha i permessi di amministratore), riepilogo, barra di avanzamento con percentuale e fine
   con "Launch QICOM". Crea la voce nel menu Start e, a scelta, il collegamento sul desktop, e si
-  disinstalla da Impostazioni > App. Lo stesso bundle entra byte per byte, e un aggiornamento
+  disinstalla con "Uninstall QICOM" nella cartella di installazione, accanto a `qicom.exe`, oppure
+  da Impostazioni > App. Lo stesso bundle entra byte per byte, e un aggiornamento
   sostituisce `_internal` per intero. La CI lo installa in silenzio per tutti gli utenti, avvia
   lo smoke test dalla cartella installata, ne verifica l'identità di build e lo disinstalla
   controllando che non resti nulla. La versione senza installazione diventa

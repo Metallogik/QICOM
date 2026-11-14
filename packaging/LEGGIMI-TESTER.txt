@@ -101,9 +101,10 @@ Consigliato: QICOM-windows-x64.zip, che contiene l'installer
    allora nella tua cartella dei programmi.
 3. Alla fine puoi avviare QICOM subito; in seguito lo trovi nel menu Start
    (e sul desktop, se hai lasciato la casella spuntata).
-4. Per disinstallare: Impostazioni > App > App installate > QICOM >
-   Disinstalla. I tuoi progetti e le preferenze non vengono cancellati
-   (stanno in %LOCALAPPDATA%\qicom, vedi sotto).
+4. Per disinstallare: doppio click su "Uninstall QICOM" nella cartella di
+   installazione (accanto a qicom.exe), oppure Impostazioni > App > App
+   installate > QICOM > Disinstalla. I tuoi progetti e le preferenze non
+   vengono cancellati (stanno in %LOCALAPPDATA%\qicom, vedi sotto).
 
 In alternativa, QICOM-windows-x64-portable.zip (versione portatile, senza
 installazione):
@@ -178,9 +179,10 @@ I dati delle sessioni (progetti, ROI, risultati) stanno qui:
   macOS:    ~/Library/Application Support/qicom
   Windows:  %LOCALAPPDATA%\qicom
 
-Per disinstallare: su Windows, se hai usato l'installer, da Impostazioni >
-App; altrimenti cancella la cartella dell'applicazione. Se vuoi ripulire
-tutto, cancella anche le due cartelle dati qui sopra.
+Per disinstallare: su Windows, se hai usato l'installer, con "Uninstall
+QICOM" nella cartella di installazione oppure da Impostazioni > App;
+altrimenti cancella la cartella dell'applicazione. Se vuoi ripulire tutto,
+cancella anche le due cartelle dati qui sopra.
 
 
 Metriche learned: LPIPS e DISTS al primo avvio

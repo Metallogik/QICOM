@@ -3505,3 +3505,20 @@ class TestProjectSaveDeidentificationOverride:
         assert calls[0] is None and isinstance(calls[1], list)
         messages = [record.message for record in window.errors_panel.records()]
         assert any("scan.dcm" in message for message in messages)
+
+
+class TestHeatmapRestoreDefaultsWiring:
+    def test_restore_defaults_returns_every_image_to_its_loaded_levels(
+        self, window: MainWindow
+    ) -> None:
+        pixels = np.arange(100, dtype=np.float64).reshape(10, 10)
+        panels = window.dual_image_view.list_panels()
+        for panel in panels:
+            panel.set_image(pixels)
+        loaded = [panel.get_levels() for panel in panels]
+        for panel in panels:
+            panel.set_levels((10.0, 20.0))
+
+        window.heatmap_panel._reset_defaults_button.click()
+
+        assert [panel.get_levels() for panel in panels] == loaded

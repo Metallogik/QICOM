@@ -27,6 +27,13 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Added
 
+- **Ripristino dei valori predefiniti.** Nella pagina Mappe di calore, "Ripristina predefiniti"
+  riporta la scala colori a quella della metrica, la soglia min/max all'intervallo della mappa
+  mostrata e luminosità/contrasto di ogni immagine ai valori del caricamento (ognuno annullabile
+  come una modifica normale); il tooltip nomina ogni valore predefinito. Un doppio clic sulla
+  barra dei colori riporta la soglia all'intervallo della mappa. Nel passaggio Rimuovi aria,
+  "Ripristina tolleranza predefinita (3)" riporta la tolleranza al valore predefinito ed elimina
+  una soglia esatta inserita a mano.
 - **Nuovo progetto, Salva progetto e Salva progetto con nome nel menu File** dell'analisi
   quantitativa, sempre visibili e con le scorciatoie abituali (Ctrl+N, Ctrl+O, Ctrl+S,
   Ctrl+Maiusc+S). Prima il salvataggio del progetto compariva solo nel passaggio Esporta e per

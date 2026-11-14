@@ -183,6 +183,11 @@ class BackgroundPanel(QWidget):
             button.setFixedSize(42, 42)
         self._tolerance_minus_button.clicked.connect(lambda: self._step_tolerance(-1))
         self._tolerance_plus_button.clicked.connect(lambda: self._step_tolerance(1))
+        # Back to the default tolerance, which the label names, dropping an
+        # exact threshold typed below.
+        self._tolerance_reset_button = QPushButton()
+        self._tolerance_reset_button.setObjectName("toleranceResetButton")
+        self._tolerance_reset_button.clicked.connect(self.reset_tolerance)
 
         # An exact intensity threshold, for the user who already knows the
         # number they want (a CT reader thinking in Hounsfield units, say).
@@ -249,6 +254,7 @@ class BackgroundPanel(QWidget):
         tolerance_stepper_row.addWidget(self._tolerance_spin, 1)
         tolerance_stepper_row.addWidget(self._tolerance_plus_button)
         tolerance_column.addLayout(tolerance_stepper_row)
+        tolerance_column.addWidget(self._tolerance_reset_button)
         tolerance_column.addWidget(self._threshold_label)
         tolerance_column.addWidget(self._threshold_spin)
 
@@ -440,6 +446,14 @@ class BackgroundPanel(QWidget):
         self._refresh_state()
         self.brush_toggled.emit(active)
 
+    def reset_tolerance(self) -> None:
+        """The default tolerance, and no exact threshold."""
+        if self._tolerance_spin.value() != DEFAULT_TOLERANCE_FACTOR:
+            self._tolerance_spin.setValue(DEFAULT_TOLERANCE_FACTOR)  # emits settings_changed
+        elif self._tolerance_override is not None:
+            self._tolerance_override = None
+            self.settings_changed.emit()
+
     def _step_tolerance(self, direction: int) -> None:
         self._tolerance_spin.setValue(
             self._tolerance_spin.value() + direction * self._tolerance_spin.singleStep()
@@ -476,6 +490,7 @@ class BackgroundPanel(QWidget):
             self._tolerance_spin,
             self._tolerance_minus_button,
             self._tolerance_plus_button,
+            self._tolerance_reset_button,
             self._threshold_label,
             self._threshold_spin,
             self._detect_button,
@@ -498,6 +513,7 @@ class BackgroundPanel(QWidget):
             self._tolerance_spin,
             self._tolerance_minus_button,
             self._tolerance_plus_button,
+            self._tolerance_reset_button,
             self._threshold_label,
             self._threshold_spin,
             self._detect_button,
@@ -630,6 +646,10 @@ class BackgroundPanel(QWidget):
         self._detect_button.setText(translator.tr("background.detect"))
         self._detect_button.setToolTip(translator.tr("background.detect_tooltip"))
         self._tolerance_spin.setToolTip(translator.tr("background.tolerance_tooltip"))
+        self._tolerance_reset_button.setText(
+            translator.tr("background.tolerance_reset", value=f"{DEFAULT_TOLERANCE_FACTOR:g}")
+        )
+        self._tolerance_reset_button.setToolTip(translator.tr("background.tolerance_reset_tooltip"))
         self._threshold_label.setText(translator.tr("background.threshold"))
         self._threshold_spin.setToolTip(translator.tr("background.threshold_tooltip"))
         self._eraser_button.setText(translator.tr("background.eraser"))

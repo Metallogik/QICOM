@@ -358,6 +358,7 @@ class MainWindow(QMainWindow):
         self.heatmap_panel.hide_requested.connect(self.dual_image_view.hide_heatmap)
         self.heatmap_panel.threshold_changed.connect(self.dual_image_view.set_heatmap_levels)
         self.heatmap_panel.color_mode_changed.connect(self.dual_image_view.set_heatmap_color_mode)
+        self.heatmap_panel.image_levels_reset_requested.connect(self._reset_image_levels)
         self.heatmap_panel.export_heatmaps_requested.connect(self._on_export_heatmaps_requested)
 
         # The Analyze step's air-exclusion control (see BackgroundPanel):
@@ -2361,6 +2362,13 @@ class MainWindow(QMainWindow):
         # only ever reacts to image_loaded.
         self.dual_image_view.hide_heatmap()
         self._refresh_images_loaded_gating()
+
+    def _reset_image_levels(self) -> None:
+        """Every image's brightness/contrast back to its values at load
+        time - each one an ordinary, undoable window/level change."""
+        for panel in self.dual_image_view.list_panels():
+            if panel.image is not None:
+                panel.reset_levels()
 
     def _on_new_project(self) -> None:
         """File > New Project: start over in this window, without going back

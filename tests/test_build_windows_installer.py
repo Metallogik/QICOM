@@ -156,7 +156,7 @@ def test_the_workflow_builds_smokes_and_publishes_the_installer() -> None:
     assert '7z a -mx=1 "${{ matrix.artifact }}.zip"' in installer["run"]
     archive = by_name["Stage and archive (Windows)"]["run"]
     assert "${{ matrix.artifact }}-portable.zip" in archive
-    assert "LEGGIMI-PRIMA.txt" in archive
+    assert "README-FIRST.txt" in archive
     assert "${{ matrix.artifact }}-portable.*" in upload["with"]["path"].splitlines()
     site = workflow["jobs"]["publish-site"]["steps"]
     collect = next(step for step in site if step.get("name") == "Collect the bundles of this run")

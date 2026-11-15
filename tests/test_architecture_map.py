@@ -113,7 +113,7 @@ class TestTheMapIsUseful:
     def test_it_says_it_is_generated_and_how_to_regenerate_it(self, generated_map: Path) -> None:
         text = generated_map.read_text(encoding="utf-8")
 
-        assert "File generato" in text
+        assert "Generated file" in text
         assert "packaging/generate_architecture_map.py" in text
 
 
@@ -255,8 +255,8 @@ def test_render_keeps_all_three_import_outcomes_distinct(monkeypatch: pytest.Mon
     rendered = generator["render"]()
 
     assert "| `qicom.metrics` | Qt-free |" in rendered
-    assert "| `qicom.io` | **importa Qt** | PySide6.QtCore |" in rendered
+    assert "| `qicom.io` | **imports Qt** | PySide6.QtCore |" in rendered
     assert (
-        "| `qicom.radiomics` | **non importabile in questo ambiente** | "
+        "| `qicom.radiomics` | **not importable in this environment** | "
         "ModuleNotFoundError: x\\|y extra |" in rendered
     )

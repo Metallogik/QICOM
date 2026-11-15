@@ -244,22 +244,22 @@ def _trust_boundaries() -> list[tuple[str, str]]:
 
 def render() -> str:
     lines: list[str] = [
-        "# QICOM — mappa dell'architettura",
+        "# QICOM — architecture map",
         "",
-        "> **File generato. Non modificarlo a mano.**",
-        "> Rigenera con `python packaging/generate_architecture_map.py`.",
-        "> Documento locale escluso da Git. I test verificano il generatore e i confini",
-        "> fra package; rigenera questa copia dopo modifiche al codice.",
+        "> **Generated file. Do not edit it by hand.**",
+        "> Regenerate with `python packaging/generate_architecture_map.py`.",
+        "> Local document excluded from Git. The tests check the generator and the boundaries",
+        "> between packages; regenerate this copy after changing the code.",
         "",
-        "Ogni riga viene dal codice: l'elenco dei moduli dal filesystem, la descrizione",
-        "dalla prima frase del docstring di ciascun modulo, la regola di stratificazione",
-        "da un import reale, i trust boundary da `coverage-floor.json`. Le righe sono",
-        "arrotondate al centinaio: una mappa che cambia a ogni funzione allungata di tre",
-        "righe è una mappa che nessuno rigenera più.",
+        "Every line comes from the code: the module list from the filesystem, the description",
+        "from the first sentence of each module's docstring, the layering rule from a real",
+        "import, the trust boundaries from `coverage-floor.json`. Line counts are rounded",
+        "to the nearest hundred: a map that changes every time a function grows by three",
+        "lines is a map nobody regenerates any more.",
         "",
-        "## Punti di ingresso",
+        "## Entry points",
         "",
-        "| comando | funzione |",
+        "| command | function |",
         "| --- | --- |",
     ]
     for name, target in _entry_points():
@@ -267,22 +267,22 @@ def render() -> str:
 
     lines += [
         "",
-        "## Regola di stratificazione",
+        "## Layering rule",
         "",
-        "Il core non dipende da PySide6: una ricevuta viene costruita in thread worker e",
-        "dalla CLI, senza GUI nel processo. Verificato importando ciascun package con",
-        "tutti i suoi sottomoduli, e ogni altro modulo fuori da `qicom.gui`, in un",
-        "interprete pulito. Un package non importabile non è una verifica superata:",
-        "può mancare un extra, oppure esserci un errore da diagnosticare. Se Qt è stato",
-        "caricato prima di un errore d'importazione, la violazione resta segnalata.",
+        "The core does not depend on PySide6: a receipt is built in worker threads and",
+        "by the CLI, with no GUI in the process. Verified by importing each package with",
+        "all its submodules, and every other module outside `qicom.gui`, in a clean",
+        "interpreter. An unimportable package is not a passed check: an extra may be",
+        "missing, or there may be an error to diagnose. If Qt was loaded before an",
+        "import error, the violation is still reported.",
         "",
-        "| package | esito import | dettaglio |",
+        "| package | import outcome | detail |",
         "| --- | --- | --- |",
     ]
     labels = {
         "qt-free": "Qt-free",
-        "imports-qt": "**importa Qt**",
-        "unimportable": "**non importabile in questo ambiente**",
+        "imports-qt": "**imports Qt**",
+        "unimportable": "**not importable in this environment**",
     }
     for report in _qt_free_report():
         detail = " ".join(report.detail.split()).replace("|", "\\|")
@@ -290,17 +290,17 @@ def render() -> str:
 
     lines += [
         "",
-        "`qicom.gui` è l'unico package che importa Qt, e lo importa già nel suo",
-        "`__init__`: ogni modulo sotto `qicom.gui`, anche se il suo codice non usa Qt",
-        "(per esempio `panel_roles` o i servizi di calcolo ed export), porta Qt nel",
-        "processo quando viene importato.",
+        "`qicom.gui` is the only package that imports Qt, and it already imports it in its",
+        "`__init__`: every module under `qicom.gui`, even if its own code does not use Qt",
+        "(for example `panel_roles` or the calculation and export services), brings Qt into",
+        "the process when it is imported.",
         "",
-        "## Trust boundary",
+        "## Trust boundaries",
         "",
-        "Dove l'input non fidato entra in QICOM. La lista e le motivazioni vengono da",
-        "`coverage-floor.json`, che è già curato e già sotto test.",
+        "Where untrusted input enters QICOM. The list and the reasons come from",
+        "`coverage-floor.json`, which is already curated and already tested.",
         "",
-        "| modulo | perché |",
+        "| module | why |",
         "| --- | --- |",
     ]
     for path, why in _trust_boundaries():
@@ -308,12 +308,12 @@ def render() -> str:
 
     lines += [
         "",
-        "## Formati persistiti",
+        "## Persisted formats",
         "",
-        "Le costanti di versione degli schemi. Cambiarne una richiede migrazione esplicita",
-        "e test di round-trip (vedi `OPERATIONS_SCHEMAS.md`).",
+        "The schema version constants. Changing one requires an explicit migration",
+        "and round-trip tests (see `OPERATIONS_SCHEMAS.md`).",
         "",
-        "| costante | valore | file |",
+        "| constant | value | file |",
         "| --- | ---: | --- |",
     ]
     for name, value, path in _schema_constants():
@@ -321,9 +321,9 @@ def render() -> str:
 
     lines += [
         "",
-        "## Gate di build e release",
+        "## Build and release gates",
         "",
-        "| script | cosa impedisce |",
+        "| script | what it prevents |",
         "| --- | --- |",
     ]
     for path, summary in _gates():
@@ -332,9 +332,9 @@ def render() -> str:
     root_modules = [row for row in _modules(REPO_ROOT / "qicom") if row[0].count("/") == 1]
     lines += [
         "",
-        "## `qicom/` — moduli di primo livello",
+        "## `qicom/` — top-level modules",
         "",
-        "| modulo | righe | cosa fa |",
+        "| module | lines | what it does |",
         "| --- | ---: | --- |",
     ]
     for path, size, summary in root_modules:
@@ -353,7 +353,7 @@ def render() -> str:
             "",
             f"## `qicom/{package.name}/`",
             "",
-            "| modulo | righe | cosa fa |",
+            "| module | lines | what it does |",
             "| --- | ---: | --- |",
         ]
         for path, size, summary in rows:

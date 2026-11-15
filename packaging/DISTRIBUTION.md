@@ -125,7 +125,7 @@ To call a delivered artifact tested, retain its revision, profile, actual runner
 image/architecture, dependency manifest, successful build/smoke logs and archive
 checksum. Compatibility with an additional OS version remains expected until
 that artifact is exercised there. Raising or lowering a support floor requires
-updating this document and [the tester guide](LEGGIMI-TESTER.txt) with that evidence.
+updating this document and [the tester guide](TESTER-GUIDE.txt) with that evidence.
 
 ## What the build already proves
 

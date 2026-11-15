@@ -1,0 +1,212 @@
+QICOM - testing instructions
+============================
+
+The bundle includes Python and the application's libraries: there is no
+need to install Python. Unpack it and launch it, keeping the whole folder.
+A compatible operating system and architecture are still required; on
+Linux, system graphics libraries not included in the bundle may be needed.
+
+The automatic check of the bundles is a smoke test on the build system.
+It is not equivalent to a test on every version of the operating system or
+on physical monitors with different DPI. The details and the limits are
+documented in packaging/DISTRIBUTION.md in the repository, section
+Compatibility boundary.
+
+The build can be "base" (quantitative and qualitative analysis) or "full"
+(adds radiomics). Practical requirements: minimum 8 GB RAM/4 cores;
+recommended 16 GB/6-8 cores; 32 GB for large 3D volumes, many ROIs or
+learned metrics.
+
+The downloaded artifact contains the archive and a file with the .sha256
+suffix. The checksum identifies exactly the build you received and lets IT
+compare it with the authorised one. It does not replace a digital
+signature.
+
+To verify the archive before extracting it:
+
+  Windows PowerShell (replace the name if necessary):
+
+    $expected = (Get-Content .\QICOM-windows-x64.zip.sha256).Split()[0]
+    $computed = (Get-FileHash .\QICOM-windows-x64.zip -Algorithm SHA256).Hash
+    $computed.ToLower() -eq $expected.ToLower()
+
+  macOS:
+
+    shasum -a 256 -c QICOM-macos-arm64.zip.sha256
+
+  Linux:
+
+    sha256sum -c QICOM-linux-x64.tar.gz.sha256
+    sha256sum -c QICOM-linux-x64.deb.sha256     (Debian/Ubuntu package)
+
+The result must be True on Windows or OK on macOS/Linux. After extraction,
+SHA256SUMS also contains the hash of each individual file in the bundle,
+including the three attribution files described below.
+
+Next to the application you will find:
+
+  THIRD_PARTY_LICENSES.txt    licences of the third-party components
+                              included in THIS build, generated from the
+                              environment it was built from
+  THIRD_PARTY_INVENTORY.json  the same list in machine-readable form:
+                              version, origin and licence of every
+                              component
+  qicom-sbom.cdx.json         the same set as a CycloneDX SBOM, for whoever
+                              in your organisation has to inventory the
+                              software
+
+They are meant for IT: they describe exactly what the build you received
+contains, and they are covered by the same SHA256SUMS as the rest of the
+bundle.
+
+IMPORTANT: keep the folder whole. The executable does not work if it is
+moved out of its folder, because the libraries it loads sit next to it.
+
+
+macOS 14 (Apple Silicon / arm64)
+--------------------------------
+This build does NOT work on Intel Macs.
+The intended build system is macOS 14; later versions require checking the
+build you received. Launching on macOS 11-13 is not guaranteed.
+
+1. Unpack the zip (double-click).
+2. Drag QICOM.app wherever you like (for example into Applications).
+3. On first launch macOS blocks the app with a message such as
+   "cannot be opened because it is from an unidentified developer" or
+   "the app is damaged".
+
+   The build is not signed or notarised by Apple. If the checksum matches
+   and your organisation's policy allows the test, try to open it, then go
+   to System Settings > Privacy & Security, scroll to the bottom and press
+   "Open Anyway".
+
+   If instead an antivirus/EDR reports malware or quarantines the app, do
+   not bypass it: write down the product, the detection name and the hash,
+   then contact IT.
+
+
+Windows 10 from 1809 / Windows 11 (x64)
+---------------------------------------
+These are the expected desktop targets. The automatic smoke test runs on
+GitHub's Windows Server runner, not on Windows 10 and 11 separately.
+Windows 7/8/8.1, 32-bit systems and a native Windows ARM bundle are not
+supported.
+
+Recommended: QICOM-windows-x64.zip, which contains the installer
+
+1. Right-click the zip > "Extract All...", then double-click
+   QICOM-Setup.exe.
+2. The classic setup wizard opens: welcome page with the description of
+   QICOM, licence, information about QICOM, destination folder, progress
+   bar with the percentage, and finish.
+   By default QICOM goes into Program Files (C:\Program Files\QICOM) for
+   all users, and Windows asks for administrator permissions. Without those
+   permissions choose "Install for me only" in the first window: QICOM then
+   goes into your own programs folder.
+3. At the end you can launch QICOM right away; afterwards you will find it
+   in the Start menu (and on the desktop, if you left the box ticked).
+4. To uninstall: double-click "Uninstall QICOM" in the installation folder
+   (next to qicom.exe), or Settings > Apps > Installed apps > QICOM >
+   Uninstall. Your projects and preferences are not deleted (they are in
+   %LOCALAPPDATA%\qicom, see below).
+
+Alternatively, QICOM-windows-x64-portable.zip (portable version, no
+installation):
+
+1. Right-click the zip > "Extract All..." into a real folder (for example
+   on the Desktop).
+   DO NOT launch the executable directly from inside the zip: Windows
+   extracts it to a temporary folder and the application does not start.
+2. Open the extracted folder and double-click qicom.exe
+
+In both cases:
+
+- On first launch the blue "Windows protected your PC" screen
+  (SmartScreen) may appear. Press "More info" and then "Run anyway" only
+  if the checksum matches and your organisation's policy explicitly allows
+  the test.
+
+  The SmartScreen "unrecognized app" warning is also due to the lack of a
+  publicly trusted signature. It is not, however, the same thing as a
+  malware detection. If Defender or an EDR shows a threat name or
+  quarantines the file, do not disable it and do not create exclusions:
+  send IT the product, the full detection name, the SHA-256 hash and the
+  time of the event.
+- On Windows 11 with Smart App Control turned on, Windows can block the
+  installer, the application or the uninstaller because they are not
+  digitally signed, and it does not offer "Run anyway". Report it to the
+  test lead instead of turning the protection off.
+
+The first launch is slower than the others (Windows scans the files the
+first time). A splash screen with the logo appears, then the mode
+selection window.
+
+
+Linux (x86-64)
+--------------
+The verified local reference is Ubuntu 24.04 with glibc 2.39. The bundle
+is built on the ubuntu-latest runner: check the actual version stated for
+the build. An archive built on a recent distribution is not guaranteed to
+work on an older one; the system glibc is not included. Linux ARM and
+32-bit bundles are not supported.
+
+On Debian and Ubuntu use the .deb package:
+
+    sudo apt install ./QICOM-linux-x64.deb
+
+apt also installs the system libraries that Qt needs. QICOM appears in the
+applications menu and can also be launched from a terminal with: qicom
+The files are in /opt/qicom; the user's data stays in their home folder.
+To verify the installed files: dpkg --verify qicom
+To uninstall: sudo apt remove qicom
+If apt refuses the package because of the libc6 version, the system is
+older than the one the build was made on: use a more recent system, do not
+force the installation.
+
+On other distributions unpack the .tar.gz archive preserving permissions
+and launch qicom from its folder.
+If Qt libraries are missing or the graphics driver is not compatible,
+write down the error and the distribution version for the test lead.
+
+
+If something does not work
+--------------------------
+When reporting a problem, attach the log file. It is here:
+
+  macOS:    ~/Library/Logs/qicom/qicom.log
+  Windows:  %LOCALAPPDATA%\qicom\Logs\qicom.log
+            (paste it into the File Explorer address bar)
+
+Session data (projects, ROIs, results) is here:
+
+  macOS:    ~/Library/Application Support/qicom
+  Windows:  %LOCALAPPDATA%\qicom
+
+To uninstall: on Windows, if you used the installer, with "Uninstall
+QICOM" in the installation folder or from Settings > Apps; otherwise
+delete the application folder. To clean up everything, also delete the two
+data folders above.
+
+
+Learned metrics: LPIPS and DISTS on first launch
+------------------------------------------------
+If you are testing a build with the learned metrics, on first launch LPIPS
+and DISTS are shown as NOT available. This is not a defect.
+
+The weights of those two models take about 760 MB - more than the rest of
+the application - and are not included in any bundle. QICOM never
+downloads them on its own, and in particular never during an analysis: if
+they are missing, the metric is simply omitted with the reason stated,
+without any network access.
+
+Enabling them takes an explicit step that you decide on: the "Select
+Metrics" window has a button that downloads the weights, first showing how
+much space they take. Every file is verified against a known SHA-256: if it
+does not match, it is refused.
+
+The other five metrics of the same family (MS-SSIM, FSIM, GMSD, VIF,
+HaarPSI) use no weights and work right away.
+
+This download is the only network connection the whole application ever
+opens. Everything else - images, ROIs, results, reports - stays on your
+machine.

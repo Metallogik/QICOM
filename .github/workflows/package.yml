@@ -573,7 +573,7 @@ jobs:
           else
             cp -R "dist/qicom-${QICOM_PACKAGE_PROFILE}/." "staging/${{ matrix.artifact }}/"
           fi
-          cp packaging/LEGGIMI-TESTER.txt "staging/${{ matrix.artifact }}/"
+          cp packaging/TESTER-GUIDE.txt "staging/${{ matrix.artifact }}/"
           # Attribution travels with the bundle it describes, and is covered
           # by the same checksum manifest - an inventory a user cannot verify
           # against the files they received is not evidence of anything.
@@ -597,16 +597,16 @@ jobs:
             "staging/${{ matrix.artifact }}" "${{ matrix.artifact }}.zip"
 
       # The portable version: the bundle folder itself, for whoever cannot or
-      # will not install. LEGGIMI-PRIMA.txt sits at the top of the zip, beside
+      # will not install. README-FIRST.txt sits at the top of the zip, beside
       # the folder: extract first (qicom.exe does not start from inside the
       # zip), or use the installer in QICOM-windows-x64.zip instead.
       - name: Stage and archive (Windows)
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cp packaging/windows/LEGGIMI-PRIMA.txt staging/
+          cp packaging/windows/README-FIRST.txt staging/
           7z a -mx=1 "${{ matrix.artifact }}-portable.zip" \
-            "./staging/${{ matrix.artifact }}" ./staging/LEGGIMI-PRIMA.txt
+            "./staging/${{ matrix.artifact }}" ./staging/README-FIRST.txt
           python packaging/generate_sha256sums.py "${{ matrix.artifact }}-portable.zip" \
             --output "${{ matrix.artifact }}-portable.zip.sha256"
 

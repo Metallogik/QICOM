@@ -18,13 +18,3 @@ Windows may show "Windows protected your PC" (SmartScreen) the first time,
 because the setup is not yet digitally signed: choose "More info" and then
 "Run anyway" only if your organisation allows it.
 
-
-Italiano
---------
-
-Per installare QICOM fai doppio clic su QICOM-Setup.exe e segui la
-procedura guidata. Di default QICOM viene installato in Programmi (puoi
-scegliere un'altra cartella), compare nel menu Start e, se vuoi, sul
-desktop. Per disinstallarlo fai doppio clic su "Uninstall QICOM" nella
-cartella di installazione, oppure usa Impostazioni > App > App installate >
-QICOM > Disinstalla. Progetti e preferenze non vengono cancellati.

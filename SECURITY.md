@@ -1,192 +1,189 @@
-# Sicurezza di QICOM
+# QICOM security
 
-QICOM è uno strumento desktop locale per ricerca e controllo qualità, non un dispositivo medico.
-Il modello di sicurezza considera non fidati i file immagine, gli archivi progetto/valutazione,
-i file di risposte e ogni testo che può finire in un report.
+QICOM is a local desktop tool for research and quality control, not a medical device.
+The security model treats as untrusted the image files, the project/evaluation archives,
+the answer files and any text that can end up in a report.
 
-## Garanzie implementate
+## Implemented guarantees
 
-- Import ZIP fail-closed contro traversal, percorsi assoluti, link simbolici, zip bomb e archivi
-  oltre i limiti configurati. Sono rifiutati anche i membri duplicati o uguali a meno di maiuscole,
-  normalizzazione Unicode e punti o spazi finali, che su NTFS/APFS finirebbero nello stesso file;
-  su Windows anche i nomi di dispositivo (`CON`, `LPT1`…) e i caratteri non ammessi. I limiti sono per tipo di pacchetto (progetto, valutazione,
-  radiomica, coorte, workbook), perché una tabella di coorte e un progetto multi-serie non
-  presentano lo stesso rischio e un tetto condiviso lascia il piccolo di fatto senza budget. Il
-  contatore agisce sui byte **realmente estratti**, non sulle dimensioni dichiarate nell'archivio,
-  ed è preceduto da un controllo dello spazio libero con margine: un rifiuto non lascia file
-  parziali dietro di sé.
-- Validazione strutturale di immagini, manifest e risposte prima del calcolo o dell'aggregazione.
-  Le risposte accettate in aggregazione possono arrivare come JSON QICOM, XLSX o CSV: tutti e tre
-  i formati sono trattati come non fidati, con limite di dimensione del file e di numero di
-  record, e vengono confrontati con il pacchetto di domande prima di entrare nelle statistiche.
-- Anonimizzazione DICOM predefinita negli export portabili, con coerenza degli UID e blocco dei
-  file clinici che non dichiarano esplicitamente assenza di annotazioni identificative nei pixel.
-  I soli Secondary Capture minimali senza attributi identificativi diretti sono accettati anche
-  quando la dichiarazione manca, per supportare immagini JPG convertite in DICOM. Le regole del
-  profilo PS3.15 sono applicate anche a ogni elemento delle sequenze annidate (gruppi funzionali
-  dei multi-frame Enhanced, catene di derivazione, riferimenti allo studio sorgente); ogni UID di
-  istanza, data, ora o nome di persona rimasto viene sostituito, e la copia esportata è verificata
-  contro gli UID e le date dell'originale prima di dichiarare `PatientIdentityRemoved=YES`. I
-  DICOMDIR non vengono anonimizzati: i loro record possono nominare pazienti nei percorsi.
-  Il contenitore Part 10 è ricostruito, non ereditato (PS3.15): il preambolo di 128 byte è
-  azzerato e il gruppo File Meta tiene solo gli elementi richiesti da PS3.10 (classe e istanza
-  SOP, sintassi di trasferimento, identità dell'implementazione); `PrivateInformation`, AE title e
-  indirizzi di origine non sopravvivono. La copia riletta è verificata anche su questo.
-- Un file con suffisso NIfTI è riconosciuto solo se la struttura è coerente: magic di file
-  singolo, dimensioni, datatype con dimensione del voxel nota, offset dei voxel oltre
-  l'extender e payload presente per intero. Tutto ciò che sta tra header e voxel è azzerato, i
-  byte dopo il payload sono eliminati; un file che non supera la verifica è rifiutato come gli
-  altri non verificabili.
-- Consegne in cieco: ogni immagine è de-identificata di nuovo per la consegna, e un override
-  accettato dall'autore quando ha salvato il proprio pacchetto non si trasmette: le immagini
-  rifiutate fermano la consegna prima di scrivere qualunque file, finché l'autore non sceglie
-  esplicitamente, per quella consegna, di includerle. Il pacchetto del valutatore non contiene
-  nulla che permetta di ricostruire la randomizzazione: il seed mescola un segreto derivato da
-  una chiave casuale dell'autore, conservata privata nel suo profilo
-  (`qualitative_blinding_key.json`), e seed, segreto e master seed stanno solo nella mappa;
-  pagine e domande sono numerate nell'ordine di presentazione, e il design pubblico non riporta
-  randomizzazione né ripetizioni nascoste. Le consegne create prima di questa versione
-  contengono seed e master seed: chi le ha ricevute può ricostruire quale pannello era quale e
-  quali pagine erano ripetizioni (vedi `CHANGELOG.md`).
-- Le copie di JPG e PNG nei pacchetti perdono EXIF, XMP, commenti e chunk di testo senza perdita
-  di qualità (stessi dati compressi, stesso nome e formato); il testo impresso nei pixel resta
-  fuori dalla portata di qualunque rimozione di metadati.
-- Scritture atomiche per archivi/JSON e transazioni SQLite per analisi, risultati, ROI e note.
-- Protezione da formula injection negli export Excel e CSV (le celle di testo che iniziano con
-  `=`, `+`, `-` o `@` ricevono un apostrofo iniziale) e nomi foglio validi/univoci.
-- Due soli accessi di rete, entrambi avviati esplicitamente dall'utente e mai da un'analisi: il
-  download dei pesi learned (sotto) e lo scaricamento delle risorse ufficiali IBSI per la
-  "Verifica IBSI" (raw.githubusercontent.com e ibsi.radiomics.hevs.ch), con SHA-256 e dimensione
-  fissati nel manifest e conferma prima del download.
-- Nessun download implicito di pesi learned durante un'analisi; i checkpoint ammessi sono
-  verificati tramite SHA-256 **e** dimensione fissata. Ogni trasferimento è limitato in due modi
-  indipendenti: `Content-Length` quando il server lo dichiara, e un contatore sui byte ricevuti —
-  un server disposto a mandare il file sbagliato è disposto a dichiararne la lunghezza sbagliata.
-  Un sovraccarico, un digest errato o un'interruzione eliminano il temporaneo e lasciano intatta
-  la copia già verificata. L'hash di un checkpoint è ricontrollato a ogni caricamento del modello,
-  non una volta per sessione.
-- Ogni risultato porta nella ricevuta il commit esatto da cui è stato prodotto (`build_revision`)
-  e se quel checkout era modificato (`source_dirty`): una versione nomina una release, non
-  identifica il software che ha calcolato i numeri.
+- Fail-closed ZIP import against traversal, absolute paths, symbolic links, zip bombs and archives
+  beyond the configured limits. Members that are duplicates, or identical up to case, Unicode
+  normalisation and trailing dots or spaces, which on NTFS/APFS would end up as the same file, are
+  also refused; on Windows, so are device names (`CON`, `LPT1`…) and disallowed characters. The limits are per package type (project, evaluation,
+  radiomics, cohort, workbook), because a cohort table and a multi-series project do not carry
+  the same risk, and a shared ceiling would in practice leave the small one with no budget. The
+  counter acts on the bytes **actually extracted**, not on the sizes declared in the archive,
+  and is preceded by a free-space check with a margin: a refusal leaves no partial files
+  behind.
+- Structural validation of images, manifests and answers before computation or aggregation.
+  Answers accepted for aggregation can arrive as QICOM JSON, XLSX or CSV: all three formats are
+  treated as untrusted, with a limit on file size and number of records, and are checked
+  against the question package before they enter the statistics.
+- DICOM anonymisation by default in portable exports, with consistent UIDs, and blocking of
+  clinical files that do not explicitly declare the absence of identifying annotations in the
+  pixels. Only minimal Secondary Captures without direct identifying attributes are accepted
+  when the declaration is missing, to support JPG images converted to DICOM. The rules of the
+  PS3.15 profile are also applied to every item of nested sequences (functional groups of
+  Enhanced multi-frames, derivation chains, references to the source study); every remaining
+  instance UID, date, time or person name is replaced, and the exported copy is checked against
+  the UIDs and dates of the original before declaring `PatientIdentityRemoved=YES`.
+  DICOMDIRs are not anonymised: their records can name patients in their paths.
+  The Part 10 container is rebuilt, not inherited (PS3.15): the 128-byte preamble is zeroed and
+  the File Meta group keeps only the elements required by PS3.10 (SOP class and instance,
+  transfer syntax, implementation identity); `PrivateInformation`, AE titles and source
+  addresses do not survive. The re-read copy is checked for this too.
+- A file with a NIfTI suffix is recognised only if its structure is consistent: single-file
+  magic, dimensions, a datatype with a known voxel size, a voxel offset beyond the extender, and
+  the payload present in full. Everything between header and voxels is zeroed, and bytes after
+  the payload are dropped; a file that fails the check is refused like any other file that
+  cannot be verified.
+- Blinded deliveries: every image is de-identified again for the delivery, and an override that
+  the author accepted when saving their own package does not carry over: refused images stop
+  the delivery before any file is written, until the author explicitly chooses, for that
+  delivery, to include them. The evaluator's package contains nothing that allows the
+  randomisation to be reconstructed: the seed mixes in a secret derived from a random key of the
+  author, kept private in their profile (`qualitative_blinding_key.json`), and seed, secret and
+  master seed live only in the map; pages and questions are numbered in presentation order, and
+  the public design reports neither randomisation nor hidden repeats. Deliveries created before
+  this version contain the seed and the master seed: whoever received them can reconstruct which
+  panel was which and which pages were repeats (see `CHANGELOG.md`).
+- Copies of JPG and PNG images in packages lose EXIF, XMP, comments and text chunks without any
+  loss of quality (same compressed data, same name and format); text burned into the pixels
+  remains beyond the reach of any metadata removal.
+- Atomic writes for archives/JSON and SQLite transactions for analyses, results, ROIs and notes.
+- Protection against formula injection in Excel and CSV exports (text cells starting with `=`,
+  `+`, `-` or `@` get a leading apostrophe) and valid/unique sheet names.
+- Only two network accesses, both started explicitly by the user and never by an analysis: the
+  download of the learned weights (below) and the download of the official IBSI resources for
+  the IBSI verification (raw.githubusercontent.com and ibsi.radiomics.hevs.ch), with SHA-256 and
+  size pinned in the manifest and confirmation before the download.
+- No implicit download of learned weights during an analysis; admitted checkpoints are verified
+  by SHA-256 **and** pinned size. Every transfer is bounded in two independent ways:
+  `Content-Length` when the server declares it, and a counter on the bytes received — a server
+  willing to send the wrong file is willing to declare the wrong length for it. An overrun, a
+  wrong digest or an interruption deletes the temporary file and leaves the already verified copy
+  intact. A checkpoint's hash is re-checked every time the model is loaded, not once per session.
+- Every result carries in its receipt the exact commit it was produced from (`build_revision`)
+  and whether that checkout was modified (`source_dirty`): a version names a release, it does not
+  identify the software that computed the numbers.
 
-## Limiti operativi
+## Operational limits
 
-- Gli ZIP quantitativi conservano i nomi originali dei file. Gli header NIfTI sono ripuliti come
-  nei pacchetti qualitativi (campi di testo, estensioni, nome e data nell'header gzip), ma i nomi
-  dei file e il testo libero dei manifest richiedono una verifica prima della condivisione.
-- `BurnedInAnnotation=NO` è una dichiarazione del produttore DICOM, non una verifica OCR dei
-  pixel. Prima di condividere dati reali resta necessaria la procedura privacy dell'organizzazione.
-- Nei Secondary Capture minimali accettati senza `BurnedInAnnotation`, QICOM annota nel metodo di
-  de-identificazione che il contenuto dei pixel non è stato verificato. L'assenza di tag anagrafici
-  non garantisce che il JPG originario non contenga testo identificativo visibile.
-- Quando un'immagine non si può anonimizzare, per qualunque motivo, l'export non scrive nulla:
-  QICOM raccoglie tutte le immagini interessate e dice all'utente quali sono e perché, e che può
-  comunque procedere senza anonimizzazione per quelle immagini (Annulla resta il pulsante
-  predefinito). Solo questa scelta esplicita le esporta: anonimizzate al meglio ma **non
-  verificate**, con `PatientIdentityRemoved=NO` e un `DeidentificationMethod` che nomina
-  l'override, elencate nel registro errori; un file che QICOM non riesce a leggere o riscrivere
-  esce invariato. La responsabilità della condivisione passa all'utente. I motivi mostrati e
-  registrati nominano gli attributi, mai i valori identificativi.
-- Il report errori (finestra Errori, Aiuto ▸ Segnala un bug) è un file di testo scritto solo su
-  richiesta e mai inviato da QICOM. Contiene i messaggi di errore scelti, i dati di build e la coda
-  del log applicativo; i messaggi possono citare nomi di file, quindi va letto prima dell'invio.
-- I file immagine sono decodificati da librerie native di terze parti. Aggiornare regolarmente le
-  dipendenze, eseguire `pip-audit` e ricostruire gli eseguibili dopo gli aggiornamenti di
-  sicurezza. La CI esegue `pip-audit` sia sull'ambiente di test sia su quello che produce il
-  bundle, e aggiorna l'installer prima di qualunque dipendenza: è pip a scaricare ed eseguire i
-  build backend, quindi fissare le versioni di ciò che installa non serve se l'installer stesso
-  è vulnerabile.
-- Il JPEG lossless e il JPEG-LS dei DICOM sono decodificati da GDCM (`python-gdcm`), che incorpora
-  copie proprie, più vecchie di quelle di Pillow, di libjpeg 6b, CharLS e OpenJPEG 2.3. QICOM gli
-  affida solo le sintassi che Pillow non decodifica: JPEG baseline e JPEG 2000 restano a Pillow
-  (`qicom/io/dicom_io.py`). Il wheel Linux include anche OpenSSL 1.1.1k (build RHEL 8, ramo non
-  più supportato upstream; su macOS è OpenSSL 3.5, su Windows è assente), collegato al nucleo di
-  GDCM e quindi caricato con esso, anche se QICOM usa GDCM solo per decodificare pixel e non apre
-  connessioni. `pip-audit` non vede queste librerie native: un avviso di sicurezza su GDCM o sulle
-  librerie che incorpora va seguito a mano, aggiornando `python-gdcm` e rigenerando i lock.
-- Gli artefatti CI non sono firmati. Una distribuzione pubblica deve aggiungere Authenticode su
-  Windows e firma/notarizzazione Apple su macOS usando credenziali conservate nel sistema CI —
-  vedi [packaging/DISTRIBUTION.md](packaging/DISTRIBUTION.md) per la sequenza esatta e per il
-  motivo per cui la firma va inserita **prima** del calcolo dei checksum.
-- Ogni bundle è accompagnato dall'inventario delle licenze (incluso il runtime PyInstaller e con
-  i testi di licenza/notice riprodotti), da un SBOM CycloneDX e dal manifest delle versioni e
-  origini VCS realmente installate sulla piattaforma di build, tutti coperti dallo stesso
-  `SHA256SUMS`. Il manifest dell'ambiente non è un lock dei wheel con hash; la build fallisce se
-  contiene una distribuzione che l'inventario non descrive.
-- Ogni bundle CI contiene `SHA256SUMS` per i file regolari e viene pubblicato insieme al checksum
-  SHA-256 dell'archivio. Questi valori identificano la build e permettono di confrontarla con
-  quella approvata, ma non autenticano il publisher: finché manca una firma attendibile devono
-  essere ottenuti o confermati tramite un canale aziendale fidato.
-- Utenti valutatore (Esegui valutazione): le valutazioni sospese e concluse di ogni utente sono
-  cifrate con AES-256-GCM, a ogni salvataggio automatico e non solo alla sospensione, con una
-  chiave casuale dell'utente. Quella chiave è conservata cifrata con una chiave derivata dalla
-  password (scrypt, N=2^17, r=8, p=1); la password non è salvata. Ogni file è legato al suo utente
-  e al suo nome: copiato nella cartella di un altro, o scambiato, non si apre. Dentro QICOM un
-  utente vede, riprende e rimuove solo le proprie valutazioni.
-  - Limiti: la cifratura impedisce di leggere o alterare senza che ce ne si accorga, non di
-    cancellare. Chi condivide l'account del sistema operativo può eliminare i file degli altri
-    dalla cartella dati; contro questo servono account del sistema operativo separati.
-  - La password minima è di 5 caratteri, senza requisiti di complessità, per scelta. Chi copia i
-    file su un altro computer può provare password senza il ritardo della finestra di accesso:
-    scrypt rende ogni tentativo costoso, ma una password corta resta indovinabile.
-  - Nessun recupero della password: dimenticarla rende illeggibili le valutazioni sospese di
-    quell'utente (il pacchetto si può rifare da capo).
-  - Restano in chiaro gli ID utente, il report e il file risposte che il valutatore salva per
-    l'autore, e le immagini del pacchetto estratte temporaneamente durante la valutazione. La
-    chiave resta in memoria finché la finestra di valutazione è aperta.
-  - Senza accesso («Continua senza accedere») non si conserva nulla su disco: niente sospensione né
-    ripresa, e chiudere prima di salvare il report perde le risposte, dopo una conferma.
-  - Le bozze in chiaro di versioni precedenti non vengono assegnate a nessuno in automatico: le
-    recupera solo chi, dopo l'accesso, riapre lo stesso pacchetto e conferma che sono sue. Sono poi
-    cifrate nel suo utente e la copia in chiaro viene cancellata; su SSD la cancellazione di un
-    file non garantisce che i blocchi precedenti spariscano dal disco.
-- Codice di accesso (facoltativo, passo Pubblica): la copia da inviare ai valutatori, la consegna
-  in cieco e la sua mappa di decodifica sono cifrate (AES-256-GCM, chiave derivata dal codice con
-  scrypt) e si aprono, si modificano e si aggregano solo con il codice, dentro QICOM e fuori. Le
-  risposte salvate per un pacchetto protetto sono cifrate con lo stesso codice.
-  - Il codice è unico per tutti i valutatori: stabilisce chi può aprire la valutazione, non chi ha
-    risposto, e chi lo conosce può inoltrarlo.
-  - Minimo 10 caratteri; QICOM ne propone uno generato di 16 (circa 79 bit). Chi ha il file può
-    provare codici sul proprio computer senza limiti: un codice breve o prevedibile resta
-    indovinabile.
-  - Nessun recupero: perso il codice, i file protetti non si aprono più (la copia di lavoro
-    dell'autore resta senza codice).
-  - Va comunicato su un canale diverso da quello del file.
-  - Durante la valutazione o l'aggregazione il pacchetto è decifrato in una cartella temporanea,
-    eliminata alla chiusura; un arresto improvviso può lasciarla sul disco.
-- Strumenti di utilità. Leggono le sorgenti e non le modificano mai: ogni risultato è una copia, e
-  un insieme di file compare nella cartella di destinazione tutto insieme o per niente; la
-  cartella deve essere nuova o vuota, reale (non un collegamento) e diversa da quella delle
-  sorgenti. Le scansioni di cartelle non seguono i collegamenti.
-  - Ispezione e confronto dei tag mostrano l'header così com'è, dati del paziente compresi, e
-    l'export CSV della tabella **non è anonimizzato**. Le celle di ogni CSV sono protette dalla
+- Quantitative ZIPs keep the original file names. NIfTI headers are cleaned as in qualitative
+  packages (text fields, extensions, name and date in the gzip header), but file names and the
+  free text of manifests need checking before sharing.
+- `BurnedInAnnotation=NO` is a statement by the DICOM producer, not an OCR check of the pixels.
+  Before sharing real data, the organisation's privacy procedure is still required.
+- In minimal Secondary Captures accepted without `BurnedInAnnotation`, QICOM records in the
+  de-identification method that the pixel content was not verified. The absence of demographic
+  tags does not guarantee that the original JPG contains no visible identifying text.
+- When an image cannot be anonymised, for whatever reason, the export writes nothing: QICOM
+  collects all the affected images and tells the user which ones they are and why, and that they
+  can still proceed without anonymisation for those images (Cancel remains the default button).
+  Only this explicit choice exports them: anonymised as far as possible but **not verified**, with
+  `PatientIdentityRemoved=NO` and a `DeidentificationMethod` that names the override, and listed
+  in the error log; a file that QICOM cannot read or rewrite is written out unchanged.
+  Responsibility for sharing passes to the user. The reasons shown and logged name the
+  attributes, never the identifying values.
+- The error report (Errors window, Help ▸ Report a Bug) is a text file written only on request and
+  never sent by QICOM. It contains the selected error messages, the build data and the tail of the
+  application log; the messages can mention file names, so read it before sending it.
+- Image files are decoded by third-party native libraries. Update the dependencies regularly, run
+  `pip-audit`, and rebuild the executables after security updates. CI runs `pip-audit` on both
+  the test environment and the one that produces the bundle, and upgrades the installer before
+  any dependency: pip is what downloads and runs the build backends, so pinning the versions of
+  what it installs does not help if the installer itself is vulnerable.
+- Lossless JPEG and JPEG-LS in DICOM are decoded by GDCM (`python-gdcm`), which embeds its own
+  copies, older than Pillow's, of libjpeg 6b, CharLS and OpenJPEG 2.3. QICOM hands it only the
+  syntaxes that Pillow does not decode: baseline JPEG and JPEG 2000 stay with Pillow
+  (`qicom/io/dicom_io.py`). The Linux wheel also includes OpenSSL 1.1.1k (RHEL 8 build, a branch no
+  longer supported upstream; on macOS it is OpenSSL 3.5, on Windows it is absent), linked into the
+  GDCM core and therefore loaded with it, even though QICOM uses GDCM only to decode pixels and
+  opens no connections. `pip-audit` does not see these native libraries: a security advisory on
+  GDCM or on the libraries it embeds must be followed by hand, by updating `python-gdcm` and
+  regenerating the locks.
+- CI artifacts are not signed. A public distribution must add Authenticode on Windows and Apple
+  signing/notarisation on macOS, using credentials stored in the CI system — see
+  [packaging/DISTRIBUTION.md](packaging/DISTRIBUTION.md) for the exact sequence and for why
+  signing must happen **before** the checksums are computed.
+- Every bundle comes with the licence inventory (including the PyInstaller runtime, with the
+  licence/notice texts reproduced), a CycloneDX SBOM and the manifest of the versions and VCS
+  origins actually installed on the build platform, all covered by the same `SHA256SUMS`. The
+  environment manifest is not a hashed wheel lock; the build fails if it contains a distribution
+  that the inventory does not describe.
+- Every CI bundle contains `SHA256SUMS` for its regular files and is published together with the
+  SHA-256 checksum of the archive. These values identify the build and allow it to be compared
+  with the approved one, but they do not authenticate the publisher: until a trusted signature is
+  in place, they must be obtained or confirmed through a trusted company channel.
+- Evaluator users (Take Evaluation): each user's paused and finished evaluations are encrypted
+  with AES-256-GCM, at every autosave and not only when pausing, with a random key belonging to
+  the user. That key is stored encrypted with a key derived from the password (scrypt, N=2^17,
+  r=8, p=1); the password is not stored. Every file is bound to its user and to its name: copied
+  into someone else's folder, or swapped, it does not open. Inside QICOM a user sees, resumes and
+  removes only their own evaluations.
+  - Limits: encryption prevents reading or undetected tampering, not deletion. Anyone who shares
+    the operating-system account can delete other users' files from the data folder; separate
+    operating-system accounts are needed against this.
+  - The minimum password length is 5 characters, with no complexity requirements, by design.
+    Anyone who copies the files to another computer can try passwords without the delay of the
+    login window: scrypt makes every attempt expensive, but a short password remains guessable.
+  - No password recovery: forgetting it makes that user's paused evaluations unreadable (the
+    package can be taken again from the start).
+  - What stays in clear text: the user IDs, the report and the answer file that the evaluator
+    saves for the author, and the package images extracted temporarily during the evaluation. The
+    key stays in memory while the evaluation window is open.
+  - Without logging in ("Continue without logging in") nothing is kept on disk: no pausing or
+    resuming, and closing before saving the report loses the answers, after a confirmation.
+  - Clear-text drafts from previous versions are not assigned to anyone automatically: they are
+    recovered only by whoever, after logging in, reopens the same package and confirms they are
+    theirs. They are then encrypted under that user and the clear-text copy is deleted; on SSDs,
+    deleting a file does not guarantee that the previous blocks disappear from the disk.
+- Access code (optional, Save step): the copy to send to evaluators, the blinded delivery and its
+  decoding map are encrypted (AES-256-GCM, key derived from the code with scrypt) and can be
+  opened, edited and aggregated only with the code, inside QICOM and outside it. Answers saved for
+  a protected package are encrypted with the same code.
+  - The code is the same for all evaluators: it determines who can open the evaluation, not who
+    answered, and anyone who knows it can pass it on.
+  - Minimum 10 characters; QICOM suggests a generated one of 16 (about 79 bits). Anyone who has
+    the file can try codes on their own computer without limit: a short or predictable code
+    remains guessable.
+  - No recovery: once the code is lost, the protected files can no longer be opened (the author's
+    working copy remains without a code).
+  - It should be communicated over a different channel from the file.
+  - During evaluation or aggregation the package is decrypted into a temporary folder, deleted on
+    close; a sudden shutdown can leave it on disk.
+- Utility tools. They read the sources and never modify them: every result is a copy, and a set
+  of files appears in the destination folder all at once or not at all; the folder must be new or
+  empty, real (not a link) and different from the sources' folder. Folder scans do not follow
+  links.
+  - Tag inspection and comparison show the header as it is, patient data included, and the CSV
+    export of the table **is not anonymised**. The cells of every CSV are protected against
     formula injection.
-  - L'editor di tag scrive copie in una cartella nuova; i tag che definiscono i pixel e il gruppo
-    0002 non si modificano, quelli che cambiano le misure chiedono conferma. Il registro delle
-    modifiche contiene i nuovi valori e gli hash, mai i valori precedenti. Una copia modificata
-    resta identificabile quanto la sorgente, salvo ciò che l'utente ha cambiato.
-  - L'anonimizzatore applica le stesse regole fail-closed degli export (sopra): un file che non
-    si può verificare ferma tutto prima di scrivere, e solo la scelta esplicita dell'utente lo
-    scrive come non verificato. La copia mantiene l'albero delle cartelle e i nomi dei file
-    dell'originale, in `<cartella>_anonymized`: i nomi **non sono de-identificati**, e una
-    cartella o un file che porta il nome di un paziente lo porta anche nella copia. Lo strumento
-    lo scrive prima di procedere; i nomi vanno controllati prima di condividere la copia. Per
-    le esportazioni i cui nomi identificano il paziente, un'opzione sostituisce cartelle e file
-    con nomi generici (`folder_001`, `image_0001.dcm`, ...) in una cartella `anonymized`, senza
-    tabella di corrispondenza.
-  - La copia organizzata dei DICOM nomina le cartelle per ordine di studio, numero di serie e
-    modalità, mai per paziente, ma i file **non sono anonimizzati**.
-  - La decompressione DICOM riscrive l'header completo in ogni copia, dati del paziente compresi:
-    le copie **non sono anonimizzate**, e la cartella prende il nome del file sorgente. I pixel
-    sono decodificati dagli stessi decoder del loader (Pillow, poi GDCM) e i limiti di sicurezza
-    di GDCM descritti sopra valgono anche qui.
-  - Conversioni, ricampionamenti, degradazioni, risultati aritmetici, maschere e segmentazioni
-    portano solo pixel e geometria: nessun campo dell'header né testo della sorgente. La
-    conversione crea la sua cartella con il nome dell'immagine sorgente (`<nome>_<formato>`).
-- Il database locale e i progetti non sono cifrati a riposo. Usare cifratura del disco e controlli
-  di accesso del sistema operativo quando contengono dati sensibili.
+  - The tag editor writes copies into a new folder; the tags that define the pixels and group
+    0002 cannot be edited, and those that change measurements ask for confirmation. The change
+    log contains the new values and the hashes, never the previous values. An edited copy remains
+    as identifiable as the source, except for what the user changed.
+  - The anonymiser applies the same fail-closed rules as the exports (above): a file that cannot
+    be verified stops everything before anything is written, and only the user's explicit choice
+    writes it as not verified. The copy keeps the folder tree and file names of the original, in
+    `<folder>_anonymized`: the names **are not de-identified**, and a folder or file that carries
+    a patient's name carries it in the copy too. The tool says so before proceeding; the names
+    must be checked before sharing the copy. For exports whose names identify the patient, an
+    option replaces folders and files with generic names (`folder_001`, `image_0001.dcm`, ...) in
+    an `anonymized` folder, without a correspondence table.
+  - The organised copy of DICOM files names the folders by study order, series number and
+    modality, never by patient, but the files **are not anonymised**.
+  - DICOM decompression rewrites the full header into every copy, patient data included: the
+    copies **are not anonymised**, and the folder is named after the source file. The pixels are
+    decoded by the same decoders as the loader (Pillow, then GDCM), and the GDCM security limits
+    described above apply here too.
+  - Conversions, resamplings, degradations, arithmetic results, masks and segmentations carry
+    only pixels and geometry: no header field and no text from the source. The conversion
+    creates its folder named after the source image (`<name>_<format>`).
+- The local database and the projects are not encrypted at rest. Use disk encryption and
+  operating-system access controls when they contain sensitive data.
 
-## Segnalazione
+## Reporting
 
-Non includere immagini cliniche, dati personali, chiavi o credenziali in una segnalazione. Fornire
-una riproduzione minima con dati sintetici e la versione di QICOM e del sistema operativo.
+Do not include clinical images, personal data, keys or credentials in a report. Provide a minimal
+reproduction with synthetic data and the versions of QICOM and of the operating system.

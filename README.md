@@ -37,7 +37,7 @@ Conceived and developed by Fabio Mattiussi in Lugano, Switzerland. Licensed unde
 
 | For | Go to |
 | --- | --- |
-| Launching and using QICOM | [Starting the GUI](#gui), [tester guide](packaging/TESTER-GUIDE.txt) |
+| Installing and using QICOM | [Downloads on qicom.ch](https://qicom.ch/#download), [tester guide](packaging/TESTER-GUIDE.txt), [starting the GUI](#gui) |
 | Understanding the analyses | [Metrics](#implemented-metrics), [qualitative methodology](QUALITATIVE_METHODOLOGY.md), [radiomics methodology](RADIOMICS_METHODOLOGY.md) |
 | Sharing results and knowing the limits | [AI export](#ai-assistant-export), [security and privacy](SECURITY.md), [intended use](#intended-use) |
 | What's new | [Changelog](CHANGELOG.md) |
@@ -777,8 +777,16 @@ Notes:
   their coverage. On Linux the same bundle is also published as a Debian package
   (`QICOM-linux-x64.deb`, built by `packaging/build_deb.py`): `sudo apt install
   ./QICOM-linux-x64.deb` puts it under `/opt/qicom` with a `qicom` command and a menu entry, and
-  installs the Qt system libraries it needs; the `.tar.gz` remains for other distributions. The
-  Windows executable embeds product name, description, author, copyright and version; every
+  installs the Qt system libraries it needs; the `.tar.gz` remains for other distributions. On
+  Windows, `QICOM-windows-x64.zip` contains the setup wizard `QICOM-Setup.exe` (Inno Setup,
+  `packaging/build_windows_installer.py`: Program Files by default or the user's own folder,
+  Start menu entry, uninstaller) and the same bundle without installation is published as
+  `QICOM-windows-x64-portable.zip`. The downloads on [qicom.ch](https://qicom.ch/#download) are
+  the builds of `main`: `full` profile **without** the learned metrics, published under the
+  rolling `latest-build` release together with the `latest.json` that installed copies read to
+  update themselves ([Security and privacy](#security-and-privacy),
+  [updates](packaging/DISTRIBUTION.md#updates-of-an-installed-copy)); tag builds include the
+  learned metrics. The Windows executable embeds product name, description, author, copyright and version; every
   bundle contains `SHA256SUMS` and every archive or package is published with a `.sha256`
   sidecar, useful for verifying and authorising exactly the build received. Checksums do not,
   however, authenticate the publisher. The artefacts remain unsigned: Windows Authenticode

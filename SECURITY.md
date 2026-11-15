@@ -53,10 +53,19 @@ the answer files and any text that can end up in a report.
 - Atomic writes for archives/JSON and SQLite transactions for analyses, results, ROIs and notes.
 - Protection against formula injection in Excel and CSV exports (text cells starting with `=`,
   `+`, `-` or `@` get a leading apostrophe) and valid/unique sheet names.
-- Only two network accesses, both started explicitly by the user and never by an analysis: the
-  download of the learned weights (below) and the download of the official IBSI resources for
-  the IBSI verification (raw.githubusercontent.com and ibsi.radiomics.hevs.ch), with SHA-256 and
-  size pinned in the manifest and confirmation before the download.
+- Three kinds of network access, each started or allowed by the user and never by an analysis:
+  - the download of the metric models (learned weights and the canonical BRISQUE/NIQE models,
+    below);
+  - the download of the official IBSI resources for the IBSI verification
+    (raw.githubusercontent.com and ibsi.radiomics.hevs.ch), with SHA-256 and size pinned in the
+    manifest and confirmation before the download;
+  - the update check of a copy downloaded from qicom.ch (`qicom/updates.py`). It runs at startup
+    only if the user agreed to it when first asked (Help > Check for Updates at Startup changes
+    the choice), or when they choose Help > Check for Updates...; it reads `latest.json` from
+    the GitHub release that qicom.ch links to and sends nothing about the user or their data
+    (GitHub sees the IP address, as for any download). An update is downloaded only if the user
+    accepts it, and is verified against the size and SHA-256 in that manifest before anything is
+    run. Builds from a release tag and runs from source never check.
 - No implicit download of learned weights during an analysis; admitted checkpoints are verified
   by SHA-256 **and** pinned size. Every transfer is bounded in two independent ways:
   `Content-Length` when the server declares it, and a counter on the bytes received — a server
@@ -106,6 +115,9 @@ the answer files and any text that can end up in a report.
   signing/notarisation on macOS, using credentials stored in the CI system — see
   [packaging/DISTRIBUTION.md](packaging/DISTRIBUTION.md) for the exact sequence and for why
   signing must happen **before** the checksums are computed.
+- The update manifest (`latest.json`) proves integrity, not origin, exactly like `SHA256SUMS`:
+  whoever can replace the files of the release can replace the manifest too. Until the setup is
+  signed, Windows Smart App Control blocks an update just as it blocks a first installation.
 - Every bundle comes with the licence inventory (including the PyInstaller runtime, with the
   licence/notice texts reproduced), a CycloneDX SBOM and the manifest of the versions and VCS
   origins actually installed on the build platform, all covered by the same `SHA256SUMS`. The

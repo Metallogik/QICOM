@@ -12,10 +12,12 @@ on physical monitors with different DPI. The details and the limits are
 documented in packaging/DISTRIBUTION.md in the repository, section
 Compatibility boundary.
 
-The build can be "base" (quantitative and qualitative analysis) or "full"
-(adds radiomics). Practical requirements: minimum 8 GB RAM/4 cores;
-recommended 16 GB/6-8 cores; 32 GB for large 3D volumes, many ROIs or
-learned metrics.
+The downloads on qicom.ch are "full" builds (quantitative and qualitative
+analysis plus radiomics) without the learned metrics: see the last section.
+Builds made from a release tag also include the learned metrics, and a
+"base" build (without radiomics) can be made on request. Practical
+requirements: minimum 8 GB RAM/4 cores; recommended 16 GB/6-8 cores; 32 GB
+for large 3D volumes, many ROIs or learned metrics.
 
 The downloaded artifact contains the archive and a file with the .sha256
 suffix. The checksum identifies exactly the build you received and lets IT
@@ -169,6 +171,33 @@ If Qt libraries are missing or the graphics driver is not compatible,
 write down the error and the distribution version for the test lead.
 
 
+Updates
+-------
+On first launch a copy downloaded from qicom.ch asks whether it may check
+for a newer version every time it starts. The check reads a small file from
+github.com, where qicom.ch publishes its downloads, and sends nothing about
+you or your data. You can change the answer at any time with Help > Check
+for Updates at Startup, and check on demand with Help > Check for
+Updates...
+
+Nothing is downloaded or installed without asking you. If you accept an
+update, QICOM downloads it, verifies its size and SHA-256, asks you to save
+any unsaved changes, closes and installs it:
+
+  Windows (installed with QICOM-Setup.exe): the new setup runs silently in
+      the same folder, for the same users, and QICOM starts again. Windows
+      may ask for permission to make changes.
+  Linux (.deb): the new package is installed after you enter the
+      administrator password, then QICOM starts again.
+  Linux (.tar.gz): the folder is replaced with the new version and QICOM
+      starts again.
+  macOS and the portable Windows folder: QICOM opens the download page
+      instead.
+
+The update is unsigned like the first download: on Windows 11 with Smart
+App Control turned on, it is blocked just as the installer is.
+
+
 If something does not work
 --------------------------
 When reporting a problem, attach the log file. It is here:
@@ -176,37 +205,53 @@ When reporting a problem, attach the log file. It is here:
   macOS:    ~/Library/Logs/qicom/qicom.log
   Windows:  %LOCALAPPDATA%\qicom\Logs\qicom.log
             (paste it into the File Explorer address bar)
+  Linux:    ~/.local/state/qicom/log/qicom.log
+
+Help > Report a Bug... saves the selected errors, the build data and the
+end of the log into a text file to attach. QICOM never sends it by
+itself; read it before sending it, because it can contain file names.
 
 Session data (projects, ROIs, results) is here:
 
   macOS:    ~/Library/Application Support/qicom
   Windows:  %LOCALAPPDATA%\qicom
+  Linux:    ~/.local/share/qicom (preferences in ~/.config/qicom)
 
 To uninstall: on Windows, if you used the installer, with "Uninstall
-QICOM" in the installation folder or from Settings > Apps; otherwise
-delete the application folder. To clean up everything, also delete the two
-data folders above.
+QICOM" in the installation folder or from Settings > Apps; on Debian and
+Ubuntu with sudo apt remove qicom; otherwise delete the application
+folder. To clean up everything, also delete the data folders above (on
+Windows the log is already inside %LOCALAPPDATA%\qicom).
 
 
-Learned metrics: LPIPS and DISTS on first launch
-------------------------------------------------
-If you are testing a build with the learned metrics, on first launch LPIPS
-and DISTS are shown as NOT available. This is not a defect.
+Metrics shown as not available
+------------------------------
+Some metrics can be listed as NOT available. This is not a defect.
 
-The weights of those two models take about 760 MB - more than the rest of
-the application - and are not included in any bundle. QICOM never
-downloads them on its own, and in particular never during an analysis: if
-they are missing, the metric is simply omitted with the reason stated,
-without any network access.
+The downloads on qicom.ch do not include the learned-metric libraries
+(torch, piq, lpips), which would make them about ten times larger. In those
+builds MS-SSIM, FSIM, GMSD, VIF, HaarPSI, LPIPS, DISTS and canonical BRISQUE
+are omitted, with the missing library stated as the reason. Every other
+metric works.
 
-Enabling them takes an explicit step that you decide on: the "Select
-Metrics" window has a button that downloads the weights, first showing how
-much space they take. Every file is verified against a known SHA-256: if it
-does not match, it is refused.
+Some metrics also need model files that are not included in any bundle:
+canonical NIQE (about 8 KB, from LIVE) and, in builds with the learned
+metrics, LPIPS and DISTS (about 760 MB together - more than the rest of the
+application) and canonical BRISQUE. QICOM never downloads them on its own,
+and in particular never during an analysis: if they are missing, the metric
+is simply omitted with the reason stated, without any network access.
 
-The other five metrics of the same family (MS-SSIM, FSIM, GMSD, VIF,
-HaarPSI) use no weights and work right away.
+Enabling them takes an explicit step that you decide on: when a selected
+metric needs a missing model, the list of metrics (Analyze step, or
+Settings > Default metrics) shows a "Download missing models" button,
+which first states how much will be downloaded. Every file is verified
+against a known size and SHA-256: if it does not match, it is refused.
 
-This download is the only network connection the whole application ever
-opens. Everything else - images, ROIs, results, reports - stays on your
-machine.
+
+Network connections
+-------------------
+QICOM opens a network connection only for the model download above, for
+the official IBSI resources of the IBSI verification (after you agree), and
+for the update check, if you allowed it or ask for it (see Updates). No
+analysis ever opens one. Everything else - images, ROIs, results, reports -
+stays on your machine.

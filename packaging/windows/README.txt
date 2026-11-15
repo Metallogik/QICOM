@@ -8,6 +8,11 @@ remove it later, double-click "Uninstall QICOM" in the installation folder,
 or use Settings > Apps > Installed apps > QICOM > Uninstall. Your projects
 and preferences are kept.
 
+Once installed, QICOM can also update itself: on first launch it asks
+whether it may check for a newer version at startup, and Help > Check for
+Updates... checks on demand. Nothing is downloaded or installed without
+asking you.
+
 QICOM compares medical images and measures how their quality differs:
 objective quality metrics on whole images and regions of interest, heatmaps
 of the differences, blinded reader evaluations, radiomics and DICOM utility

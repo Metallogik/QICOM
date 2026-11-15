@@ -436,7 +436,12 @@ empty between that version and yours, re-run the analysis before comparing.
   documentation. The files that travel in the bundles are renamed accordingly:
   `packaging/LEGGIMI-TESTER.txt` → `packaging/TESTER-GUIDE.txt` and
   `packaging/windows/LEGGIMI-PRIMA.txt` → `packaging/windows/README-FIRST.txt` (at the top of
-  `QICOM-windows-x64-portable.zip`). The interface languages are unchanged.
+  `QICOM-windows-x64-portable.zip`). The interface languages are unchanged. The same pass
+  corrected what the documents said about the current version: `SECURITY.md` and the tester
+  guide counted two network accesses (or one) and now list the update check as well; the tester
+  guide and the Windows readme describe updates, the downloads on qicom.ch (without the learned
+  metrics) and the Linux log and data folders; the README describes the Windows installer and
+  the portable zip.
 - Mouse on images, in all workflows and in the utility tools: dragging with the left button
   adjusts window and level (horizontally the contrast, to the right the window widens;
   vertically the brightness, downwards the image gets darker) instead of moving the image;

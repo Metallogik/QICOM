@@ -19,7 +19,7 @@
     },
     "qicom/metrics/learned_weights.py": {
       "branch_target": 90.0,
-      "why": "the only network access in the application, gated on consent and a pinned SHA-256"
+      "why": "a network access (the metric models), gated on consent and a pinned SHA-256"
     },
     "qicom/session/recent_projects.py": {
       "branch_target": 100.0,
@@ -47,7 +47,7 @@
     },
     "qicom/radiomics/ibsi_validation.py": {
       "branch_target": 55.0,
-      "why": "the second network access: official IBSI resources downloaded on request, verified by SHA-256 and size, then parsed (a workbook and NIfTI images from the network). Target set at the measured level and raised as tests land"
+      "why": "a network access: official IBSI resources downloaded on request, verified by SHA-256 and size, then parsed (a workbook and NIfTI images from the network). Target set at the measured level and raised as tests land"
     },
     "qicom/io/bitmap_anonymize.py": {
       "branch_target": 95.0,

@@ -27,312 +27,305 @@ empty between that version and yours, re-run the analysis before comparing.
 
 ### Added
 
-- **Aggiornamenti dall'app, con consenso.** Al primo avvio una copia installata da qicom.ch chiede
-  se può controllare all'avvio la presenza di una versione più recente; la scelta si cambia da
-  Aiuto > "Controlla aggiornamenti all'avvio", e Aiuto > "Controlla aggiornamenti..." controlla
-  quando lo si chiede. Il controllo legge `latest.json`, che la CI pubblica nella release
-  `latest-build` dopo tutti i file che descrive (commit, data del commit, dimensione e SHA-256 di
-  ogni file): una build è più recente se viene da un commit successivo, perché tutte le build di
-  main hanno la stessa versione. Se l'utente accetta, l'aggiornamento viene scaricato con una barra
-  di avanzamento, verificato e installato dopo la chiusura delle finestre (con la solita richiesta
-  di salvare le modifiche): su Windows il setup gira in silenzio sulla stessa cartella e per gli
-  stessi utenti e riapre QICOM (`/RELAUNCH=yes`), su Linux il `.deb` si installa con `pkexec
-  apt-get` e il `.tar.gz` scambia la cartella con quella nuova. Su macOS e dalla cartella portable
-  si apre la pagina di download. Le release con tag e le esecuzioni da sorgente non controllano mai.
-  La dichiarazione sulla privacy (finestra Informazioni, README) elenca la nuova connessione, e il
-  download verificato dei pesi learned e degli aggiornamenti è ora un solo modulo
+- **Updates from inside the app, with consent.** On first launch, a copy installed from qicom.ch
+  asks whether it may check at startup for a newer version; the choice can be changed from
+  Help > "Check for Updates at Startup", and Help > "Check for Updates..." checks on demand. The
+  check reads `latest.json`, which CI publishes in the `latest-build` release after all the files
+  it describes (commit, commit date, size and SHA-256 of every file): a build is newer if it comes
+  from a later commit, because all main builds have the same version. If the user accepts, the
+  update is downloaded with a progress bar, verified and installed after the windows close (with
+  the usual prompt to save changes): on Windows the setup runs silently on the same folder and
+  for the same users and reopens QICOM (`/RELAUNCH=yes`), on Linux the `.deb` is installed with
+  `pkexec apt-get` and the `.tar.gz` swaps its folder for the new one. On macOS and from the
+  portable folder the download page opens. Tagged releases and runs from source never check.
+  The privacy statement (About window, README) lists the new connection, and the verified
+  download of the learned weights and of updates is now a single module
   (`qicom/verified_download.py`).
-- **"Carica immagini" spiega cosa chiede.** La finestra di apertura dice in una riga come si può
-  caricare, e i tre pulsanti hanno nomi espliciti ("Carica una cartella intera...", "Carica un solo
-  file...", "Carica più file insieme...") con un tooltip ciascuno: cosa accettano e in che ordine
-  diventano slice (DICOM per posizione, le altre immagini per nome). Anche la scelta del pannello
-  di destinazione e il pulsante "Carica immagini..." del passaggio Importa hanno un tooltip.
-- **Ripristino dei valori predefiniti.** Nella pagina Mappe di calore, "Ripristina predefiniti"
-  riporta la scala colori a quella della metrica, la soglia min/max all'intervallo della mappa
-  mostrata e luminosità/contrasto di ogni immagine ai valori del caricamento (ognuno annullabile
-  come una modifica normale); il tooltip nomina ogni valore predefinito. Un doppio clic sulla
-  barra dei colori riporta la soglia all'intervallo della mappa. Nel passaggio Rimuovi aria,
-  "Ripristina tolleranza predefinita (3)" riporta la tolleranza al valore predefinito ed elimina
-  una soglia esatta inserita a mano.
-- **Nuovo progetto, Salva progetto e Salva progetto con nome nel menu File** dell'analisi
-  quantitativa, sempre visibili e con le scorciatoie abituali (Ctrl+N, Ctrl+O, Ctrl+S,
-  Ctrl+Maiusc+S). Prima il salvataggio del progetto compariva solo nel passaggio Esporta e per
-  ricominciare c'era "Reimposta tutto", che sostituiscono. "Nuovo progetto" resta nella finestra:
-  propone di salvare le modifiche non salvate, chiede conferma se c'è lavoro già salvato aperto e
-  non chiede nulla a finestra vuota. Il titolo della finestra mostra il progetto aperto (o "Nuovo
-  progetto (non salvato)") e un asterisco quando ci sono modifiche non salvate.
-- **Installer Windows con la classica procedura guidata.** `QICOM-windows-x64.zip`, lo stesso
-  file a cui punta il sito, contiene ora `QICOM-Setup.exe` (Inno Setup 6,
-  `packaging/build_windows_installer.py` e `packaging/windows/qicom.iss`) e un README: estratto lo
-  zip, l'installer apre la procedura guidata in inglese, con il logo e l'icona di QICOM. Pagine:
-  benvenuto con la descrizione di QICOM, licenza Apache 2.0, "About QICOM" (cosa fa e a cosa
-  serve), cartella di destinazione (Program Files di default, con "Install for me only" per chi
-  non ha i permessi di amministratore), riepilogo, barra di avanzamento con percentuale e fine
-  con "Launch QICOM". Crea la voce nel menu Start e, a scelta, il collegamento sul desktop, e si
-  disinstalla con "Uninstall QICOM" nella cartella di installazione, accanto a `qicom.exe`, oppure
-  da Impostazioni > App. Lo stesso bundle entra byte per byte, e un aggiornamento
-  sostituisce `_internal` per intero. La CI lo installa in silenzio per tutti gli utenti, avvia
-  lo smoke test dalla cartella installata, ne verifica l'identità di build e lo disinstalla
-  controllando che non resti nulla. La versione senza installazione diventa
-  `QICOM-windows-x64-portable.zip`, con in cima `LEGGIMI-PRIMA.txt`.
-- **Pacchetto Debian/Ubuntu** (`QICOM-linux-x64.deb`, con sidecar `.sha256`), prodotto dalla
-  build Linux accanto al `.tar.gz` da `packaging/build_deb.py`: lo stesso bundle, byte per byte,
-  in `/opt/qicom`, il comando `qicom`, la voce di menu e l'icona. Dichiara le librerie Qt di
-  sistema (la stessa lista che la CI installa, verificata da un test), così `apt install` le
-  porta con sé, e `libc6 (>= glibc del runner di build)`, così un sistema troppo vecchio rifiuta
-  il pacchetto invece di installare un'applicazione che non parte. `DEBIAN/md5sums` permette
-  `dpkg --verify qicom`. La CI lo installa con apt, lo avvia dal comando installato con lo smoke
-  test, ne verifica l'identità di build e lo rimuove controllando che non resti nulla.
-- **Citazione dell'articolo QICOM** (arXiv:2610.31218, doi:10.48550/arXiv.2610.31218): badge e
-  frase di citazione in apertura, a metà e in fondo al README, con la voce BibTeX nella nuova
-  sezione *Citing the QICOM article*; `CITATION.cff` riporta l'articolo come `preferred-citation`,
-  così il pulsante *Cite this repository* di GitHub propone l'articolo. La citazione del software
-  (versione) resta invariata accanto a quella dell'articolo.
-- **Strumenti di utilità**, quarta sezione del launcher accanto ai tre flussi e sottomenu del menu
-  Strumenti di ogni finestra di lavoro: un catalogo di strumenti autonomi in una finestra dedicata
-  (catalogo a sinistra, strumento a destra), che torna al launcher alla chiusura. Gli strumenti
-  leggono le sorgenti e non le modificano mai; ogni insieme di file in uscita compare completo o
-  non compare (cartella di staging rinominata alla fine), in una cartella nuova o vuota. Il NIfTI
-  scritto da uno strumento è posizionato dalla geometria della sorgente
-  (`qicom/io/geometry.py`: per il DICOM l'ordine colonna, riga, slice di dcm2niix e SimpleITK,
-  verificato contro SimpleITK anche con orientamento obliquo) e non copia alcun campo dell'header.
-  Ogni elaborazione e ogni salvataggio apre una finestra con la percentuale di avanzamento; nei
-  canvas la rotella scorre le slice e Ctrl+rotella ingrandisce, come nei flussi, e un clic
-  sull'area vuota (o un file trascinato) carica l'immagine; in ogni strumento un solo tipo di
-  pulsante è colorato alla volta, il passo da fare, come nella rimozione dell'aria.
-  - **Segmentazione semi-automatica**: si costruisce una mappa di etichette un passo alla volta,
-    in sei pagine a schede (Immagine, Etichetta, Campione, Selezione, Applica, Salva) con
-    Indietro/Avanti e il ciclo «Segmenta un'altra regione». Si sceglie un'etichetta (preset aria, polmone, grasso, tessuti molli, mezzo di contrasto,
-    tessuto osseo, metallo, lettino, o con un nome libero), si disegna una ROI (rettangolo,
-    ellisse, mano libera, scelti nella colonna di destra), se ne campiona l'intervallo di intensità (percentili o media ± k·DS,
-    regolabile sull'istogramma; per la CT anche un intervallo HU indicativo del preset, non una
-    soglia clinica), si sceglie dove può arrivare la selezione (questa slice o il volume, ovunque
-    o solo collegato alla ROI), con rifiniture facoltative (mediana, buchi, regioni piccole,
-    apertura e chiusura, sempre nel piano della slice), si guarda l'anteprima e si decide:
-    «Togli dall'immagine», «Mantieni solo questo», «Assegna» o «Cancella dall'etichetta». Un
-    pixel appartiene a un'etichetta al massimo; un passo prende solo i pixel non assegnati,
-    salvo sovrascrittura esplicita. Annulla/Ripeti senza limite di passi entro 256 MiB di
-    cronologia. La tabella delle etichette mostra visibilità, colore e volume (mL con geometria
-    nota); la vista mostra i colori sopra l'immagine o solo le parti spuntate. Salvataggio e
-    riapertura come mappa NIfTI con tabella JSON delle etichette (nuovo formato versione 1,
-    `OPERATIONS_SCHEMAS.md`), importabile dalla radiomica; export dell'immagine con solo le parti
-    spuntate (NIfTI, o PNG per le immagini 2D).
-  - **Operazioni e confronto tra maschere**: unione, intersezione, differenza, XOR di due mappe
-    di etichette (anche per singolo valore), riempimento delle slice vuote tra quelle disegnate
-    (interpolazione di mappe di distanza), confronto con Dice, Jaccard, volumi, Hausdorff, HD95
-    e distanza media delle superfici in mm; export CSV.
-  - **Converti immagini**: DICOM, NIfTI o pile di bitmap in NIfTI (tipo intero più piccolo senza
-    perdita, altrimenti float32), slice PNG a 8 o 16 bit nella finestra a schermo o slice TIFF
-    float con i valori reali. Il risultato va in una cartella nuova creata dentro quella scelta e
-    chiamata come l'immagine e il formato (`<nome>_nifti`, `<nome>_png16`, numerata se esiste
-    già), mai sparso tra i file già presenti.
-  - **Ricampiona**: a una spaziatura scelta (anche isotropa) o sulla griglia di un'immagine di
-    riferimento per coordinate paziente, senza registrazione; interpolazione lineare, al vicino
-    più prossimo o cubica. Il ricampionamento sulla griglia coincide con quello di SimpleITK.
-    Lineare e vicino più prossimo si calcolano per blocchi di slice, che danno l'avanzamento.
-  - **Aritmetica tra immagini**: differenza, differenza assoluta, somma, media, rapporto (i
-    denominatori nulli sono contati e portati al valore scelto), con avviso se le spaziature
-    differiscono.
-  - **Degradazione controllata**: rumore gaussiano o di Poisson, sfocatura, perdita di
-    risoluzione, compressione JPEG, da un unico seed, per verificare come reagisce una metrica. Un
-    effetto alla volta: tasti degli effetti in alto, intensità, Applica, elenco degli effetti
-    applicati (ognuno rimovibile) e salvataggio; ogni modifica ricalcola la catena dall'originale.
-    La provenance (nuovo formato versione 1) basta a riprodurre il risultato bit per bit.
-  - **Ispeziona e modifica tag DICOM**: tutti i tag di un file o di un file di una serie, con
-    meta-informazioni, sequenze annidate e tag privati, ricerca, filtro dei tag privati, copia ed
-    export CSV di ciò che è mostrato, non anonimizzato (vedi `SECURITY.md`). Header malformati:
-    un elemento non decodificabile diventa una riga marcata, sequenze troppo profonde o troppo
-    grandi si troncano dichiarandolo. Dal menu Strumenti del quantitativo e della radiomica,
-    «Ispeziona i tag DICOM dell'immagine corrente»; non dal qualitativo, per non dare l'header di
-    un'immagine valutata in cieco. Nello stesso albero, la colonna «Nuovo valore» modifica,
-    aggiunge o elimina elementi di primo livello di un file o di tutta la serie e scrive copie in
-    una cartella nuova; i tag che definiscono i pixel e il
-    gruppo 0002 sono bloccati, quelli che cambiano le misure (spaziatura, rescale, geometria
-    delle slice) chiedono conferma; UID nuovi coerenti per istanza, serie o studio
-    (SOPInstanceUID segue sempre questa scelta e la file meta resta allineata); i testi a valore
-    singolo (LT, ST, UT, UR) conservano le barre rovesciate; registro delle modifiche con hash,
-    mai i valori precedenti (nuovo formato versione 1).
-  - **Confronta header DICOM** (sola lettura): due header elemento per elemento con esito
-    diverso / solo da un lato / identico; si apre con entrambi gli header interi, e «Solo
-    differenze» e «Nascondi UID» restringono la vista.
-  - **Controlla e organizza cartelle DICOM**: raggruppa per studio e serie e segnala istanze
-    mancanti o ripetute, dimensioni miste, spaziatura o orientamento irregolari, slice senza
-    posizione; report CSV e copia ordinata con nomi che non identificano il paziente.
-  - **Decomprimi DICOM**: un file DICOM compresso (JPEG lossless, JPEG-LS, JPEG 2000, RLE,
-    JPEG baseline) riscritto in Explicit VR Little Endian, un file per frame, in una cartella
-    nuova con il nome del file dentro quella scelta (il dialogo parte dalla cartella della
-    sorgente), tutta insieme o per niente (`qicom/io/dicom_decompress.py`). I pixel sono
-    decodificati dagli stessi decoder e nello stesso ordine del loader, quindi le copie
-    contengono esattamente ciò che QICOM mostra. Un file a frame singolo mantiene tutti gli UID (cambia solo la
-    codifica); un multi-frame diventa un'istanza per frame, con SOP Instance UID nuovi, un unico
-    Series Instance UID nuovo e il numero del frame come Instance Number, mentre studio e frame
-    of reference restano. Un oggetto Enhanced resta Enhanced: ogni copia porta il proprio item
-    per frame e i functional group condivisi; i vettori indicati da Frame Increment Pointer sono
-    ridotti al frame. Una sorgente JPEG baseline o extended senza Lossy Image Compression riceve
-    «01», perché la decompressione non annulla la perdita.
-  - **Anonimizza immagini**: DICOM, NIfTI e bitmap con le regole fail-closed degli export. I file
-    scelti (o una cartella con le sottocartelle) si vedono prima come albero, con l'esito previsto
-    per ciascuno; la copia va in `<cartella>_anonymized` accanto all'originale (o in un'altra
-    posizione scelta), con le stesse sottocartelle e gli stessi nomi di file. I nomi non sono
-    de-identificati e lo strumento lo dice; in alternativa un'opzione li sostituisce con nomi
-    generici (`folder_001`, `image_0001.dcm`, ...) in una cartella `anonymized`, senza tabella di
-    corrispondenza, e l'albero mostra il nome che ogni elemento avrà nella copia. I file che non
-    sono immagini restano fuori. I file
-    non verificabili sono elencati prima di scrivere e scritti solo su scelta esplicita, come
-    non verificati.
-- Le primitive di segmentazione (Otsu, riempimento dei buchi, componente maggiore, dilatazione,
-  erosione, bounding box) sono passate da `qicom/radiomics/segmentation.py` al nuovo package
-  senza Qt né SimpleITK `qicom/segmentation/`, condiviso da radiomica e strumenti; la radiomica le
-  importa da lì con gli stessi nomi e lo stesso comportamento. Nuovi package senza Qt anche
-  `qicom/processing/`; entrambi verificati dalla mappa dell'architettura.
-- Codice di accesso per le valutazioni da inviare. Nel passo **Pubblica** l'autore può inserire o
-  generare un codice (almeno 10 caratteri) e salvare una **copia protetta per i valutatori**; con
-  il codice inserito anche la **consegna in cieco** e la sua mappa di decodifica sono protette. La
-  copia di lavoro dell'autore resta senza codice; un pacchetto protetto aperto in modifica si
-  salva di nuovo protetto. Chi esegue, modifica o aggrega una valutazione protetta deve inserire il
-  codice, chiesto subito dopo la scelta del file; un valutatore con utente non lo reinserisce
-  quando riprende, perché la chiave è conservata nella sua bozza cifrata. Le risposte di un
-  pacchetto protetto si salvano cifrate con lo stesso codice (al posto del report Excel), e
-  l'aggregazione le apre solo con il codice, chiesto una volta. L'aggregazione da riga di comando
-  legge il codice da un file (`access_code_file`). Pacchetto, risposte e mappa sono cifrati con
-  AES-256-GCM e chiave derivata con scrypt; il pacchetto a blocchi da 1 MiB, così che pacchetti
-  grandi non stiano in memoria e uno troncato venga rifiutato. Nuovo formato "file protetti da
-  codice" versione 1 (`OPERATIONS_SCHEMAS.md`); limiti in `SECURITY.md`
-  (`qicom/session/protected_files.py`, `qicom/session/key_derivation.py`,
-  `qicom/gui/widgets/access_code_dialog.py`).
-- Utenti valutatore e valutazioni sospese, cifrate. **Esegui valutazione** chiede ora di accedere
-  con ID e password (minimo 5 caratteri, nessun requisito di complessità) o di creare un utente;
-  in alternativa si può continuare senza accedere, ma allora nulla viene conservato e la
-  valutazione non si può sospendere (chiudere prima di salvare il report chiede conferma, perché
-  le risposte andrebbero perse). Dopo l'accesso **Le mie valutazioni** elenca solo le valutazioni
-  di quell'utente, divise in **In sospeso** (Riprendi, sulla pagina lasciata) e **Concluse**
-  (Riapri, per salvare di nuovo il report), con Rimuovi dopo conferma — elimina le risposte, mai il
-  pacchetto .zip né i report — e Apri un'altra valutazione. Durante la valutazione **Sospendi e
-  riprendi più tardi** chiude e torna alla schermata iniziale; la barra di stato mostra l'utente.
-  Cambio password ed eliminazione dell'utente (con tutte le sue valutazioni) dal menu Utente e
-  dalla finestra di accesso. Le risposte sono cifrate (AES-256-GCM) a ogni salvataggio automatico
-  con la chiave dell'utente, protetta dalla password tramite scrypt; la password non è salvata e
-  non si può recuperare. Le bozze in chiaro delle versioni precedenti si recuperano riaprendo il
-  pacchetto e confermando che sono proprie; vengono allora cifrate e la copia in chiaro eliminata.
-  Formati nuovi: account, involucro cifrato e bozze, tutti versione 1 (vedi
-  `OPERATIONS_SCHEMAS.md`); limiti in `SECURITY.md`. Nuova dipendenza `cryptography` (Apache-2.0 o
-  BSD-3-Clause, con `cffi` e `pycparser`), nei lock di tutte le piattaforme
-  (`qicom/session/evaluator_accounts.py`, `encrypted_files.py`, `evaluator_drafts.py`;
-  `qicom/gui/widgets/evaluator_login_dialog.py`, `my_evaluations_dialog.py`).
-- Interfaccia in spagnolo (`es`), portoghese brasiliano (`pt`), cinese semplificato (`zh-Hans`)
-  e giapponese (`ja`), selezionabili come le altre lingue dal launcher, dal menu Lingua e dalle
-  impostazioni. Coprono tutte le chiavi, comprese le schede delle metriche, con placeholder
-  verificati contro l'inglese. Sono una prima traduzione non ancora rivista da madrelingua: i
-  testi su uso previsto, desidentificazione e limiti delle metriche vanno rivisti prima di una
-  release. Per cinese e giapponese il tema aggiunge i font CJK della lingua scelta, così i kanji
-  giapponesi non vengono disegnati con le forme cinesi (e viceversa).
-- Golden esteso (`tests/performance/golden_outputs_extended.json`): fissa i valori di tutte le
-  metriche oltre le 8 del golden originale, che resta invariato. Le metriche classiche 2D e 3D e le
-  ROI sono confrontate con la tolleranza originale; le sezioni PIQ, learned e NR canoniche, in
-  float32, a rel 1e-5, e si saltano dichiarando il motivo quando mancano backend o pesi.
-- BRISQUE e NIQE canonici (`brisque_canonical`, `niqe_canonical`): il punteggio BRISQUE di PIQ
-  0.8.0 con il suo SVM pre-addestrato e la distanza NIQE dal modello MVG LIVE originale, accanto
-  alle distanze NSS esistenti `brisque`/`niqe`, che restano invariate. I modelli si scaricano solo
-  su richiesta esplicita e sono verificati per SHA-256. Il profilo `complete` è passato alla 1.1
-  per includerli (vedi la sezione sui risultati numerici).
-- Profili di risorsa (`qicom.runtime`: ridotto, standard, workstation) scelti da RAM e CPU
-  disponibili: regolano cache, modelli tenuti in memoria e coppie in parallelo, mai i valori.
-- Controllo della memoria prima di allocare un'immagine (`qicom.io.memory_preflight`): un volume
-  che non ci starebbe chiede conferma prima di essere decodificato, invece di esaurire la RAM.
-- Export con DICOM non anonimizzabili in modo verificato: quando i controlli fail-closed bloccano
-  il salvataggio di una valutazione qualitativa o di un progetto quantitativo (per esempio un DICOM
-  senza `BurnedInAnnotation=NO`, un attributo che `dicom-anonymizer` non riesce a trattare, un
-  DICOMDIR), QICOM non si ferma più senza alternative: mostra il motivo e chiede se esportare
-  comunque. Il default resta il blocco (Annulla è il pulsante predefinito). Se l'utente accetta, i
-  file rifiutati sono anonimizzati al meglio — profilo PS3.15 se applicabile, poi rimozione dei tag
-  privati e svuotamento di ogni attributo identificativo residuo — e marcati
-  `PatientIdentityRemoved=NO` con `DeidentificationMethod` che nomina l'override; un file che non si
-  riesce nemmeno a leggere o riscrivere viene incluso invariato. Ogni file esportato così è elencato
-  nel registro errori. Lato codice: parametro `unverified` di `anonymize_dicom_file` e
-  `unverified_dicom` nei salvataggi (`qicom/io/dicom_anonymize.py`, `qicom/gui/error_reporting.py`).
-- Report errori da inviare allo sviluppatore: dalla finestra Errori (indicatore nella barra di
-  stato), dal pannello Errori e da Aiuto ▸ Segnala un bug si selezionano uno o più errori (Ctrl/Maiusc
-  + clic; nessuna selezione = tutti) e si salvano in un file di testo con versione, revisione,
-  piattaforma e le ultime voci del log applicativo con i traceback. Testo semplice, da controllare
-  prima dell'invio; percorso home oscurato; nessuna immagine (`qicom/session/error_report.py`).
-- La finestra qualitativa ha ora un registro errori persistente con indicatore nella barra di stato,
-  come quella quantitativa: prima gli errori comparivano solo per pochi secondi nella barra di stato.
-- Le eccezioni non gestite nei gestori Qt sono registrate nel log con traceback e compaiono nel
-  registro errori delle finestre aperte, invece di finire solo su una console che il bundle non ha.
+- **"Load Images" explains what it asks for.** The open window says in one line how loading
+  works, and the three buttons have explicit names ("Load a Whole Folder...", "Load One File...",
+  "Load Several Files Together...") with a tooltip each: what they accept and in which order they
+  become slices (DICOM by position, other images by name). The choice of the destination panel
+  and the "Load images..." button of the Import step also have a tooltip.
+- **Restoring default values.** On the Heatmaps page, "Restore Defaults" brings the colour scale
+  back to the metric's, the min/max threshold to the range of the map shown, and the
+  brightness/contrast of each image to the values at loading (each undoable like a normal
+  change); the tooltip names every default value. A double-click on the colour bar brings the
+  threshold back to the range of the map. In the Remove air step, "Restore default tolerance (3)"
+  brings the tolerance back to its default value and removes an exact threshold entered by hand.
+- **New Project, Save Project and Save Project As in the File menu** of the quantitative
+  analysis, always visible and with the usual shortcuts (Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+Shift+S).
+  Previously, saving the project appeared only in the Export step and starting over meant "Reset
+  all", which they replace. "New Project" stays in the window: it offers to save unsaved
+  changes, asks for confirmation if saved work is open, and asks nothing when the window is empty.
+  The window title shows the open project (or "New project (not saved)") and an asterisk when
+  there are unsaved changes.
+- **Windows installer with the classic setup wizard.** `QICOM-windows-x64.zip`, the same file
+  the website points to, now contains `QICOM-Setup.exe` (Inno Setup 6,
+  `packaging/build_windows_installer.py` and `packaging/windows/qicom.iss`) and a README: once the
+  zip is extracted, the installer opens the setup wizard in English, with the QICOM logo and icon.
+  Pages: welcome with the description of QICOM, Apache 2.0 licence, "About QICOM" (what it does
+  and what it is for), destination folder (Program Files by default, with "Install for me only"
+  for those without administrator permissions), summary, progress bar with percentage, and finish
+  with "Launch QICOM". It creates the Start menu entry and, optionally, the desktop shortcut, and
+  it uninstalls with "Uninstall QICOM" in the installation folder, next to `qicom.exe`, or from
+  Settings > Apps. The same bundle goes in byte for byte, and an update replaces `_internal` in
+  full. CI installs it silently for all users, runs the smoke test from the installed folder,
+  verifies its build identity and uninstalls it, checking that nothing is left behind. The
+  version without installation becomes `QICOM-windows-x64-portable.zip`, with
+  `README-FIRST.txt` at the top.
+- **Debian/Ubuntu package** (`QICOM-linux-x64.deb`, with a `.sha256` sidecar), produced by the
+  Linux build next to the `.tar.gz` by `packaging/build_deb.py`: the same bundle, byte for byte,
+  in `/opt/qicom`, the `qicom` command, the menu entry and the icon. It declares the system Qt
+  libraries (the same list CI installs, checked by a test), so `apt install` brings them along,
+  and `libc6 (>= glibc of the build runner)`, so a system that is too old refuses the package
+  instead of installing an application that does not start. `DEBIAN/md5sums` enables
+  `dpkg --verify qicom`. CI installs it with apt, launches it from the installed command with the
+  smoke test, verifies its build identity and removes it, checking that nothing is left behind.
+- **Citation of the QICOM article** (arXiv:2610.31218, doi:10.48550/arXiv.2610.31218): badge and
+  citation sentence at the top, in the middle and at the bottom of the README, with the BibTeX
+  entry in the new section *Citing the QICOM article*; `CITATION.cff` lists the article as
+  `preferred-citation`, so GitHub's *Cite this repository* button offers the article. The
+  software citation (version) stays unchanged next to the article's.
+- **Utility Tools**, a fourth section of the launcher next to the three workflows and a submenu
+  of the Tools menu of every working window: a catalogue of standalone tools in a dedicated window
+  (catalogue on the left, tool on the right), which returns to the launcher when closed. The tools
+  read the sources and never modify them; every set of output files appears complete or not at
+  all (staging folder renamed at the end), in a new or empty folder. The NIfTI written by a tool
+  is positioned from the source geometry (`qicom/io/geometry.py`: for DICOM the column, row,
+  slice order of dcm2niix and SimpleITK, checked against SimpleITK also with oblique orientation)
+  and copies no header field. Every processing and every save opens a window with the progress
+  percentage; in the canvases the wheel scrolls through slices and Ctrl+wheel zooms, as in the
+  workflows, and a click on the empty area (or a dragged file) loads the image; in each tool only
+  one kind of button is coloured at a time, the step to take, as in air removal.
+  - **Semi-automatic segmentation**: a label map is built one step at a time, in six tabbed pages
+    (Image, Label, Sample, Selection, Apply, Save) with Back/Next and the "Segment another region"
+    loop. You choose a label (presets air, lung, fat, soft tissue, contrast medium, bone tissue,
+    metal, table, or a free name), draw an ROI (rectangle, ellipse, freehand, chosen in the
+    right-hand column), sample its intensity range (percentiles or mean ± k·SD, adjustable on the
+    histogram; for CT also an indicative HU range from the preset, not a clinical threshold),
+    choose where the selection may reach (this slice or the volume, anywhere or only connected to
+    the ROI), with optional refinements (median, holes, small regions, opening and closing, always
+    in the slice plane), look at the preview and decide: "Remove from image", "Keep only this",
+    "Assign" or "Erase from label". A pixel belongs to at most one label; a step takes only
+    unassigned pixels, unless overwriting is explicit. Undo/Redo with no limit on steps within
+    256 MiB of history. The label table shows visibility, colour and volume (mL with known
+    geometry); the view shows the colours over the image or only the ticked parts. Saving and
+    reopening as a NIfTI map with a JSON label table (new format version 1,
+    `OPERATIONS_SCHEMAS.md`), importable by radiomics; export of the image with only the ticked
+    parts (NIfTI, or PNG for 2D images).
+  - **Mask operations and comparison**: union, intersection, difference, XOR of two label maps
+    (also per single value), filling of empty slices between drawn ones (distance-map
+    interpolation), comparison with Dice, Jaccard, volumes, Hausdorff, HD95 and mean surface
+    distance in mm; CSV export.
+  - **Convert images**: DICOM, NIfTI or bitmap stacks to NIfTI (smallest lossless integer type,
+    otherwise float32), 8- or 16-bit PNG slices in the on-screen window, or float TIFF slices
+    with the real values. The result goes into a new folder created inside the chosen one and
+    named after the image and the format (`<name>_nifti`, `<name>_png16`, numbered if it already
+    exists), never scattered among the files already there.
+  - **Resample**: to a chosen spacing (also isotropic) or onto the grid of a reference image by
+    patient coordinates, without registration; linear, nearest-neighbour or cubic interpolation.
+    Resampling onto the grid matches SimpleITK's. Linear and nearest neighbour are computed in
+    blocks of slices, which provide the progress.
+  - **Image arithmetic**: difference, absolute difference, sum, mean, ratio (zero denominators
+    are counted and set to the chosen value), with a warning if the spacings differ.
+  - **Controlled degradation**: Gaussian or Poisson noise, blur, loss of resolution, JPEG
+    compression, from a single seed, to check how a metric reacts. One effect at a time: effect
+    buttons at the top, intensity, Apply, list of the applied effects (each removable) and
+    saving; every change recomputes the chain from the original. The provenance (new format
+    version 1) is enough to reproduce the result bit for bit.
+  - **Inspect and edit DICOM tags**: all the tags of a file or of a file in a series, with meta
+    information, nested sequences and private tags, search, private-tag filter, copy and CSV
+    export of what is shown, not anonymised (see `SECURITY.md`). Malformed headers: an element
+    that cannot be decoded becomes a marked row, sequences that are too deep or too large are
+    truncated, saying so. From the Tools menu of quantitative analysis and radiomics, "Inspect
+    DICOM tags of the current image"; not from qualitative evaluation, so as not to give away the
+    header of an image evaluated blind. In the same tree, the "New value" column edits, adds or
+    deletes top-level elements of a file or of the whole series and writes copies into a new
+    folder; the tags that define the pixels and group 0002 are locked, those that change
+    measurements (spacing, rescale, slice geometry) ask for confirmation; new consistent UIDs per
+    instance, series or study (SOPInstanceUID always follows this choice and the file meta stays
+    aligned); single-valued texts (LT, ST, UT, UR) keep their backslashes; change log with hashes,
+    never the previous values (new format version 1).
+  - **Compare DICOM headers** (read-only): two headers element by element, with outcome
+    different / only on one side / identical; it opens with both headers in full, and "Only
+    differences" and "Hide UIDs" narrow the view.
+  - **Check and organize DICOM folders**: groups by study and series and reports missing or
+    repeated instances, mixed sizes, irregular spacing or orientation, slices without a position;
+    CSV report and ordered copy with names that do not identify the patient.
+  - **Decompress DICOM**: a compressed DICOM file (JPEG lossless, JPEG-LS, JPEG 2000, RLE, JPEG
+    baseline) rewritten in Explicit VR Little Endian, one file per frame, in a new folder named
+    after the file inside the chosen one (the dialog starts from the source folder), all at once
+    or not at all (`qicom/io/dicom_decompress.py`). The pixels are decoded by the same decoders and
+    in the same order as the loader, so the copies contain exactly what QICOM shows. A
+    single-frame file keeps all its UIDs (only the encoding changes); a multi-frame becomes one
+    instance per frame, with new SOP Instance UIDs, a single new Series Instance UID and the frame
+    number as Instance Number, while study and frame of reference stay. An Enhanced object stays
+    Enhanced: each copy carries its own per-frame item and the shared functional groups; the
+    vectors pointed to by Frame Increment Pointer are reduced to the frame. A baseline or extended
+    JPEG source without Lossy Image Compression gets "01", because decompression does not undo
+    the loss.
+  - **Anonymize images**: DICOM, NIfTI and bitmaps with the fail-closed rules of the exports. The
+    chosen files (or a folder with its subfolders) are first shown as a tree, with the expected
+    outcome for each; the copy goes into `<folder>_anonymized` next to the original (or another
+    chosen location), with the same subfolders and the same file names. The names are not
+    de-identified and the tool says so; alternatively an option replaces them with generic names
+    (`folder_001`, `image_0001.dcm`, ...) in an `anonymized` folder, without a correspondence
+    table, and the tree shows the name each item will have in the copy. Files that are not images
+    are left out. Files that cannot be verified are listed before writing and written only on
+    explicit choice, as not verified.
+- The segmentation primitives (Otsu, hole filling, largest component, dilation, erosion, bounding
+  box) moved from `qicom/radiomics/segmentation.py` to the new package `qicom/segmentation/`,
+  free of Qt and SimpleITK, shared by radiomics and the tools; radiomics imports them from there
+  with the same names and the same behaviour. `qicom/processing/` is another new Qt-free package;
+  both are checked by the architecture map.
+- Access code for the evaluations to be sent out. In the **Save** step (publishing) the author
+  can enter or generate a code (at least 10 characters) and save a **protected copy for the
+  evaluators**; with the code entered, the **blinded delivery** and its decoding map are protected
+  too. The author's working copy stays without a code; a protected package opened for editing is
+  saved protected again. Whoever takes, edits or aggregates a protected evaluation must enter the
+  code, asked for right after choosing the file; an evaluator with a user does not re-enter it
+  when resuming, because the key is kept in their encrypted draft. The answers of a protected
+  package are saved encrypted with the same code (instead of the Excel report), and aggregation
+  opens them only with the code, asked for once. Command-line aggregation reads the code from a
+  file (`access_code_file`). Package, answers and map are encrypted with AES-256-GCM and a key
+  derived with scrypt; the package in 1 MiB blocks, so that large packages do not sit in memory
+  and a truncated one is refused. New "code-protected files" format version 1
+  (`OPERATIONS_SCHEMAS.md`); limits in `SECURITY.md` (`qicom/session/protected_files.py`,
+  `qicom/session/key_derivation.py`, `qicom/gui/widgets/access_code_dialog.py`).
+- Evaluator users and paused evaluations, encrypted. **Take Evaluation** now asks to log in with
+  ID and password (minimum 5 characters, no complexity requirements) or to create a user;
+  alternatively one can continue without logging in, but then nothing is kept and the evaluation
+  cannot be paused (closing before saving the report asks for confirmation, because the answers
+  would be lost). After logging in, **My evaluations** lists only that user's evaluations, split
+  into **Paused** (Resume, on the page left) and **Finished** (Reopen, to save the report again),
+  with Remove after confirmation — it deletes the answers, never the .zip package or the
+  reports — and Open another evaluation. During the evaluation, **Pause and resume later** closes
+  and returns to the start screen; the status bar shows the user. Password change and deletion of
+  the user (with all their evaluations) from the User menu and from the login window. The answers
+  are encrypted (AES-256-GCM) at every autosave with the user's key, protected by the password
+  through scrypt; the password is not stored and cannot be recovered. Clear-text drafts from
+  previous versions are recovered by reopening the package and confirming they are one's own;
+  they are then encrypted and the clear-text copy deleted. New formats: account, encrypted
+  envelope and drafts, all version 1 (see `OPERATIONS_SCHEMAS.md`); limits in `SECURITY.md`. New
+  dependency `cryptography` (Apache-2.0 or BSD-3-Clause, with `cffi` and `pycparser`), in the
+  locks of all platforms (`qicom/session/evaluator_accounts.py`, `encrypted_files.py`,
+  `evaluator_drafts.py`; `qicom/gui/widgets/evaluator_login_dialog.py`,
+  `my_evaluations_dialog.py`).
+- Interface in Spanish (`es`), Brazilian Portuguese (`pt`), Simplified Chinese (`zh-Hans`) and
+  Japanese (`ja`), selectable like the other languages from the launcher, the Language menu and
+  the settings. They cover all keys, including the metric cards, with placeholders checked
+  against English. They are a first translation not yet reviewed by native speakers: the texts on
+  intended use, de-identification and metric limits must be reviewed before a release. For
+  Chinese and Japanese the theme adds the CJK fonts of the chosen language, so Japanese kanji are
+  not drawn with the Chinese forms (and vice versa).
+- Extended golden (`tests/performance/golden_outputs_extended.json`): pins the values of all the
+  metrics beyond the 8 of the original golden, which stays unchanged. Classic 2D and 3D metrics
+  and ROIs are compared with the original tolerance; the PIQ, learned and canonical NR sections,
+  in float32, at rel 1e-5, and they are skipped, stating the reason, when backends or weights are
+  missing.
+- Canonical BRISQUE and NIQE (`brisque_canonical`, `niqe_canonical`): the BRISQUE score of PIQ
+  0.8.0 with its pre-trained SVM and the NIQE distance from the original LIVE MVG model, next to
+  the existing NSS distances `brisque`/`niqe`, which stay unchanged. The models are downloaded
+  only on explicit request and are verified by SHA-256. The `complete` profile moved to 1.1 to
+  include them (see the section on numerical results).
+- Resource profiles (`qicom.runtime`: reduced, standard, workstation) chosen from the available
+  RAM and CPU: they tune caches, models kept in memory and pairs in parallel, never the values.
+- Memory check before allocating an image (`qicom.io.memory_preflight`): a volume that would not
+  fit asks for confirmation before being decoded, instead of exhausting the RAM.
+- Export with DICOM files that cannot be anonymised in a verified way: when the fail-closed
+  checks block saving a qualitative evaluation or a quantitative project (for example a DICOM
+  without `BurnedInAnnotation=NO`, an attribute that `dicom-anonymizer` cannot handle, a
+  DICOMDIR), QICOM no longer stops without alternatives: it shows the reason and asks whether to
+  export anyway. The default is still to block (Cancel is the default button). If the user
+  accepts, the refused files are anonymised as far as possible — PS3.15 profile if applicable,
+  then removal of private tags and blanking of every remaining identifying attribute — and marked
+  `PatientIdentityRemoved=NO` with a `DeidentificationMethod` that names the override; a file
+  that cannot even be read or rewritten is included unchanged. Every file exported this way is
+  listed in the error log. On the code side: the `unverified` parameter of `anonymize_dicom_file`
+  and `unverified_dicom` in the saves (`qicom/io/dicom_anonymize.py`,
+  `qicom/gui/error_reporting.py`).
+- Error report to send to the developer: from the Errors window (indicator in the status bar),
+  from the Errors panel and from Help ▸ Report a Bug, one or more errors are selected (Ctrl/Shift
+  + click; no selection = all) and saved to a text file with version, revision, platform and the
+  latest entries of the application log with the tracebacks. Plain text, to be checked before
+  sending; home path masked; no images (`qicom/session/error_report.py`).
+- The qualitative window now has a persistent error log with an indicator in the status bar, like
+  the quantitative one: previously, errors appeared only for a few seconds in the status bar.
+- Unhandled exceptions in Qt handlers are logged with their traceback and appear in the error log
+  of the open windows, instead of ending up only on a console that the bundle does not have.
 
-- Metrica **RIQE** (`riqe`, Radiology Image Quality Evaluator) per TC: distanza in stile NIQE
-  dal modello `riqe-v1.0` (doi:10.5281/zenodo.23055559), stimato su 3.792 slice a dose piena di
-  158 pazienti TCIA invece che su fotografie. Il modello (CC BY 4.0) è incluso nel pacchetto e
-  verificato con SHA-256 prima di ogni lettura: nessun download, nessuna rete. Si calcola solo su
-  immagini dichiarate in unità Hounsfield (GUI: DICOM con Modality CT o NIfTI; CLI
-  `--hounsfield-units`; batch `"hounsfield_units": true`); altrimenti l'esito è
-  `invalid/degenerate-input`; una slice con meno dell'1% di aria (≤ −900 HU) nel campo di vista è
-  rifiutata come non in HU, così RM, bitmap o un NIfTI non TC non ricevono un punteggio. Come
-  nella validazione pubblicata, l'immagine di confronto è
-  valutata sulle maschere di campo di vista e corpo del riferimento. Il calcolo riproduce il
-  codice di riferimento rilasciato: bit-identico sulle fixture sintetiche e sulle 480 coppie a
-  dose ridotta del test split TCIA (`validation/no_reference/riqe_verification.json`). Adatto al
-  confronto appaiato di un'immagine degradata con la sua sorgente; non va usato da solo per
-  scegliere o regolare un denoiser (`qicom/metrics/riqe.py`, `NO_REFERENCE_METHODOLOGY.md`).
+- **RIQE** metric (`riqe`, Radiology Image Quality Evaluator) for CT: a NIQE-style distance from
+  the `riqe-v1.0` model (doi:10.5281/zenodo.23055559), estimated on 3,792 full-dose slices from
+  158 TCIA patients instead of on photographs. The model (CC BY 4.0) is included in the package
+  and verified with SHA-256 before every read: no download, no network. It is computed only on
+  images declared in Hounsfield units (GUI: DICOM with Modality CT or NIfTI; CLI
+  `--hounsfield-units`; batch `"hounsfield_units": true`); otherwise the outcome is
+  `invalid/degenerate-input`; a slice with less than 1% air (≤ −900 HU) in the field of view is
+  refused as not in HU, so MR, bitmaps or a non-CT NIfTI do not get a score. As in the published
+  validation, the comparison image is evaluated on the field-of-view and body masks of the
+  reference. The computation reproduces the released reference code: bit-identical on the
+  synthetic fixtures and on the 480 reduced-dose pairs of the TCIA test split
+  (`validation/no_reference/riqe_verification.json`). Suited to the paired comparison of a
+  degraded image with its source; it should not be used on its own to choose or tune a denoiser
+  (`qicom/metrics/riqe.py`, `NO_REFERENCE_METHODOLOGY.md`).
 
-- Valutazione qualitativa: nuovo primo passo "Impostazioni" nel percorso di creazione. Anonimato
-  delle risposte, randomizzazione di pagine/domande/pannelli, controbilanciamento, etichette neutre,
-  seed, ripetizioni nascoste e raccolta dei tempi si decidono ora in una sezione dedicata, prima di
-  costruire qualsiasi pagina, invece di essere sparsi tra due caselle sopra l'elenco delle domande e
-  una finestra modale dietro un pulsante. Le impostazioni sono le stesse e i pacchetti già salvati si
-  riaprono senza modifiche: cambia solo dove si impostano
-  (`qicom/gui/widgets/evaluation_setup_panel.py`).
+- Qualitative evaluation: new first step "Setup" in the authoring path. Anonymity of the answers,
+  randomisation of pages/questions/panels, counterbalancing, neutral labels, seed, hidden repeats
+  and timing collection are now decided in a dedicated section, before any page is built, instead
+  of being scattered between two boxes above the question list and a modal window behind a
+  button. The settings are the same and packages already saved reopen without changes: only
+  where they are set changes (`qicom/gui/widgets/evaluation_setup_panel.py`).
 
-- Export "Markdown per assistente AI": un unico file autoconsistente con i valori delle metriche
-  accanto alla definizione presa dalle schede `descriptors/*.yaml`, da incollare in una chat con un
-  assistente AI. Disponibile dalla GUI (spunta nel pannello di export, con avviso mostrato una sola
-  volta) e dalla CLI con `--output report.md`. QICOM non esegue alcuna elaborazione AI, non contatta
-  servizi e non carica nulla: scrive un file, l'eventuale invio è una scelta dell'utente. Il
-  contenuto è deciso da una whitelist esplicita in `qicom/reporting/llm_export.py` — nomi e percorsi
-  dei file, header DICOM/NIfTI, identificativi di paziente/studio/serie, date, istituzione,
-  operatore, hostname e utente non hanno accesso al file, e i nomi delle ROI sono contati anziché
-  riprodotti. L'output è deterministico (nessun timestamp) e segue la lingua dell'interfaccia. Le
-  tabelle radiomiche restano fuori da questa v1: richiedono una strategia di sintesi propria.
+- "Markdown for AI assistant" export: a single self-contained file with the metric values next to
+  the definition taken from the `descriptors/*.yaml` cards, to paste into a chat with an AI
+  assistant. Available from the GUI (checkbox in the export panel, with a notice shown only once)
+  and from the CLI with `--output report.md`. QICOM performs no AI processing, contacts no
+  services and uploads nothing: it writes a file, and any sending is the user's choice. The
+  content is decided by an explicit whitelist in `qicom/reporting/llm_export.py` — file names and
+  paths, DICOM/NIfTI headers, patient/study/series identifiers, dates, institution, operator,
+  hostname and user have no access to the file, and ROI names are counted rather than
+  reproduced. The output is deterministic (no timestamp) and follows the interface language.
+  Radiomics tables stay out of this v1: they need a summarisation strategy of their own.
 
-- Formato qualitativo v4 e risposte v3: piano deterministico per consegna con randomizzazione di
-  casi/domande/pannelli, controbilanciamento, seed/ordine persistiti, ripetizioni nascoste e
-  consegna in cieco con nomi generici più mappa autore separata. I formati precedenti restano
-  leggibili.
-- Scale qualitative ancorate, istruzioni generali e per pagina, pagine di calibrazione escluse,
-  commenti condizionalmente obbligatori, `not_assessable` distinto da skip/missing, 2-AFC
-  forzata, preferenza appaiata e timing con disclosure configurabile.
-- Statistica qualitativa ordinale: mediana/IQR e distribuzioni, Kendall W, alpha di Krippendorff
-  primaria, Gwet AC2 avanzata, affidabilità intra-rater, confronto appaiato valutatore×caso,
-  bootstrap a due cluster e Holm. QC e precisione non producono esclusioni automatiche.
-- Fondazioni scientifiche condivise: `StatisticalUnit`, registro esplicito degli esiti delle
-  metriche e ricevuta di riproducibilità versionata con hash di input, maschere, configurazione
-  e risultati. Persistenza SQLite ed export mantengono la lettura dei progetti precedenti.
-- Profili quantitativi versionati (Core rapido come default GUI, Strutturale, Percettivo
-  sperimentale, Rumore/ROI QC, Completo, Fantoccio/task-based e Personalizzato) e Indice QICOM
-  con profilo/composizione dichiarati, stato sperimentale e controllo di confrontabilità.
-- Diagnostica quantitativa: bias `comparison - reference`, SD residua, mediane e percentili,
-  Wasserstein-1, calibrazione lineare/ortogonale dichiarata, phase cross-correlation 2D/3D senza
-  registrazione automatica, statistiche robuste degli stack e navigazione alla slice peggiore.
-- Mappa della differenza con segno con LUT divergente centrata su zero, range simmetrico,
-  tissue/ROI mask ed export PNG più configurazione JSON della scala.
-- NPS tracciabile da ROI dedicate `noise_texture_roi`, profili di accettazione YAML/JSON senza
-  soglie predefinite, modello NSS locale BRISQUE/NIQE da corpus QA e strumenti esperti rise
-  distance, MTF/TTF/MTF50 e detectability d′ NPW(E).
-- Verifica IBSI-1 condivisa fra GUI e CI: manifest versionato, download ufficiale con consenso,
-  checksum fissati, confronto di 104 feature del digital phantom, PASS/FAIL/INCOMPLETE ed export
-  JSON/CSV/Excel/HTML senza dichiarazioni di certificazione.
-- Progetto radiomico v2 con identità subject/case/lesion/timepoint/acquisition, registro esiti,
-  ricevuta comune, QC di maschere e feature, import/export NIfTI multi-label e compatibilità in
-  lettura con i progetti v1.
-- Robustness check fisico e sweep del preprocessing; aggregatore multi-progetto table-only con
-  unità indipendenti dichiarate, ICC/CCC di coorte, correlazioni/effective N, associazioni col
-  volume e cluster di ridondanza senza selezione predittiva.
-- Trending SQLite con baseline versionate, Shewhart/EWMA e limiti utente separati; tre comandi
-  batch/headless con log, cancellazione/exit code, tidy CSV/JSON, ricevute e isolamento errori.
-- Report HTML locale autoconsistente con CSP, escaping e limite dimensionale, più bundle demo
-  deterministico privo di PHI accessibile dal launcher.
-- Documentazione metodologica radiomica e degli schemi operativi in
-  `RADIOMICS_METHODOLOGY.md` e `OPERATIONS_SCHEMAS.md`.
+- Qualitative format v4 and answers v3: deterministic plan per delivery with randomisation of
+  cases/questions/panels, counterbalancing, persisted seed/order, hidden repeats and blinded
+  delivery with generic names plus a separate author map. The previous formats remain readable.
+- Anchored qualitative scales, general and per-page instructions, excluded calibration pages,
+  conditionally mandatory comments, `not_assessable` distinct from skip/missing, forced 2-AFC,
+  paired preference and timing with configurable disclosure.
+- Ordinal qualitative statistics: median/IQR and distributions, Kendall's W, Krippendorff's alpha
+  as primary, Gwet's AC2 as advanced, intra-rater reliability, paired evaluator×case comparison,
+  two-cluster bootstrap and Holm. QC and precision produce no automatic exclusions.
+- Shared scientific foundations: `StatisticalUnit`, an explicit registry of metric outcomes and a
+  versioned reproducibility receipt with hashes of inputs, masks, configuration and results.
+  SQLite persistence and exports keep reading previous projects.
+- Versioned quantitative profiles (Quick core as the GUI default, Structural, Experimental
+  perceptual, Noise/ROI QC, Complete, Phantom/task-based and Custom) and QICOM Index with declared
+  profile/composition, experimental status and comparability check.
+- Quantitative diagnostics: `comparison - reference` bias, residual SD, medians and percentiles,
+  Wasserstein-1, declared linear/orthogonal calibration, 2D/3D phase cross-correlation without
+  automatic registration, robust stack statistics and navigation to the worst slice.
+- Signed difference map with a diverging LUT centred on zero, symmetric range, tissue/ROI mask and
+  PNG export plus a JSON configuration of the scale.
+- Traceable NPS from dedicated `noise_texture_roi` ROIs, YAML/JSON acceptance profiles without
+  default thresholds, local BRISQUE/NIQE NSS model from a QA corpus, and expert tools for rise
+  distance, MTF/TTF/MTF50 and NPW(E) detectability d′.
+- IBSI-1 verification shared between GUI and CI: versioned manifest, official download with
+  consent, pinned checksums, comparison of 104 digital-phantom features, PASS/FAIL/INCOMPLETE and
+  JSON/CSV/Excel/HTML export without certification claims.
+- Radiomics project v2 with subject/case/lesion/timepoint/acquisition identity, outcome registry,
+  common receipt, QC of masks and features, multi-label NIfTI import/export and read
+  compatibility with v1 projects.
+- Physical robustness check and preprocessing sweep; table-only multi-project aggregator with
+  declared independent units, cohort ICC/CCC, correlations/effective N, associations with volume
+  and redundancy clusters without predictive selection.
+- SQLite trending with versioned baselines, Shewhart/EWMA and separate user limits; three
+  batch/headless commands with logging, cancellation/exit codes, tidy CSV/JSON, receipts and error
+  isolation.
+- Self-contained local HTML report with CSP, escaping and a size limit, plus a deterministic
+  PHI-free demo bundle reachable from the launcher.
+- Methodological documentation for radiomics and the operational schemas in
+  `RADIOMICS_METHODOLOGY.md` and `OPERATIONS_SCHEMAS.md`.
 - `qicom/gui/themes/gray.qss`: a third theme, gray, sitting between light and
   dark - same "Clinico" rules and teal accent as the dark theme with every
   neutral lifted into the mid grays, for when the light theme glares and the
@@ -377,128 +370,130 @@ empty between that version and yours, re-run the analysis before comparing.
   radiomics): version and build, authorship, licence, intended use, DICOM
   trademark attribution and NEMA non-affiliation, privacy statement, and a
   copyable citation (plain text and BibTeX).
-- Metadati di versione Windows (`CompanyName`, prodotto, descrizione, versione
-  e copyright) nel bundle PyInstaller, con verifica automatica durante il
+- Windows version metadata (`CompanyName`, product, description, version
+  and copyright) in the PyInstaller bundle, with an automatic check during
   packaging.
-- Manifest `SHA256SUMS` dentro ogni bundle e checksum sidecar dell'archivio CI,
-  utilizzabili per verifica d'integrità e allow-listing puntuale da parte IT.
+- `SHA256SUMS` manifest inside every bundle and a sidecar checksum of the CI
+  archive, usable by IT for integrity verification and per-file allow-listing.
 
 #### Release readiness
 
-- **Identità di build nella ricevuta.** `qicom/build_identity.py` risolve il
-  commit esatto che ha prodotto un risultato: da `qicom/_build_identity.py`
-  (generato in fase di build), poi da git in un checkout, poi `unknown` —
-  dichiarato tale, mai indovinato, e mai "clean" se ignoto. La ricevuta di
-  riproducibilità porta ora `build_revision` e `source_dirty` (schema 3; gli
-  schemi 1 e 2 restano leggibili). Una versione nomina una release; fra due
-  build che portano lo stesso numero possono esserci un numero qualsiasi di
-  commit, e al momento dell'audit di 1.0.0 ce n'erano 57. Vedi `VERSIONING.md`.
-- **Gate di coerenza della release** (`packaging/check_release_consistency.py`):
-  rifiuta versioni divergenti fra `qicom/__version__.py`, `pyproject.toml` e
-  `CITATION.cff`, una versione stabile senza la sua sezione di changelog, e una
-  versione stabile che lascia voci sotto "Changes affecting numerical results"
-  in `[Unreleased]`. Eseguito in CI e prima di ogni build di packaging.
-- **Inventario licenze e SBOM generati** (`packaging/attribution.py`): per ogni
-  profilo realmente distribuito, dall'ambiente da cui il bundle viene
-  congelato, con fallimento quando manca versione, origine, licenza o testo di
-  licenza. `check-bundle` confronta ciò che PyInstaller ha davvero raccolto con
-  l'inventario. Inventario, SBOM CycloneDX e licenze viaggiano con il bundle,
-  dentro il manifest dei checksum.
-- **Gate IBSI obbligatorio sui tag**: un rilascio non può essere costruito da
-  una revisione le cui feature radiomiche divergono dal riferimento ufficiale.
-  Un problema di rete è classificato separatamente solo nelle pull request, mai
-  su un tag.
-- **Gate di coverage** (`packaging/check_coverage.py`): soglia globale di
-  non-regressione misurata (non scelta) e obiettivo di copertura *branch* sui
-  trust boundary selezionati. Vedi `coverage-floor.json`.
-- **Ratchet di complessità** (`packaging/check_complexity.py`): nessuna nuova
-  funzione oltre C901 20 di ruff, nessuna esistente che peggiora. Lo strumento
-  è dichiarato: radon, mccabe e ruff danno numeri diversi sulla stessa funzione.
-- **Manifest dell'ambiente installato per profilo e piattaforma**
-  (`packaging/generate_constraints.py`): versioni esatte, tag locali e origini
-  VCS realmente congelati, pubblicati accanto al bundle senza presentarli come
-  un lock degli artefatti con hash.
-- **`ARCHITECTURE.md`: la mappa del progetto, generata dal codice.** Ogni modulo
-  con una riga su cosa fa (presa dalla prima frase del suo docstring: li hanno
-  tutti e 167), i punti di ingresso, i trust boundary, le costanti di versione
-  dei formati persistiti e i gate di build. Scritta a mano sarebbe il documento
-  a più alta deriva del repository; generata da `packaging/generate_architecture_map.py`
-  e verificata in CI, non può mentire. Le righe sono arrotondate al centinaio
-  perché una mappa che cambia a ogni funzione allungata di tre righe è una mappa
-  che nessuno rigenera.
-- `packaging/DISTRIBUTION.md` raccoglie requisiti di distribuzione e firma. La specifica
-  dell'export AI quantitativo è implementata in ogni suo punto; l'export AI per le tabelle
-  radiomiche resta un lavoro futuro, invece di essere implementato a metà.
-- Export Markdown per la lettura assistita da AI: una sezione **Citazione** chiede al modello che
-  un articolo, un report o una presentazione scritti a partire dal file citino QICOM con lo stesso
-  riferimento di Informazioni su QICOM e di `CITATION.cff`. Quando fra i risultati c'è RIQE, il
-  file aggiunge lo studio (arXiv:2610.00384), la release del modello
-  (doi:10.5281/zenodo.23055559) e le citazioni e il ringraziamento che la licenza CC BY 4.0 del
-  modello richiede (`qicom.metrics.riqe_model.CITATIONS`). I riferimenti restano in inglese in
-  ogni lingua; nessun dato in più entra nel file.
+- **Build identity in the receipt.** `qicom/build_identity.py` resolves the
+  exact commit that produced a result: from `qicom/_build_identity.py`
+  (generated at build time), then from git in a checkout, then `unknown` —
+  declared as such, never guessed, and never "clean" if unknown. The
+  reproducibility receipt now carries `build_revision` and `source_dirty`
+  (schema 3; schemas 1 and 2 remain readable). A version names a release;
+  between two builds carrying the same number there can be any number of
+  commits, and at the time of the 1.0.0 audit there were 57. See `VERSIONING.md`.
+- **Release consistency gate** (`packaging/check_release_consistency.py`):
+  refuses diverging versions between `qicom/__version__.py`, `pyproject.toml`
+  and `CITATION.cff`, a stable version without its changelog section, and a
+  stable version that leaves entries under "Changes affecting numerical
+  results" in `[Unreleased]`. Run in CI and before every packaging build.
+- **Generated licence inventory and SBOM** (`packaging/attribution.py`): for
+  every profile actually distributed, from the environment the bundle is
+  frozen from, failing when a version, origin, licence or licence text is
+  missing. `check-bundle` compares what PyInstaller actually collected with
+  the inventory. Inventory, CycloneDX SBOM and licences travel with the
+  bundle, inside the checksum manifest.
+- **Mandatory IBSI gate on tags**: a release cannot be built from a revision
+  whose radiomic features diverge from the official reference. A network
+  problem is classified separately only in pull requests, never on a tag.
+- **Coverage gate** (`packaging/check_coverage.py`): a global non-regression
+  threshold that is measured (not chosen) and a *branch* coverage target on
+  the selected trust boundaries. See `coverage-floor.json`.
+- **Complexity ratchet** (`packaging/check_complexity.py`): no new function
+  above ruff's C901 20, no existing one getting worse. The tool is declared:
+  radon, mccabe and ruff give different numbers for the same function.
+- **Manifest of the installed environment per profile and platform**
+  (`packaging/generate_constraints.py`): exact versions, local tags and VCS
+  origins actually frozen, published next to the bundle without presenting
+  them as a hashed artifact lock.
+- **`ARCHITECTURE.md`: the project map, generated from the code.** Every module
+  with one line on what it does (taken from the first sentence of its
+  docstring: all 167 have one), the entry points, the trust boundaries, the
+  version constants of the persisted formats and the build gates. Written by
+  hand it would be the most drift-prone document in the repository; generated
+  by `packaging/generate_architecture_map.py` and checked in CI, it cannot lie.
+  Line counts are rounded to the nearest hundred because a map that changes
+  every time a function grows by three lines is a map nobody regenerates.
+- `packaging/DISTRIBUTION.md` collects the distribution and signing requirements. The
+  specification of the quantitative AI export is implemented in every point; the AI export for
+  radiomics tables remains future work, instead of being half-implemented.
+- Markdown export for AI-assisted reading: a **Citation** section asks the model that an article,
+  a report or a presentation written from the file cite QICOM with the same reference as About
+  QICOM and `CITATION.cff`. When RIQE is among the results, the file adds the study
+  (arXiv:2610.00384), the model release (doi:10.5281/zenodo.23055559) and the citations and
+  acknowledgement that the model's CC BY 4.0 licence requires
+  (`qicom.metrics.riqe_model.CITATIONS`). The references stay in English in every language; no
+  additional data enters the file.
 
 ### Changed
 
-- Mouse sulle immagini, in tutti i flussi e negli strumenti di utilità: il trascinamento con il
-  tasto sinistro regola finestra e livello (orizzontale il contrasto, a destra la finestra si
-  allarga; verticale la luminosità, in basso l'immagine si scurisce) invece di spostare
-  l'immagine; lo spostamento resta sul tasto centrale e lo zoom sul destro, la rotella scorre le
-  slice. Ogni trascinamento è una sola modifica annullabile e «Sincronizza livelli» lo segue dal
-  vivo. Con uno strumento ROI selezionato, anche dopo aver aggiunto la ROI, trascinamento,
-  spostamento e zoom restano attivi (prima erano tutti spenti finché non si tornava a Zoom /
-  Pan): trascinare sopra una ROI la sposta, trascinare fuori regola i livelli. Restano inattivi
-  in modalità Annotazione, dove il tasto sinistro posa un'annotazione, e mentre si cancella o si
-  aggiunge sfondo.
-- Editor delle domande: per i formati a scelta (singola, multipla, menu a discesa, classifica) le
-  opzioni si scrivono in un elenco numerato, una riga per opzione, con il numero di opzioni scelto
-  esplicitamente (da 2 a 20, predefinito 5) al posto della casella «una opzione per riga». Una riga
-  lasciata vuota usa il testo suggerito: una scala di qualità (da Inaccettabile a Eccellente) per i
-  formati a scelta, «Opzione n» per la classifica e oltre sette opzioni. Le righe che il formato
-  scelto non usa (ancore e intervallo della scala, elenco delle opzioni) sono ora nascoste invece
-  che disattivate. Il formato salvato non cambia.
-- Sigle e nomi standard restano in inglese in tutte le lingue, come nel testo di riferimento: CT,
-  MRI, CI, QC, AI, IQR, MAD, HU, MB e Z-score sostituiscono TC, RM, IRM, MRT, TDM, IC, KI, CQ,
-  IA, ÉIQ, ÉAM, UH e Mo nelle traduzioni italiana, francese e tedesca. Le descrizioni italiana,
-  francese e tedesca di Wasserstein-1 riportano ora anche le unità calibrate e l'assenza di
-  p-value KS, come l'originale inglese.
-- Revisione dei testi in tutte le lingue. Italiano, francese e tedesco usano le maiuscole della
-  propria lingua invece del Title Case inglese ("Nuovo progetto", "Projekt laden"). I nomi delle
-  metriche seguono la stessa regola ("Errore quadratico medio"). Sono stati corretti refusi,
-  termini incoerenti e frasi incomplete: ad esempio *repeatability* è "ripetibilità",
-  "répétabilité" e "Wiederholbarkeit", non "riproducibilità". Il testo inglese di riferimento
-  usa ora solo l'ortografia americana ("color", "analyzed", "neighbor").
-- **Ricevute allo schema 4: JSON canonico rigoroso.** Nella forma precedente il float NaN e la
-  stringa "NaN" davano lo stesso hash, le chiavi `1` e `"1"` collassavano e un booleano NumPy
-  diventava la stringa "True". Ora una stringa uguale a un token speciale viene marcata, le chiavi
-  in collisione sono rifiutate e i booleani NumPy restano booleani. Per tutto il resto la codifica
-  è identica byte per byte. Una ricevuta allo schema 3 resta schema 3 e conserva il proprio hash;
-  identità dei modelli NSS e profili di accettazione mantengono la forma precedente.
-- Immagini non anonimizzabili: il salvataggio di un progetto o di una valutazione non si ferma più
-  alla prima immagine rifiutata. Raccoglie tutte le immagini che non si possono anonimizzare, per
-  qualunque motivo, non scrive nulla e dice all'utente quali sono, perché, e che può comunque
-  procedere senza anonimizzazione per quelle immagini. I writer sollevano
-  `ImageDeidentificationRefused` (nuovo `qicom/io/deidentification.py`, con l'elenco completo in
-  `refusals`) al posto di `DicomDeidentificationError`; `anonymize_dicom_file` accetta un
-  collettore `refused`.
-- La descrizione di NIQE (`niqe_canonical`) avverte che il modello è stimato su fotografie, che
-  il suo rapporto con la qualità TC non è dimostrato e che per la TC va usato RIQE. Solo testo:
-  formula, modello e valori sono invariati.
+- **Documentation in English.** `SECURITY.md`, this changelog, the tester guide and the Windows
+  readme files, and the generated `ARCHITECTURE.md` are now in English like the rest of the
+  documentation. The files that travel in the bundles are renamed accordingly:
+  `packaging/LEGGIMI-TESTER.txt` → `packaging/TESTER-GUIDE.txt` and
+  `packaging/windows/LEGGIMI-PRIMA.txt` → `packaging/windows/README-FIRST.txt` (at the top of
+  `QICOM-windows-x64-portable.zip`). The interface languages are unchanged.
+- Mouse on images, in all workflows and in the utility tools: dragging with the left button
+  adjusts window and level (horizontally the contrast, to the right the window widens;
+  vertically the brightness, downwards the image gets darker) instead of moving the image;
+  panning stays on the middle button and zoom on the right one, and the wheel scrolls through the
+  slices. Every drag is a single undoable change and "Sync Levels" follows it live. With an ROI
+  tool selected, even after adding the ROI, dragging, panning and zoom stay active (previously
+  they were all off until you went back to Zoom / Pan): dragging over an ROI moves it, dragging
+  outside adjusts the levels. They stay inactive in Annotation mode, where the left button places
+  an annotation, and while erasing or adding background.
+- Question editor: for the choice formats (single, multiple, drop-down menu, ranking) the options
+  are written in a numbered list, one row per option, with the number of options chosen
+  explicitly (from 2 to 20, default 5) instead of the "one option per line" box. A row left empty
+  uses the suggested text: a quality scale (from Unacceptable to Excellent) for the choice
+  formats, "Option n" for ranking and beyond seven options. The rows that the chosen format does
+  not use (scale anchors and range, option list) are now hidden instead of disabled. The saved
+  format does not change.
+- Acronyms and standard names stay in English in all languages, as in the reference text: CT,
+  MRI, CI, QC, AI, IQR, MAD, HU, MB and Z-score replace TC, RM, IRM, MRT, TDM, IC, KI, CQ, IA,
+  ÉIQ, ÉAM, UH and Mo in the Italian, French and German translations. The Italian, French and
+  German descriptions of Wasserstein-1 now also state the calibrated units and the absence of a
+  KS p-value, like the English original.
+- Review of the texts in all languages. Italian, French and German use their own language's
+  capitalisation instead of English Title Case ("Nuovo progetto", "Projekt laden"). Metric names
+  follow the same rule ("Errore quadratico medio"). Typos, inconsistent terms and incomplete
+  sentences were corrected: for example *repeatability* is "ripetibilità", "répétabilité" and
+  "Wiederholbarkeit", not "riproducibilità". The English reference text now uses only American
+  spelling ("color", "analyzed", "neighbor").
+- **Receipts at schema 4: strict canonical JSON.** In the previous form, the float NaN and the
+  string "NaN" gave the same hash, the keys `1` and `"1"` collapsed, and a NumPy boolean became
+  the string "True". Now a string equal to a special token is marked, colliding keys are refused
+  and NumPy booleans stay booleans. For everything else the encoding is identical byte for byte.
+  A receipt at schema 3 stays schema 3 and keeps its own hash; the identities of NSS models and
+  acceptance profiles keep the previous form.
+- Images that cannot be anonymised: saving a project or an evaluation no longer stops at the first
+  refused image. It collects all the images that cannot be anonymised, for whatever reason,
+  writes nothing, and tells the user which ones they are, why, and that they can still proceed
+  without anonymisation for those images. The writers raise `ImageDeidentificationRefused` (new
+  `qicom/io/deidentification.py`, with the full list in `refusals`) instead of
+  `DicomDeidentificationError`; `anonymize_dicom_file` accepts a `refused` collector.
+- The description of NIQE (`niqe_canonical`) warns that the model is estimated on photographs,
+  that its relationship with CT quality has not been shown, and that RIQE should be used for CT.
+  Text only: formula, model and values are unchanged.
 
-- Valutazione qualitativa: la finestra Nuova/Modifica Domanda è divisa in tre sezioni con titolo -
-  "Domanda", "Formato della risposta" (tipo di risposta, opzioni, ancore della scala, intervallo del
-  punteggio) e "Regole di risposta" - al posto di un unico elenco piatto di dieci righe. Quando si
-  cambia formato, i campi che non si applicano si disattivano dentro la loro sezione anziché in punti
-  sparsi dell'elenco.
+- Qualitative evaluation: the New/Edit Question window is divided into three titled sections -
+  "Question", "Answer format" (answer type, options, scale anchors, score range) and "Answer
+  rules" - instead of a single flat list of ten rows. When the format changes, the fields that do
+  not apply are disabled inside their section rather than at scattered points of the list.
 
-- Il bundle sintetico deterministico non è più un bottone sulla prima pagina del launcher, dove
-  competeva con la scelta del flusso di lavoro e nessuno lo consumava. Ora sta in
-  **Impostazioni → Diagnostica**, è offerto anche da **Aiuto → Segnala un Bug** (il momento in cui
-  serve davvero) ed è disponibile senza GUI con `qicom-cli demo <cartella>`. Il corpo della mail di
-  segnalazione e il nuovo template di issue GitHub chiedono esplicitamente di allegarlo. La
-  generazione resta atomica e non sovrascrive mai una cartella esistente; dalla GUI il nome libero
-  successivo (`-2`, `-3`, …) viene scelto automaticamente, così il comando funziona anche la seconda
-  volta, e al termine si può aprire direttamente la cartella. Le chiavi di traduzione
-  `launcher.demo_*` diventano `demo.*`.
+- The deterministic synthetic bundle is no longer a button on the first page of the launcher,
+  where it competed with the choice of workflow and nobody used it. It now lives in
+  **Settings → Diagnostics**, is also offered by **Help → Report a Bug** (the moment it is really
+  needed) and is available without the GUI with `qicom-cli demo <folder>`. The body of the
+  report email and the new GitHub issue template explicitly ask for it to be attached.
+  Generation stays atomic and never overwrites an existing folder; from the GUI the next free
+  name (`-2`, `-3`, …) is chosen automatically, so the command also works the second time, and
+  at the end the folder can be opened directly. The translation keys `launcher.demo_*` become
+  `demo.*`.
 - Defined and audited the public API deprecation policy: the three deprecated
   compatibility adapters have no QICOM runtime callers, remain covered by
   compatibility tests, and are retained until the next major release rather
@@ -550,467 +545,463 @@ empty between that version and yours, re-run the analysis before comparing.
 
 #### Release readiness
 
-- **Versione di sviluppo su `main`.** `1.0.0` → `1.1.0.dev0` in tutte e tre le
-  fonti. `main` porta la versione della release verso cui si lavora, non quella
-  dell'ultima release: finché `[Unreleased]` contiene modifiche che alterano i
-  numeri, qualsiasi numero stabile dichiarerebbe una release che non le
-  descrive. **Nessun tag `v1.0.0` è stato creato**: un tag afferma *questo
-  commit è ciò che è stato distribuito*, e va dimostrato prima.
-- **Suite ermetica.** Ogni test gira con data/config/cache/log home
-  reindirizzate in una directory temporanea; un tripwire fa fallire la sessione
-  se la suite scrive nel profilo reale. Prima, riaprire un progetto radiomico in
-  un test scriveva nella vera `recent_projects.json` dell'utente.
-- **Authoring qualitativo transazionale.** Il documento author ha una revisione
-  monotona; Close/New/Open chiedono Save/Discard/Cancel; il salvataggio scrive
-  uno snapshot immutabile. *Create Blinded Delivery* combinava pagine, media e
-  domande dell'archivio salvato con il design **vivo** del pannello: ora usa le
-  due metà dello stesso snapshot, o rifiuta.
-- **Salvataggio qualitativo fuori dal thread GUI**: anonimizzazione, copia e ZIP
-  in un worker con cancellazione cooperativa e commit atomico; niente più
-  `QApplication.processEvents()` nel percorso di salvataggio.
-- **Policy learned dichiarata e dimostrata**: i checkpoint non sono inclusi in
-  alcun bundle (il README affermava il contrario). Lo smoke frozen gira con home
-  e cache vuote e verifica sia il rifiuto offline sia il percorso esplicito di
-  preparazione.
-- **Budget reali** su download e archivi: `size_bytes` nei manifest IBSI,
-  `Content-Length` verificato e contatore streaming sempre attivo, controllo
-  preventivo dello spazio libero, quote per tipo di pacchetto (progetto,
-  valutazione, radiomica, coorte, workbook) e contatore sui byte realmente
-  estratti.
-- **Bootstrap dell'installer**: pip aggiornato a ≥26.2 prima di ogni dipendenza,
-  in CI e nel packaging. La revisione auditata girava con pip 24.0 e sette
-  vulnerabilità note. L'ambiente che produce il bundle è ora auditato anch'esso.
-- **Dipendenze fuori dagli avvisi di sicurezza**: l'audit del packaging trovava 57 vulnerabilità
-  note in tre pacchetti dei lock. Pillow passa a `>=13.0,<14` (12.3.0: 39 avvisi PYSEC-2026-43xx;
-  le chiamate `Image.fromarray(..., mode=...)` che Pillow 13 rifiuta erano già state rimosse),
-  filelock a 4.2.6 (4.1.0, via torch: 17 CVE) e setuptools a 84.2.1 (84.0.0:
-  GHSA-xmj3-9gf7-h52w), con il minimo del build-system alzato a `>=84.1`. Il lock installato dopo
-  il bootstrap non può più riportare setuptools sotto quel minimo: `generate_locks.py` vincola la
-  risoluzione al range del build-system e `--check` rifiuta un lock che ne esce. Nuova opzione
-  `--upgrade-package` per spostare solo i pin interessati da un avviso. PNG e TIFF scritti da
-  `Image.fromarray` sono byte per byte identici fra Pillow 12.3 e 13.0 nei modi L, I;16, RGB e
-  RGBA.
-- **Job MIRP e `pip check`**: `pip check` (pip 26.2.2) si fermava con un `ValueError` su itk,
-  dipendenza di MIRP, i cui wheel 5.4.x scrivono `Tag: itk-5.4.7-cp311-abi3-…` invece di
-  `Tag: cp311-abi3-…`, e i job MIRP non potevano validare né auditare l'ambiente.
-  `packaging/repair_wheel_tags.py` toglie solo quel prefisso, quando è esattamente nome e versione
-  della distribuzione stessa, e gira nei due soli job MIRP, prima del controllo: `ibsi-mirp-gate`
-  (tag, `package.yml`) e `ibsi-mirp` (ogni push, `ci.yml`). Nessuno dei due ambienti finisce in un
-  bundle e `pip check` resta completo. Fino a questa correzione lo script compariva solo nel gate
-  dei tag, che gira soltanto su push di un tag `v*`: non era mai stato eseguito in CI, e il job
-  `ibsi-mirp` falliva ancora nell'audit, come prima dell'introduzione dello script.
-- CI: matrice Python 3.11/3.12, Action fissate a commit SHA con aggiornamento
-  Dependabot, risorse IBSI in cache sull'hash del manifest, e la seconda
-  esecuzione completa della suite sostituita dalla sola collection (che è ciò
-  che verificava davvero la differenza di `sys.path`).
-- Benchmark: `excel_only` e `full_export_with_ai` separati, schema versionato,
-  e confronto rifiutato fra schemi, profili o host differenti.
-- `packaging/THIRD_PARTY_LICENSES.txt` non descrive più QICOM come proprietario
-  (è Apache-2.0 dal primo commit pubblico) e non dichiara più fuori scope il
-  profilo learned, che i tag costruiscono.
+- **Development version on `main`.** `1.0.0` → `1.1.0.dev0` in all three
+  sources. `main` carries the version of the release being worked towards, not
+  that of the last release: as long as `[Unreleased]` contains changes that
+  alter the numbers, any stable number would declare a release that does not
+  describe them. **No `v1.0.0` tag has been created**: a tag asserts *this
+  commit is what was distributed*, and that must be demonstrated first.
+- **Hermetic suite.** Every test runs with the data/config/cache/log homes
+  redirected to a temporary directory; a tripwire fails the session if the
+  suite writes into the real profile. Previously, reopening a radiomics project
+  in a test wrote into the user's real `recent_projects.json`.
+- **Transactional qualitative authoring.** The author document has a monotonic
+  revision; Close/New/Open ask Save/Discard/Cancel; saving writes an immutable
+  snapshot. *Create Blinded Delivery* combined the pages, media and questions
+  of the saved archive with the panel's **live** design: it now uses the two
+  halves of the same snapshot, or refuses.
+- **Qualitative saving off the GUI thread**: anonymisation, copying and ZIP in
+  a worker with cooperative cancellation and an atomic commit; no more
+  `QApplication.processEvents()` in the save path.
+- **Learned policy declared and demonstrated**: the checkpoints are not
+  included in any bundle (the README claimed the opposite). The frozen smoke
+  test runs with empty home and cache and checks both the offline refusal and
+  the explicit preparation path.
+- **Real budgets** on downloads and archives: `size_bytes` in the IBSI
+  manifests, verified `Content-Length` and a streaming counter always active,
+  an up-front free-space check, quotas per package type (project, evaluation,
+  radiomics, cohort, workbook) and a counter on the bytes actually extracted.
+- **Installer bootstrap**: pip upgraded to ≥26.2 before any dependency, in CI
+  and in packaging. The audited revision ran with pip 24.0 and seven known
+  vulnerabilities. The environment that produces the bundle is now audited
+  too.
+- **Dependencies clear of security advisories**: the packaging audit found 57 known
+  vulnerabilities in three packages of the locks. Pillow moves to `>=13.0,<14` (12.3.0: 39
+  PYSEC-2026-43xx advisories; the `Image.fromarray(..., mode=...)` calls that Pillow 13 refuses
+  had already been removed), filelock to 4.2.6 (4.1.0, via torch: 17 CVEs) and setuptools to
+  84.2.1 (84.0.0: GHSA-xmj3-9gf7-h52w), with the build-system minimum raised to `>=84.1`. The lock
+  installed after the bootstrap can no longer bring setuptools below that minimum:
+  `generate_locks.py` constrains the resolution to the build-system range and `--check` refuses a
+  lock that falls outside it. New `--upgrade-package` option to move only the pins affected by an
+  advisory. PNG and TIFF files written by `Image.fromarray` are byte-for-byte identical between
+  Pillow 12.3 and 13.0 in modes L, I;16, RGB and RGBA.
+- **MIRP jobs and `pip check`**: `pip check` (pip 26.2.2) stopped with a `ValueError` on itk, a
+  dependency of MIRP, whose 5.4.x wheels write `Tag: itk-5.4.7-cp311-abi3-…` instead of
+  `Tag: cp311-abi3-…`, and the MIRP jobs could neither validate nor audit the environment.
+  `packaging/repair_wheel_tags.py` removes only that prefix, when it is exactly the name and
+  version of the distribution itself, and runs in the only two MIRP jobs, before the check:
+  `ibsi-mirp-gate` (tags, `package.yml`) and `ibsi-mirp` (every push, `ci.yml`). Neither
+  environment ends up in a bundle and `pip check` stays complete. Until this fix the script
+  appeared only in the tag gate, which runs only on the push of a `v*` tag: it had never been run
+  in CI, and the `ibsi-mirp` job still failed in the audit, as before the script was introduced.
+- CI: Python 3.11/3.12 matrix, Actions pinned to commit SHAs with Dependabot
+  updates, IBSI resources cached on the manifest hash, and the second full run
+  of the suite replaced by collection only (which is what actually checked the
+  `sys.path` difference).
+- Benchmarks: `excel_only` and `full_export_with_ai` separated, versioned
+  schema, and comparison refused between different schemas, profiles or hosts.
+- `packaging/THIRD_PARTY_LICENSES.txt` no longer describes QICOM as proprietary
+  (it has been Apache-2.0 since the first public commit) and no longer declares
+  the learned profile out of scope, which the tags build.
 
 ### Fixed
 
-- **La ROI dell'aria è di nuovo facoltativa per il calcolo.** Con "Escludi l'aria" attivo e nessuna
-  ROI verde posizionata, Calcola si fermava con "Crea prima la ROI verde dell'aria" e non produceva
-  nessuna misura. Capitava anche riaprendo un'analisi salvata con l'esclusione attiva: le
-  impostazioni tornano, ma la ROI verde no. Ora il calcolo procede sull'immagine intera, aria
-  compresa, con un avviso, e l'analisi viene registrata come "senza esclusione", in modo che
-  salvataggio ed export descrivano ciò che è stato davvero calcolato. Una ROI verde posizionata che
-  non copre alcun pixel resta un errore, e "Rileva aria" continua a chiedere la ROI. Nessun valore
-  calcolabile prima cambia.
-- **Un database occupato non viene più scambiato per danneggiato.** Con più finestre di QICOM
-  avviate insieme (per esempio dopo un primo avvio lento, a cui l'utente risponde riavviando),
-  una trovava il database delle sessioni bloccato dall'altra e lo trattava come danneggiato:
-  provava a spostarlo da parte e a crearne uno nuovo. Su Windows lo spostamento falliva sul file
-  aperto, ma il log diceva comunque che ne era stato creato uno nuovo; su Linux e macOS lo
-  spostamento sarebbe riuscito. Ora solo un file corrotto o non SQLite viene messo da parte; un
-  database occupato viene atteso (fino a 10 secondi, attesa impostata prima di ogni istruzione) e,
-  se resta occupato, l'apertura fallisce con un errore senza toccare nulla.
-- **Avvio di un flusso senza nulla sullo schermo.** Scelto un flusso nel launcher, il launcher si
-  chiudeva subito e la finestra poteva metterci molto ad apparire (al primo avvio Windows controlla
-  ogni file dell'applicazione): un tester ha creduto che QICOM si fosse chiuso e l'ha riavviato più
-  volte. Ora il logo resta sullo schermo con "Apertura in corso: Analisi quantitativa..." (o il
-  flusso scelto) e il cursore di attesa, finché la finestra non compare.
-- **Errori raggiungibili con un clic, pannelli in basso leggibili.** L'indicatore degli errori
-  nella barra di stato era testo rosso senza bordo: ora è un pulsante con icona, contorno e la
-  scritta "N errori: mostra", e il messaggio d'errore appena comparso in basso si apre anche lui
-  con un clic (cursore a mano e tooltip finché resta visibile). Aperti da Visualizza > Pannelli,
-  Cronologia, Log ed Errori ricevevano l'altezza rimasta: una sola riga in sei passaggi su otto.
-  Ora ricevono un terzo della finestra, le tabelle non scendono mai sotto quattro righe e il bordo
-  resta trascinabile; il pannello Errori ha "Mostra tutti" (anche con doppio clic su una riga) per
-  aprire l'elenco completo.
-- **Le mappe di calore sparivano dalle immagini cambiando passaggio.** L'anteprima dell'aria e le
-  mappe di calore usano lo stesso livello sopra le immagini, e a ogni cambio di passaggio fuori da
-  Rimuovi aria l'anteprima veniva tolta svuotando quel livello anche quando a occuparlo era una
-  mappa: la mappa non si vedeva più, mentre il pannello continuava a dirla mostrata. Ora si toglie
-  solo un'anteprima davvero visibile. Inoltre il passaggio Mappe di calore non si apre più vuoto:
-  mostra subito la mappa dell'immagine intera per la metrica scelta, una riga spiega cos'è la mappa,
-  che non serve Calcola e cosa salva l'export, e una riga di stato dice cosa è mostrato, oppure
-  perché non c'è nulla da mostrare (immagini mancanti, metrica non calcolabile).
-- **Un nuovo progetto non sovrascrive più quello aperto prima.** "Reimposta tutto" svuotava la
-  finestra ma ricordava il file del progetto aperto in precedenza: alla chiusura, "Salva"
-  scriveva il lavoro nuovo in quel file senza chiedere nulla. Ora iniziare da capo dimentica il
-  file e il salvataggio successivo chiede dove scrivere. La domanda alla chiusura nomina il
-  progetto e il file in cui "Salva" scriverà.
-- **Finestre più grandi dello schermo.** Le finestre si aprono massimizzate, ma "Ripristina" le
-  riportava a una dimensione fissa (1280×800, 1400×900 per Strumenti e Radiomica): più alta di un
-  portatile 1366×768 e più grande di quasi ogni schermo al 125-150% di scala. La finestra
-  ripristinata usciva dallo schermo e il bordo per ridimensionarla restava irraggiungibile. Ora la
-  dimensione iniziale è limitata al 92% dell'area disponibile dello schermo, in pixel logici, e la
-  finestra è centrata. Nella finestra Strumenti, inoltre, la larghezza minima di alcuni strumenti
-  (fino a circa 1230 pixel) diventava quella dell'intera finestra, che al 125-150% non entrava più
-  nello schermo né si poteva restringere: ogni strumento sta ora in un'area scorrevole. Un test
-  verifica ogni strumento su 1366×768 al 100%, 125% e 150%.
-- **Strumenti di utilità mancanti nell'app installata.** Il catalogo importa ogni strumento per
-  nome al primo uso (`qicom.gui.tools.converter:ConverterTool`) e nessun altro modulo li importa,
-  quindi PyInstaller non li vedeva: nell'app distribuita ogni strumento falliva con "No module
-  named qicom.gui.tools.converter". La spec raccoglie ora l'intero pacchetto `qicom.gui.tools`, lo
-  smoke test del bundle importa ogni voce del catalogo e la CI rifiuta un bundle che non ne riporta
-  nessuna. Se uno strumento manca comunque, la finestra Strumenti lo spiega a parole al posto dello
-  strumento e conserva il dettaglio per la segnalazione di bug.
-  Su Linux la build girava prima dell'installazione delle librerie Qt, e la raccolta del pacchetto,
-  che importa ogni modulo per trovarlo, scartava in silenzio tutti gli strumenti che importano
-  QtGui: il bundle Linux ne restava privo. Ora la spec elenca gli strumenti dai file sorgente, e su
-  Linux le librerie Qt si installano prima della build.
-- **mypy con numpy 2.5.4**: lo stub di `np.isscalar` è passato da
-  `TypeGuard[generic | complex | str | bytes | memoryview]` a `TypeIs[… | numbers.Number]`, e la
-  chiamata `np.isnan(result)` in `qicom/metrics/runner.py` non tipizzava più (`arg-type`). Il
-  risultato scalare è ora convertito con `np.asarray` prima di `np.isnan`, la stessa conversione
-  che l'ufunc fa da sé: nessun esito cambia, compresi i tipi su cui `np.isnan` solleva
-  `TypeError` (testo, byte, `Fraction`, `Decimal`), che restano accettati. Un test fissa gli esiti.
-  L'errore esisteva già prima del merge della PR #4, nascosto dall'audit che falliva prima della
-  fase statica; i lock fissano numpy 2.5.3, la CI installa senza lock e risolve 2.5.4.
-- **Progetti radiomici senza tabelle tipizzate: il testo "NA" tornava mancante con pandas 3.1.**
-  `read_legacy_table` proteggeva le colonne di testo note con un converter, ma pandas applica i
-  marcatori di mancante ("NA", "null", "None", …) anche al risultato del converter: il motore
-  Python lo ha sempre fatto, il motore C da pandas 3.1. Una ROI o uno stato chiamati "NA"
-  diventavano mancanti. Le colonne di testo sono ora lette a parte senza alcun marcatore, e solo un
-  campo vuoto è mancante; le altre colonne mantengono i marcatori di pandas. `float_precision`,
-  deprecato da pandas 3.1 (`Pandas4Warning`) perché il parser predefinito è diventato esatto, è
-  passato solo con pandas < 3.1, dove serve ancora per leggere i float bit per bit. Verificato con
-  pandas 2.3.3, 3.0.6 (lock) e 3.1.0. L'errore esisteva già prima del merge della PR #4: la CI,
-  senza lock, installa pandas 3.1.0.
-- **Python 3.11: la GUI terminava con SIGABRT con PySide6 6.12.0.** Ogni chiamata ai setter di
-  dimensione di `QGraphicsWidget` (`setMaximumHeight`, `setMinimumWidth`, `setPreferredHeight`, …)
-  toglie un riferimento a `None`, e pyqtgraph li chiama a ogni ridimensionamento. Da Python 3.12
-  `None` è immortale e non succede nulla; su 3.11 il conteggio arriva a zero e l'interprete
-  abortisce (`Fatal Python error: none_dealloc`). Nel job `test-base (3.11)` la suite si fermava
-  dopo 68 test in `test_adaptive_layout.py` senza traceback né riepilogo: la cattura di pytest
-  teneva l'output di faulthandler in un file temporaneo perso con il processo, e `check_ci.py`
-  restituiva il `returncode` −6 del pytest ucciso, che `SystemExit` trasforma nel codice 250.
-  L'extra `gui` esclude ora 6.12.0 solo su Python < 3.12 (6.11.3 non ha il difetto); i bundle,
-  su 3.12, restano su 6.12.0 e i lock sono invariati. `generate_locks.py --check` valuta i marker
-  per l'interprete e la piattaforma di ogni lock. Un test misura direttamente il conteggio di
-  `None` attorno a quei setter. L'errore esisteva già prima del merge della PR #4.
-- **Finestra quantitativa più larga di uno schermo da 512 px in portoghese.** Il testo vuoto del
-  pannello Grafici («Ainda não há nada para exibir no gráfico: execute Calcular primeiro.») non
-  andava a capo, e la sua larghezza su una riga diventava la larghezza minima del dock: con il
-  solo DejaVu Sans, come sul runner `ubuntu-latest`, la finestra arrivava a 529 px nello stadio
-  dei risultati. L'etichetta va ora a capo; la larghezza minima scende a 363 px. Con Liberation
-  Sans, il sostituto di Arial su molte installazioni Linux, il testo stava appena nei 512 px, e
-  per questo il test passava in locale. Preesistente.
-- **Valutazione qualitativa: le risposte sparivano scorrendo le slice.** Ogni risposta era
-  registrata sulla slice della reference in quel momento, quindi su una serie con più slice il
-  modulo si svuotava a ogni cambio di slice e le risposte ricomparivano solo tornando su quella
-  slice, come se ogni slice fosse una domanda a sé. Il design ha ora l'impostazione «Le risposte
-  valgono per» (passo «Impostazioni della valutazione»): «L'intera serie», predefinita per le
-  nuove valutazioni, registra una sola risposta per pagina, confronto e domanda (a `slice_index`
-  0) e lascia scorrere la serie senza toccare risposte né tempi; «Ogni slice separatamente»
-  mantiene il comportamento precedente. L'indicatore di slice dice quale delle due vale. Il
-  campo `design.answer_scope` viaggia nel pacchetto e nella consegna in cieco; un design salvato
-  prima, senza il campo, è letto come per slice, così le risposte già raccolte restano dove
-  erano (`OPERATIONS_SCHEMAS.md`, `qicom/session/qualitative_design.py`,
+- **The air ROI is optional again for the calculation.** With "Exclude the air" on and no green
+  ROI placed, Calculate stopped with "Create the green air ROI first" and produced no
+  measurement. It also happened when reopening a saved analysis with the exclusion on: the
+  settings come back, but the green ROI does not. Now the calculation proceeds on the whole
+  image, air included, with a warning, and the analysis is recorded as "without exclusion", so
+  that saving and export describe what was actually computed. A placed green ROI that covers no
+  pixel remains an error, and "Detect air" still asks for the ROI. No value that could be computed
+  before changes.
+- **A busy database is no longer mistaken for a damaged one.** With several QICOM windows started
+  together (for example after a slow first launch, to which the user responds by relaunching),
+  one found the session database locked by the other and treated it as damaged: it tried to move
+  it aside and create a new one. On Windows the move failed on the open file, but the log still
+  said a new one had been created; on Linux and macOS the move would have succeeded. Now only a
+  corrupt or non-SQLite file is moved aside; a busy database is waited for (up to 10 seconds, a
+  timeout set before every statement) and, if it stays busy, opening fails with an error without
+  touching anything.
+- **Starting a workflow with nothing on screen.** After a workflow was chosen in the launcher, the
+  launcher closed at once and the window could take a long time to appear (on first launch
+  Windows checks every file of the application): a tester believed QICOM had closed and relaunched
+  it several times. Now the logo stays on screen with "Opening: Quantitative analysis..." (or the
+  chosen workflow) and the wait cursor, until the window appears.
+- **Errors one click away, readable bottom panels.** The error indicator in the status bar was
+  red text with no border: it is now a button with an icon, an outline and the caption "N errors:
+  show", and the error message that has just appeared at the bottom also opens with a click (hand
+  cursor and tooltip while it stays visible). Opened from View > Panels, History, Log and Errors
+  got whatever height was left: a single row in six steps out of eight. They now get a third of
+  the window, the tables never go below four rows and the edge stays draggable; the Errors panel
+  has "Show All" (also by double-clicking a row) to open the full list.
+- **Heatmaps disappeared from the images when changing step.** The air preview and the heatmaps
+  use the same layer above the images, and at every change of step away from Remove air the
+  preview was removed by clearing that layer even when a map occupied it: the map was no longer
+  visible, while the panel still said it was shown. Now only a preview that is actually visible is
+  removed. In addition, the Heatmaps step no longer opens empty: it immediately shows the
+  whole-image map for the chosen metric, a line explains what the map is, that Calculate is not
+  needed and what the export saves, and a status line says what is shown, or why there is nothing
+  to show (missing images, metric that cannot be computed).
+- **A new project no longer overwrites the one opened before.** "Reset all" cleared the window but
+  remembered the file of the project opened previously: on closing, "Save" wrote the new work
+  into that file without asking anything. Now starting over forgets the file and the next save
+  asks where to write. The question on closing names the project and the file "Save" will write
+  to.
+- **Windows larger than the screen.** The windows open maximised, but "Restore" brought them back
+  to a fixed size (1280×800, 1400×900 for Tools and Radiomics): taller than a 1366×768 laptop and
+  larger than almost any screen at 125-150% scaling. The restored window went off screen and the
+  edge for resizing it stayed out of reach. Now the initial size is limited to 92% of the screen's
+  available area, in logical pixels, and the window is centred. In the Tools window, moreover, the
+  minimum width of some tools (up to about 1230 pixels) became that of the whole window, which at
+  125-150% no longer fitted on screen and could not be narrowed: each tool now sits in a
+  scrollable area. A test checks every tool at 1366×768 at 100%, 125% and 150%.
+- **Utility tools missing in the installed app.** The catalogue imports each tool by name on first
+  use (`qicom.gui.tools.converter:ConverterTool`) and no other module imports them, so PyInstaller
+  did not see them: in the distributed app every tool failed with "No module named
+  qicom.gui.tools.converter". The spec now collects the whole `qicom.gui.tools` package, the
+  bundle smoke test imports every catalogue entry and CI refuses a bundle that reports none of
+  them. If a tool is still missing, the Tools window explains it in words in place of the tool and
+  keeps the detail for the bug report.
+  On Linux the build ran before the Qt libraries were installed, and collecting the package, which
+  imports every module to find it, silently discarded all the tools that import QtGui: the Linux
+  bundle was left without them. Now the spec lists the tools from the source files, and on Linux
+  the Qt libraries are installed before the build.
+- **mypy with numpy 2.5.4**: the stub of `np.isscalar` moved from
+  `TypeGuard[generic | complex | str | bytes | memoryview]` to `TypeIs[… | numbers.Number]`, and
+  the call `np.isnan(result)` in `qicom/metrics/runner.py` no longer type-checked (`arg-type`).
+  The scalar result is now converted with `np.asarray` before `np.isnan`, the same conversion the
+  ufunc does by itself: no outcome changes, including the types on which `np.isnan` raises
+  `TypeError` (text, bytes, `Fraction`, `Decimal`), which remain accepted. A test pins the
+  outcomes. The error already existed before PR #4 was merged, hidden by the audit failing before
+  the static stage; the locks pin numpy 2.5.3, while CI installs without locks and resolves 2.5.4.
+- **Radiomics projects without typed tables: the text "NA" became missing again with pandas
+  3.1.** `read_legacy_table` protected the known text columns with a converter, but pandas
+  applies the missing-value markers ("NA", "null", "None", …) to the converter's result as well:
+  the Python engine always did, the C engine since pandas 3.1. An ROI or a status called "NA"
+  became missing. The text columns are now read separately without any marker, and only an empty
+  field is missing; the other columns keep pandas' markers. `float_precision`, deprecated by
+  pandas 3.1 (`Pandas4Warning`) because the default parser has become exact, is passed only with
+  pandas < 3.1, where it is still needed to read floats bit for bit. Verified with pandas 2.3.3,
+  3.0.6 (lock) and 3.1.0. The error already existed before PR #4 was merged: CI, without locks,
+  installs pandas 3.1.0.
+- **Python 3.11: the GUI terminated with SIGABRT with PySide6 6.12.0.** Every call to the size
+  setters of `QGraphicsWidget` (`setMaximumHeight`, `setMinimumWidth`, `setPreferredHeight`, …)
+  drops a reference to `None`, and pyqtgraph calls them at every resize. From Python 3.12 `None`
+  is immortal and nothing happens; on 3.11 the count reaches zero and the interpreter aborts
+  (`Fatal Python error: none_dealloc`). In the `test-base (3.11)` job the suite stopped after 68
+  tests in `test_adaptive_layout.py` with neither traceback nor summary: pytest's capture kept
+  faulthandler's output in a temporary file lost with the process, and `check_ci.py` returned the
+  `returncode` −6 of the killed pytest, which `SystemExit` turns into code 250. The `gui` extra now
+  excludes 6.12.0 only on Python < 3.12 (6.11.3 does not have the defect); the bundles, on 3.12,
+  stay on 6.12.0 and the locks are unchanged. `generate_locks.py --check` evaluates the markers
+  for the interpreter and platform of each lock. A test directly measures the reference count of
+  `None` around those setters. The error already existed before PR #4 was merged.
+- **Quantitative window wider than a 512 px screen in Portuguese.** The empty text of the Charts
+  panel ("Ainda não há nada para exibir no gráfico: execute Calcular primeiro.") did not wrap,
+  and its single-line width became the minimum width of the dock: with DejaVu Sans only, as on
+  the `ubuntu-latest` runner, the window reached 529 px in the results stage. The label now
+  wraps; the minimum width drops to 363 px. With Liberation Sans, the Arial substitute on many
+  Linux installations, the text just fitted in 512 px, which is why the test passed locally.
+  Pre-existing.
+- **Qualitative evaluation: answers disappeared when scrolling through slices.** Every answer was
+  recorded on the reference slice of that moment, so on a series with several slices the form
+  was emptied at every change of slice and the answers reappeared only when going back to that
+  slice, as if every slice were a question of its own. The design now has the setting "Answers
+  apply to" (step "Evaluation settings"): "The whole series", the default for new evaluations,
+  records a single answer per page, comparison and question (at `slice_index` 0) and lets the
+  series scroll without touching answers or timings; "Each slice separately" keeps the previous
+  behaviour. The slice indicator says which of the two applies. The `design.answer_scope` field
+  travels in the package and in the blinded delivery; a design saved earlier, without the field,
+  is read as per slice, so the answers already collected stay where they were
+  (`OPERATIONS_SCHEMAS.md`, `qicom/session/qualitative_design.py`,
   `qicom/gui/qualitative_controller.py`).
-- **Trackpad: un gesto saltava molte slice.** Ogni evento della rotella spostava di una slice
-  intera; il trackpad (soprattutto su macOS) ne manda decine per gesto, più quelli dell'inerzia
-  dopo aver sollevato le dita e uno finale senza movimento verticale, letto come «su» e quindi
-  una slice indietro. Ora gli spostamenti si sommano fino a uno scatto di rotella (120 unità),
-  l'inerzia è ignorata e un evento senza movimento verticale non sposta nulla, nei flussi e negli
-  strumenti di utilità (`qicom/gui/wheel_slice_steps.py`). Una rotella a scatti si comporta come
-  prima.
-- **Consegne in cieco ricostruibili dal pacchetto del valutatore.** Il piano pubblico conteneva il
-  seed, il design pubblico il master seed, e pagine e domande tenevano gli ID dell'autore, con le
-  ripetizioni nascoste numerate dopo tutte le altre: dal solo ZIP del valutatore si ricostruivano
-  quale pannello era il riferimento e quali pagine erano ripetizioni. Ora il seed mescola un
-  segreto derivato da una chiave casuale dell'autore, conservata privata nel suo profilo (la
-  stessa consegna ricreata dallo stesso autore resta identica, così le bozze dei valutatori e la
-  mappa restano valide), e seed, segreto e master seed stanno solo nella mappa dell'autore
-  (versione 2, `OPERATIONS_SCHEMAS.md`); il piano pubblico porta `seed: 0`,
-  pagine e domande sono numerate nell'ordine di presentazione, e il design pubblico non riporta
-  randomizzazione né ripetizioni (`qicom/session/evaluation_package.py`,
-  `qicom/session/qualitative_design.py`). L'aggregazione controlla le risposte di ogni consegna
-  sulla struttura che quella consegna ha presentato, ricostruita dalla sua mappa sul pacchetto
-  dell'autore o sulla mappa del pacchetto caricato, e riporta gli ID dell'autore
-  (`qicom/session/evaluation_aggregation.py`). Una mappa versione 2 deve essere completa: una
-  pagina, una domanda o un pannello che non mappa è rifiutato, perché con ID opachi il numero
-  presentato nominerebbe un'altra sorgente. Le mappe versione 1 restano leggibili come prima.
-  **Le consegne create con le versioni precedenti espongono comunque la randomizzazione a chi le
-  ha ricevute**: per uno studio in corso, valutare se generarne di nuove.
-- **Consegne in cieco e immagini non de-identificabili.** Un'immagine lasciata passare da un
-  override quando l'autore aveva salvato il proprio pacchetto entrava nella consegna così
-  com'era: il NIfTI non verificabile era riscansionato con l'elenco dei rifiuti scartato, e il
-  DICOM non era de-identificato affatto (solo svuotato degli attributi di acquisizione). Ora ogni
-  immagine è de-identificata di nuovo per la consegna, con UID propri per ogni caso; un rifiuto
-  ferma la consegna prima di scrivere qualunque file e la finestra chiede all'autore se
-  includere comunque quelle immagini, per questa consegna soltanto.
-- **Consegna fallita a metà.** La mappa era scritta prima dello ZIP: se poi lo ZIP non arrivava a
-  destinazione, restava la consegna precedente accanto alla mappa nuova, che nomina altre
-  immagini. Ora la mappa precedente è messa da parte e rimessa al suo posto se la consegna non
-  viene scritta; senza una mappa precedente, quella nuova è rimossa. Due consegne verso la stessa
-  destinazione, anche contemporanee, scrivono la loro coppia una dopo l'altra (lock esclusivo per
-  utente e macchina, `qicom/file_locks.py`), e la mappa registra l'hash del manifest della propria
-  consegna (`delivery_manifest_sha256`).
-- **Strumenti di utilità: NIfTI con la geometria di un'altra pila.** Per i multi-frame le posizioni
-  erano riordinate lungo la normale anche quando il loader aveva lasciato l'ordine del file
-  (posizioni ripetute), e per le serie il passo era ricavato da prima e ultima slice anche con una
-  slice mancante: l'affine scritto non descriveva i pixel scritti, ed era dichiarato noto. Ora le
-  slice sono collocate dalle posizioni che il loader consegna nell'ordine dei pixel; una pila che
-  nessun affine descrive (passi irregolari, posizioni ripetute, frame con orientamenti diversi
-  anche se le posizioni sono regolari) è scritta con qform/sform a 0, e una pila inclinata tiene il taglio solo
-  nella sform, che il qform non può rappresentare (`qicom/io/geometry.py`).
-- **CI: gate MIRP nel job di test principale.** Il job imposta `QICOM_RUN_IBSI_REFERENCE=1` per
-  il gate PyRadiomics ma non installa MIRP né la sua cache, e il test MIRP lo trattava come un
-  fallimento. Il gate MIRP ha ora una variabile propria, `QICOM_RUN_IBSI_MIRP`, impostata solo
-  nei job che lo preparano.
-- **Anonimizzazione DICOM: contenitore Part 10.** Il preambolo di 128 byte e il gruppo File Meta
-  erano copiati dall'originale, con `PrivateInformation` e i suoi dati, in file dichiarati
-  `PatientIdentityRemoved=YES`. Ora il contenitore è ricostruito come chiede PS3.15: preambolo
-  azzerato, File Meta con i soli elementi richiesti da PS3.10, verifica sulla copia riletta
+- **Trackpad: one gesture skipped many slices.** Every wheel event moved by a whole slice; the
+  trackpad (especially on macOS) sends dozens of them per gesture, plus the inertia ones after the
+  fingers are lifted and a final one with no vertical movement, read as "up" and therefore one
+  slice back. Now the movements add up to one wheel notch (120 units), inertia is ignored and an
+  event without vertical movement moves nothing, in the workflows and in the utility tools
+  (`qicom/gui/wheel_slice_steps.py`). A notched wheel behaves as before.
+- **Blinded deliveries reconstructable from the evaluator's package.** The public plan contained
+  the seed, the public design the master seed, and pages and questions kept the author's IDs, with
+  the hidden repeats numbered after all the others: from the evaluator's ZIP alone one could
+  reconstruct which panel was the reference and which pages were repeats. Now the seed mixes in a
+  secret derived from a random key of the author, kept private in their profile (the same
+  delivery recreated by the same author stays identical, so the evaluators' drafts and the map
+  remain valid), and seed, secret and master seed live only in the author's map (version 2,
+  `OPERATIONS_SCHEMAS.md`); the public plan carries `seed: 0`, pages and questions are numbered in
+  presentation order, and the public design reports neither randomisation nor repeats
+  (`qicom/session/evaluation_package.py`, `qicom/session/qualitative_design.py`). Aggregation
+  checks the answers of each delivery against the structure that delivery presented,
+  reconstructed from its map on the author's package or on the map of the loaded package, and
+  reports the author's IDs (`qicom/session/evaluation_aggregation.py`). A version 2 map must be
+  complete: a page, a question or a panel that it does not map is refused, because with opaque
+  IDs the presented number would name another source. Version 1 maps remain readable as before.
+  **Deliveries created with previous versions still expose the randomisation to whoever received
+  them**: for an ongoing study, consider generating new ones.
+- **Blinded deliveries and images that cannot be de-identified.** An image let through by an
+  override when the author had saved their own package entered the delivery as it was: the
+  unverifiable NIfTI was rescanned with the list of refusals discarded, and the DICOM was not
+  de-identified at all (only stripped of the acquisition attributes). Now every image is
+  de-identified again for the delivery, with UIDs of its own for each case; a refusal stops the
+  delivery before any file is written and the window asks the author whether to include those
+  images anyway, for this delivery only.
+- **Delivery that failed halfway.** The map was written before the ZIP: if the ZIP then did not
+  reach its destination, the previous delivery remained next to the new map, which names other
+  images. Now the previous map is set aside and put back in place if the delivery is not written;
+  without a previous map, the new one is removed. Two deliveries to the same destination, even
+  simultaneous ones, write their pair one after the other (exclusive lock per user and machine,
+  `qicom/file_locks.py`), and the map records the manifest hash of its own delivery
+  (`delivery_manifest_sha256`).
+- **Utility tools: NIfTI with the geometry of another stack.** For multi-frames the positions were
+  reordered along the normal even when the loader had kept the file order (repeated positions),
+  and for series the step was derived from the first and last slice even with a missing slice:
+  the written affine did not describe the written pixels, and was declared known. Now the slices
+  are placed from the positions the loader delivers in pixel order; a stack that no affine
+  describes (irregular steps, repeated positions, frames with different orientations even if the
+  positions are regular) is written with qform/sform set to 0, and a tilted stack keeps the shear
+  only in the sform, which the qform cannot represent (`qicom/io/geometry.py`).
+- **CI: MIRP gate in the main test job.** The job sets `QICOM_RUN_IBSI_REFERENCE=1` for the
+  PyRadiomics gate but installs neither MIRP nor its cache, and the MIRP test treated it as a
+  failure. The MIRP gate now has a variable of its own, `QICOM_RUN_IBSI_MIRP`, set only in the
+  jobs that prepare it.
+- **DICOM anonymisation: Part 10 container.** The 128-byte preamble and the File Meta group were
+  copied from the original, with `PrivateInformation` and its data, into files declared
+  `PatientIdentityRemoved=YES`. Now the container is rebuilt as PS3.15 requires: preamble zeroed,
+  File Meta with only the elements required by PS3.10, check on the re-read copy
   (`qicom/io/dicom_anonymize.py`).
-- **Anonimizzazione NIfTI: riconoscimento strutturale.** Bastava che i primi quattro byte
-  valessero 348 o 540: un file senza magic, con testo identificativo dopo l'header, era
-  esportato come verificato. Ora magic, dimensioni, datatype, offset dei voxel e completezza del
-  payload devono essere coerenti; tutto ciò che sta tra header e voxel è azzerato e i byte dopo
-  il payload sono eliminati (`qicom/io/nifti_anonymize.py`).
-- **Progetti radiomici: tabelle riaperte diverse da quelle salvate.** Il CSV non conserva i tipi:
-  una ROI di nome `"001"` tornava come l'intero `1`, il testo `"NA"` come valore mancante, e la
-  tabella riaperta non aveva più l'hash registrato nella ricevuta. Ogni tabella è ora salvata
-  anche in JSON tipizzato, che QICOM rilegge valore per valore; il CSV resta per gli altri
-  strumenti. I progetti precedenti si leggono dal CSV tenendo come testo le colonne testuali note
+- **NIfTI anonymisation: structural recognition.** It was enough for the first four bytes to be
+  348 or 540: a file without magic, with identifying text after the header, was exported as
+  verified. Now magic, dimensions, datatype, voxel offset and completeness of the payload must be
+  consistent; everything between header and voxels is zeroed and the bytes after the payload are
+  dropped (`qicom/io/nifti_anonymize.py`).
+- **Radiomics projects: tables reopened different from those saved.** CSV does not keep types: an
+  ROI named `"001"` came back as the integer `1`, the text `"NA"` as a missing value, and the
+  reopened table no longer had the hash recorded in the receipt. Every table is now also saved as
+  typed JSON, which QICOM reads back value by value; the CSV stays for other tools. Previous
+  projects are read from the CSV, keeping the known text columns as text
   (`qicom/radiomics/project.py`).
-- **Coorte radiomica su risultati obsoleti.** L'aggregazione accettava progetti marcati
-  `results_stale` e tabelle che non corrispondevano più alla ricevuta, e ne calcolava la
-  ripetibilità. Ora li rifiuta, con il motivo (`qicom/radiomics/cohort.py`).
-- **RIQE nella CLI e nel batch.** Solo la GUI passava a RIQE l'orientamento letto dal loader: CLI
-  e batch valutavano come assiale uno stack sagittale. Ora lo passano entrambi
-  (`qicom/cli/main.py`, `qicom/batch.py`).
-- **Valutazione qualitativa: il menu File spariva dopo il primo salvataggio.** Il blocco della
-  finestra durante il salvataggio chiedeva a Qt la barra dei menu, che al posto di quella con il
-  logo ne creava una nuova vuota: File, Vista, Strumenti e Aiuto sparivano, e per uscire dalla
-  valutazione restava solo chiudere QICOM. La barra resta ora quella vera, e la voce del menu File
-  che torna all'avvio si chiama «Chiudi e torna all'avvio», con la scorciatoia Ctrl+W
+- **Radiomics cohort on stale results.** Aggregation accepted projects marked `results_stale` and
+  tables that no longer matched the receipt, and computed their repeatability. Now it refuses
+  them, with the reason (`qicom/radiomics/cohort.py`).
+- **RIQE in the CLI and in batch.** Only the GUI passed RIQE the orientation read by the loader:
+  CLI and batch evaluated a sagittal stack as axial. Now both pass it (`qicom/cli/main.py`,
+  `qicom/batch.py`).
+- **Qualitative evaluation: the File menu disappeared after the first save.** Locking the window
+  during saving asked Qt for the menu bar, which instead of the one with the logo created a new
+  empty one: File, View, Tools and Help disappeared, and the only way to leave the evaluation was
+  to close QICOM. The bar now stays the real one, and the File menu item that returns to the start
+  is called "Close and Return to Start", with the shortcut Ctrl+W
   (`qicom/gui/widgets/qualitative_main_window.py`).
-- DICOM compressi in JPEG lossless (Process 14, SV1 e non) e JPEG-LS, il formato della maggior
-  parte degli esami CT e MRI esportati da scanner e PACS: QICOM li rifiutava con «cannot decode
-  with its bundled decoders», perché pydicom e Pillow da soli decodificano solo RLE, JPEG baseline
-  e JPEG 2000. `python-gdcm` è ora una dipendenza di base (lock, attribuzione con le licenze di
-  GDCM e delle librerie che incorpora in `packaging/attribution/notices/python-gdcm.txt`, smoke
-  test del bundle che decodifica un frame). JPEG baseline e JPEG 2000 restano decodificati da
-  Pillow anche se pydicom interpellerebbe prima GDCM, così i pixel dei file che si aprivano già
-  non cambiano; GDCM decodifica solo ciò che Pillow non sa (`qicom/io/dicom_io.py`). Il messaggio
-  per le sintassi ancora non decodificabili (HTJ2K) non suggerisce più di installare GDCM.
-- Risultati quantitativi: la nota «N requested metric outcome(s) require attention» contava anche
-  le metriche che il profilo non aveva selezionato (stato `not-requested`), per cui una corsa con
-  sette metriche tutte calcolate segnalava 30 esiti da controllare. Ora conta solo le metriche
-  richieste e non calcolate, e la nota resta nascosta quando non ce ne sono.
+- DICOM compressed with lossless JPEG (Process 14, SV1 and not) and JPEG-LS, the format of most CT
+  and MRI exams exported from scanners and PACS: QICOM refused them with "cannot decode with its
+  bundled decoders", because pydicom and Pillow on their own decode only RLE, baseline JPEG and
+  JPEG 2000. `python-gdcm` is now a base dependency (locks, attribution with the licences of GDCM
+  and of the libraries it embeds in `packaging/attribution/notices/python-gdcm.txt`, a bundle
+  smoke test that decodes a frame). Baseline JPEG and JPEG 2000 are still decoded by Pillow even
+  though pydicom would ask GDCM first, so the pixels of files that already opened do not change;
+  GDCM decodes only what Pillow cannot (`qicom/io/dicom_io.py`). The message for syntaxes that
+  still cannot be decoded (HTJ2K) no longer suggests installing GDCM.
+- Quantitative results: the note "N requested metric outcome(s) require attention" also counted
+  the metrics that the profile had not selected (status `not-requested`), so a run with seven
+  metrics, all computed, reported 30 outcomes to check. Now it counts only the requested metrics
+  that were not computed, and the note stays hidden when there are none.
 
-- Anonimizzazione DICOM nelle sequenze annidate: `dicom-anonymizer` applica le regole PS3.15 solo
-  al livello radice, così nei multi-frame Enhanced (e in ogni sequenza annidata) restavano date
-  d'acquisizione per frame, UID dello studio sorgente e riferimenti di derivazione, in file
-  dichiarati `PatientIdentityRemoved=YES`. Le regole sono ora applicate a ogni elemento annidato,
-  ogni UID di istanza, data, ora o nome di persona rimasto viene sostituito (in modo coerente
-  all'interno del pacchetto), gli AE title di origine nel File Meta sono rimossi e la copia è
-  verificata contro gli UID e le date dell'originale. I DICOMDIR sono riconosciuti esplicitamente
-  e non vengono anonimizzati (`qicom/io/dicom_anonymize.py`).
-- Anonimizzazione NIfTI incompleta: venivano azzerati solo `descrip` e `aux_file`. Ora sono azzerati
-  anche `intent_name`, `db_name`/`data_type` (NIfTI-1) e `unused_str` (NIfTI-2), le estensioni
-  dell'header (dove i convertitori copiano l'intero header DICOM, un JSON o la storia AFNI) sono
-  rimosse, e un `.nii.gz` è sempre ricompresso senza il nome del file originale né la data
-  nell'header gzip. Un file con suffisso NIfTI che non si riesce a verificare non viene più
-  copiato in silenzio: segue lo stesso flusso dei DICOM non anonimizzabili. Anche il progetto
-  ZIP quantitativo ora ripulisce gli header NIfTI (`qicom/io/nifti_anonymize.py`).
-- Metadati delle bitmap nei pacchetti: il pacchetto di valutazione standard (e il progetto ZIP)
-  copiava JPG e PNG con EXIF, XMP, commenti JPEG e chunk di testo PNG, mentre il dialogo dichiarava
-  anonimizzata "ogni immagine"; solo la consegna in cieco li ripuliva. Ora sono rimossi senza
-  perdita a livello di byte, mantenendo nome, formato e dati compressi del file (resta solo
-  un'eventuale orientazione EXIF non predefinita e il profilo ICC con un nome neutro; i dati
-  accodati dopo la fine dell'immagine sono eliminati) (`qicom/io/bitmap_anonymize.py`).
-- Formula injection negli export CSV: solo gli XLSX e il CSV del CLI neutralizzavano le celle che
-  iniziano con `=`, `+`, `-` o `@`. Ora lo fanno anche l'export CSV dell'aggregazione qualitativa
-  (nomi e commenti scritti dai valutatori, input non fidato), il CSV del pannello Log, i CSV della
-  radiomica, del batch e il tidy CSV. I valori numerici restano numerici; il tidy JSON resta la
-  forma esatta per il round-trip.
-- I NIfTI caricati restavano mappati in memoria sul file sorgente (`nib.load` con `mmap=True`): se
-  una pipeline riscriveva il file, le metriche successive usavano i pixel nuovi mentre display e
-  `data_range` restavano quelli vecchi, e un file troncato nel frattempo faceva terminare QICOM con
-  SIGBUS, senza log. Ora i pixel sono letti in memoria al caricamento (`qicom/io/nifti_io.py`).
-- Provenance: un `qicom/_build_identity.py` rimasto nel checkout dopo una build locale (è
-  gitignored) aveva la precedenza su git anche fuori dal bundle, così ogni risultato calcolato
-  in seguito dal sorgente veniva attribuito al commit di quella build, dichiarato pulito. Ora il
-  modulo generato vale solo nel bundle frozen; dal sorgente si interroga il checkout e il modulo
-  generato è solo un ripiego quando non c'è un repository (`qicom/build_identity.py`).
-- All'avvio il launcher si chiudeva se `recent_projects.json` aveva una forma inattesa (lista,
-  `null`, testo non UTF-8) o se un progetto recente stava in una cartella non più leggibile
-  (`PermissionError`); ora quei casi danno un elenco vuoto o saltano la voce, e il file è scritto
-  con un temporaneo univoco.
-- Diagnostica per slice con "escludi l'aria" o con le ROI: le slice senza tessuto vengono saltate,
-  e `worst_slice`, `outlier_slices` e il pulsante "slice peggiore" indicavano la posizione nella
-  lista accorciata invece della slice del volume (con tre slice iniziali di sola aria, la 6 invece
-  della 9). Ora riportano l'indice della slice nel volume (`StackAggregateResult.slice_indices`).
-  Inoltre una sola slice invariata (PSNR infinito) faceva fallire l'intero calcolo: il riepilogo
-  robusto ora usa le slice con valore finito. Una slice su cui la metrica non è definita (per
-  esempio un riferimento costante nel tessuto) veniva tolta dal valore del volume con l'esito
-  "calcolato" senza alcuna nota: ora l'esito dice su quante slice è stato calcolato e quali sono
-  state escluse. I valori delle metriche non cambiano.
-- Ripresa delle valutazioni in corso: il file locale era indicizzato solo su studio e computer, e
-  tutte le consegne in cieco di uno studio condividono lo studio. Un secondo lettore sulla stessa
-  postazione riprendeva risposte, piano di presentazione e identificativo di invio del primo; un
-  file illeggibile (per esempio scritto da una versione più recente) veniva ignorato e poi
-  sovrascritto al primo clic. Ora il file è indicizzato anche sulla consegna, QICOM chiede se la
-  valutazione trovata è di chi sta rispondendo (No ne inizia una nuova) e un file illeggibile o
-  non ripreso viene conservato a parte, con un avviso nel registro errori.
-- Calculate premuto mentre "Apri progetto" legge l'archivio (l'attesa lascia attiva l'interfaccia)
-  calcolava sulle immagini precedenti e i risultati venivano attribuiti al progetto appena aperto.
-  Ora durante l'apertura il calcolo viene rifiutato con un messaggio, e ogni calcolo partito prima
-  viene invalidato anche a lettura conclusa.
-- Sicurezza degli input e dei download: un file di risposte XLSX (input non fidato) passa ora dal
-  controllo d'inventario degli archivi prima di pandas (400 KB potevano diventare quasi 1 GB in
-  memoria); l'import di un labelmap con molte etichette chiede conferma prima di allocare una
-  maschera per etichetta; il download dei pesi learned rifiuta subito un `Content-Length` diverso
-  dalla dimensione attesa, come già dichiarato in SECURITY.md (il contatore dei byte resta).
-- Documentazione dell'accesso di rete della "Verifica IBSI" (risorse ufficiali IBSI scaricate su
-  richiesta, con SHA-256 e dimensione fissati): About (4 lingue), SECURITY.md e
-  `coverage-floor.json`, dove `ibsi_validation.py` diventa un trust boundary.
-- Consegna in cieco: i DICOM copiati senza modifiche rivelavano il braccio dello studio attraverso
-  produttore, kernel di ricostruzione, protocollo, dose e descrizioni. Ora nella consegna questi
-  attributi sono svuotati (le sequenze di apparecchiature e algoritmi rimosse), i pixel restano
-  invariati; gli header NIfTI sono ripuliti di nuovo, per i pacchetti salvati da versioni
-  precedenti. Il pacchetto dell'autore non cambia.
-- Le schede delle distanze NSS storiche (`brisque`, `niqe`) avvertono che con il modello sintetico
-  predefinito aggiungere rumore può ridurre la distanza (un test lo documenta): non sono misure di
-  rumore. Formula e direzione invariate.
-- GUI e CLI avvisano quando il `data_range` supera di oltre 8 volte lo span dei valori delle
-  immagini (tipico delle TC a 16 bit, dove SSIM e PSNR quasi non rispondono alle differenze). Il
-  valore predefinito non cambia.
-- Ricevute batch: un input mancante riceveva come "hash" lo SHA-256 del testo del suo percorso,
-  come se fosse stato letto; ora è registrato con il prefisso `missing:`. I percorsi (pacchetto,
-  risposte, mappe, progetti, cartella di output) stanno sotto `configuration.locations`, escluso
-  dal `configuration_hash`, e il `result_hash` della coorte non include più la colonna
-  `project_path`: lo stesso calcolo eseguito da un'altra cartella o macchina ha gli stessi hash.
-  Le ricevute esistenti restano leggibili e invariate.
-- Scritture persistenti: i temporanei avevano un nome fisso (`.<nome>.tmp`), quindi due finestre che
-  salvavano lo stesso file scrivevano nello stesso temporaneo (archivio corrotto riportato come
-  salvato) e un link simbolico piazzato con quel nome veniva seguito. Ora ogni scrittura usa un
-  temporaneo univoco e non prevedibile, i dati sono sincronizzati su disco prima della
-  rinomina e, su POSIX, anche la directory (`qicom/atomic_files.py`, usato da progetti,
-  valutazioni, risposte, identità del valutatore, mappe di de-blinding, tidy, workbook, progetti
-  radiomici, labelmap e verifica IBSI).
-- Persistenza: preferenze illeggibili (danneggiate o di una versione più recente) venivano
-  sovrascritte con i valori predefiniti alla prima modifica; ora il file viene conservato a parte
-  prima del salvataggio. Una cache NSS troncata bloccava per sempre le distanze NSS; ora è scritta
-  in modo atomico e una cache illeggibile viene ricalcolata. Le tabelle dei progetti radiomici sono
-  rilette in modo esatto (`float_precision="round_trip"`): prima un valore su tre tornava diverso
-  di qualche ULP e la tabella riaperta non corrispondeva al `result_hash` della sua ricevuta.
-- Il progetto ZIP quantitativo non conservava ricevuta ed esiti delle metriche (viaggiano come
-  attributi del DataFrame, persi nel manifest): riaperto altrove, esportava i numeri senza revisione
-  di build, hash degli input, configurazione ed esiti. Ora il manifest ha il campo opzionale
-  `calculation_records`, letto con default per i progetti precedenti (formato invariato, v1).
-- Bundle demo: `qicom_demo.json` elenca in `run_specific_files` i file che registrano il momento
-  della propria generazione; la procedura di confronto documentata vale per tutti gli altri.
-- File danneggiati: un archivio troncato o con membri corrotti sollevava `BadZipFile`, e un manifest
-  con campi del tipo sbagliato `TypeError`/`AttributeError`, che la GUI non gestiva: aperti dal
-  launcher chiudevano QICOM senza messaggi. Ora sono errori di input con un messaggio, e il launcher
-  torna alla scelta del flusso se l'apertura fallisce per qualunque motivo. Un database di sessione
-  illeggibile viene conservato a parte (con i file `-wal`/`-shm`) e sostituito da uno nuovo, con un
-  avviso nel registro errori; il database ha ora una versione (`PRAGMA user_version`) e uno scritto
-  da una versione più recente viene rifiutato invece di essere usato alla cieca.
-- RAM e CPU disponibili: su Linux la "RAM disponibile" era `MemFree` (senza la cache di pagina
-  recuperabile: avvisi di memoria spuri e profilo `constrained` immotivato); su macOS era
-  sconosciuta, quindi il controllo prima di caricare un volume non scattava mai. Ora QICOM usa
-  `MemAvailable` (con il limite cgroup nei container) e `vm_stat` su macOS; il numero di CPU
-  rispetta l'affinità del processo.
-- Ogni errore mostrato dall'interfaccia comincia con una frase tradotta su cosa non è riuscito
-  ("Impossibile aprire il progetto."), seguita dal dettaglio tecnico. Sono tradotti alla fonte, nelle
-  quattro lingue, i motivi di rifiuto dell'anonimizzazione, i rifiuti degli archivi non sicuri e i
-  messaggi sui file immagine illeggibili o non supportati; gli altri dettagli tecnici restano in
-  inglese, sotto la frase tradotta.
-- L'adattamento di un modello NSS locale mostra l'avanzamento per file e si può annullare.
-- Interfaccia: il pannello di configurazione radiomica segue il cambio di lingua (i suoi 43 testi
-  restavano nella lingua di apertura) e non ha più etichette fisse in inglese; i filtri dei file, i
-  nomi delle metriche in heatmap, ROI e grafici, il passo di estrazione e altre stringhe visibili
-  sono tradotti; la ricerca delle metriche trova anche il nome tradotto; il seme del region growing
-  mostra la sua intensità; otto chiavi di traduzione inutilizzate sono state rimosse.
-- Le descrizioni inglesi di BRISQUE, NIQE, NIQE/BRISQUE canonici ed EPI venivano da copie in
-  `en.json` divergenti dalle schede YAML, che sono la fonte del testo inglese: le copie sono state
-  rimosse.
-- L'adattamento di un modello NSS locale avviene fuori dal thread dell'interfaccia; un range dei
-  dati non valido è segnalato nella lingua dell'utente e ogni errore è mostrato invece di
-  sfuggire al dialogo.
-- Un file di identità del valutatore danneggiato (o di forma sbagliata, come `[]`) produceva un
-  nuovo id, e ogni risposta salvata su quella postazione restava orfana; `[]` sollevava
-  AttributeError. Ora il file viene messo da parte e, se le risposte salvate concordano su un id,
-  quell'id viene ripreso.
-- Una delivery in cieco veniva scritta prima della sua mappa di de-blinding: se la mappa falliva,
-  restava una delivery che nessuno poteva più de-blindare. Ora la mappa viene confermata per prima.
-- Una ricevuta con un identificativo con spazi (`" S1 "`) cambiava hash al ricaricamento, e
-  `source_dirty: "false"` diventava `True`. Gli identificativi sono ora ripuliti alla costruzione
-  e il flag deve essere un booleano.
-- Con due coppie in parallelo il limite di un thread nativo valeva per OpenBLAS ma non per i pool
-  OpenMP avviati dai worker, che lavoravano a piena larghezza ciascuno: ora il limite è applicato
-  dentro ogni worker.
-- La preparazione radiomica con normalizzazione "none" (il default) faceva due copie float64
-  inutili del volume.
-- La finestra radiomica non riceveva le eccezioni sfuggite a uno slot, che finivano solo nel log:
-  ora compaiono nella barra di stato e nel bug report, insieme agli errori mostrati.
-- I manifest dei progetti quantitativi e delle valutazioni sono JSON valido (RFC 8259): i numeri non
-  finiti (una deviazione standard NaN, il PSNR +inf di immagini identiche) uscivano come token
-  `NaN`/`Infinity`, rifiutati dai lettori rigorosi. Il progetto quantitativo passa al formato 2
-  (`{"$float": "Infinity"}`); il formato 1 resta leggibile.
-- I numeri di versione dei formati persistiti sono accettati solo come interi esatti: `true`, `3.0`,
-  `"3"` o `3.7` passavano il controllo (`qicom.schema_version`).
-- Una riesecuzione batch fallita lasciava i risultati della run precedente accanto a una ricevuta e
-  un log nuovi e vuoti; ora ogni run rimuove i file scritti dalla precedente
-  (`qicom_batch_outputs.json`) e nessun altro.
-- Un progetto radiomico risalvato riceveva ogni volta un nuovo `created_at`.
-- Il database di trending controlla la versione prima di creare tabelle e verifica l'hash di una
-  baseline al caricamento (colonna additiva `canonical_json`).
-- `hash_array` copiava l'intero array a ogni blocco quando non era contiguo (1,3 s invece di
-  0,05 s su un volume 5000×5000 trasposto); l'hash è identico.
-- Un'immagine più piccola della patch NSS veniva registrata come calcolo fallito (`failed`); ora è
-  un input non valido, come ogni altra immagine troppo piccola per la finestra di una metrica.
-- `qicom.runtime` dichiara che con due coppie in parallelo gli ultimi bit di BRISQUE, NIQE, NIQE
-  canonico e RIQE, e quindi il `result_hash`, possono differire da un'esecuzione con una coppia
-  sola: i valori coincidono alla precisione dichiarata.
-- I nomi di membro duplicati, o uguali a meno di maiuscole, normalizzazione Unicode e punti o spazi
-  finali, fanno rifiutare un archivio: su NTFS/APFS una slice sovrascriveva in silenzio l'altra.
-  Su Windows sono rifiutati anche i nomi di dispositivo (`CON`, `LPT1`…) e i caratteri non ammessi.
-- La verifica SHA-256 di un checkpoint learned restava in cache per tutta la sessione: un file
-  sostituito dopo il primo caricamento veniva ricaricato senza controllo. Ora l'hash è verificato
-  a ogni caricamento.
-- Il filtro dei file del dialogo del modello NSS locale mostrava la chiave di traduzione
-  `file_filter.images` invece di un filtro, e non selezionava nessun file. Un test verifica ora che
-  ogni chiave letterale passata alla traduzione esista.
-- Il pannello Log rileggeva l'intero file (fino a 5 MB) nel thread dell'interfaccia ogni 2 secondi,
-  anche nascosto, e un carattere UTF-8 troncato da una chiusura non pulita faceva uscire
-  un'eccezione dal timer. Ora legge solo le righe aggiunte, solo mentre è visibile, e tollera righe
-  troncate o illeggibili.
-- Esc o la chiusura del dialogo di download dei pesi learned bloccavano l'applicazione fino a 60 s
-  con una connessione ferma. Ora il dialogo si chiude subito e il trasferimento si ferma al blocco
-  successivo, senza attese nel thread dell'interfaccia.
-- L'estrazione radiomica e l'aggregazione di coorte si possono annullare: il dialogo di avanzamento
-  non aveva un pulsante Annulla e un'estrazione multi-ROI di molti minuti si interrompeva solo
-  chiudendo QICOM. L'annullamento ha effetto al confine successivo (tra ROI, o tra immagine di
-  riferimento e di confronto) e lascia invariati i risultati precedenti.
-- Memoria al Calculate: alcune metriche raggiungono picchi di 14-40 volte un'immagine (Wasserstein-1,
-  NMI, SSIM 3D), raddoppiati da due coppie in parallelo, e un `MemoryError` annullava l'intero
-  calcolo. Ora un `MemoryError` è l'esito della sola metrica che l'ha provocato, QICOM avvisa
-  quando la stima del picco supera la RAM disponibile e calcola le coppie una alla volta quando due
-  in parallelo non ci starebbero (`qicom.memory.estimate_calculation_peak_bytes`).
-- I motivi di un rifiuto dell'anonimizzazione non citano più il valore identificativo rimasto
-  (prima "first: 'Cognome^Nome'"): nominano solo gli attributi, perché finiscono nel registro
-  errori e nei report da inviare. Per lo stesso motivo il messaggio "più serie DICOM trovate" non
-  cita più la descrizione libera delle serie (resta visibile solo nella scelta della serie).
+- DICOM anonymisation in nested sequences: `dicom-anonymizer` applies the PS3.15 rules only at
+  the root level, so in Enhanced multi-frames (and in every nested sequence) per-frame acquisition
+  dates, source-study UIDs and derivation references remained, in files declared
+  `PatientIdentityRemoved=YES`. The rules are now applied to every nested element, every remaining
+  instance UID, date, time or person name is replaced (consistently within the package), the
+  source AE titles in the File Meta are removed and the copy is checked against the UIDs and dates
+  of the original. DICOMDIRs are recognised explicitly and are not anonymised
+  (`qicom/io/dicom_anonymize.py`).
+- Incomplete NIfTI anonymisation: only `descrip` and `aux_file` were zeroed. Now `intent_name`,
+  `db_name`/`data_type` (NIfTI-1) and `unused_str` (NIfTI-2) are zeroed too, the header extensions
+  (where converters copy the whole DICOM header, a JSON or the AFNI history) are removed, and a
+  `.nii.gz` is always recompressed without the original file name or the date in the gzip header.
+  A file with a NIfTI suffix that cannot be verified is no longer copied silently: it follows the
+  same flow as DICOM files that cannot be anonymised. The quantitative ZIP project now also cleans
+  NIfTI headers (`qicom/io/nifti_anonymize.py`).
+- Bitmap metadata in packages: the standard evaluation package (and the ZIP project) copied JPG
+  and PNG files with EXIF, XMP, JPEG comments and PNG text chunks, while the dialog declared
+  "every image" anonymised; only the blinded delivery cleaned them. Now they are removed losslessly
+  at byte level, keeping the file's name, format and compressed data (only a non-default EXIF
+  orientation, if any, and the ICC profile with a neutral name remain; data appended after the end
+  of the image is dropped) (`qicom/io/bitmap_anonymize.py`).
+- Formula injection in CSV exports: only the XLSX files and the CLI's CSV neutralised cells
+  starting with `=`, `+`, `-` or `@`. Now so do the CSV export of the qualitative aggregation
+  (names and comments written by evaluators, untrusted input), the CSV of the Log panel, and the
+  CSVs of radiomics, of batch and the tidy CSV. Numeric values stay numeric; the tidy JSON remains
+  the exact form for the round trip.
+- Loaded NIfTI files stayed memory-mapped onto the source file (`nib.load` with `mmap=True`): if a
+  pipeline rewrote the file, the following metrics used the new pixels while display and
+  `data_range` stayed the old ones, and a file truncated in the meantime made QICOM terminate with
+  SIGBUS, without a log. Now the pixels are read into memory on loading (`qicom/io/nifti_io.py`).
+- Provenance: a `qicom/_build_identity.py` left in the checkout after a local build (it is
+  gitignored) took precedence over git even outside the bundle, so every result computed
+  afterwards from source was attributed to the commit of that build, declared clean. Now the
+  generated module applies only in the frozen bundle; from source the checkout is queried, and the
+  generated module is only a fallback when there is no repository (`qicom/build_identity.py`).
+- At startup the launcher closed if `recent_projects.json` had an unexpected shape (a list,
+  `null`, non-UTF-8 text) or if a recent project was in a folder that was no longer readable
+  (`PermissionError`); now those cases give an empty list or skip the entry, and the file is
+  written with a unique temporary file.
+- Per-slice diagnostics with "exclude the air" or with ROIs: slices without tissue are skipped,
+  and `worst_slice`, `outlier_slices` and the "worst slice" button indicated the position in the
+  shortened list instead of the volume slice (with three initial slices of air only, 6 instead of
+  9). Now they report the index of the slice in the volume (`StackAggregateResult.slice_indices`).
+  In addition, a single unchanged slice (infinite PSNR) made the whole calculation fail: the robust
+  summary now uses the slices with a finite value. A slice on which the metric is not defined (for
+  example a constant reference in the tissue) was dropped from the volume value with the outcome
+  "computed" and no note at all: now the outcome says on how many slices it was computed and which
+  ones were excluded. The metric values do not change.
+- Resuming evaluations in progress: the local file was keyed only on study and computer, and all
+  the blinded deliveries of a study share the study. A second reader on the same workstation
+  resumed the first one's answers, presentation plan and submission identifier; an unreadable file
+  (for example written by a newer version) was ignored and then overwritten at the first click.
+  Now the file is also keyed on the delivery, QICOM asks whether the evaluation found belongs to
+  whoever is answering (No starts a new one), and an unreadable or not-resumed file is kept
+  aside, with a warning in the error log.
+- Calculate pressed while "Open Project" reads the archive (the wait leaves the interface active)
+  computed on the previous images, and the results were attributed to the project just opened.
+  Now the calculation is refused with a message during opening, and every calculation started
+  earlier is invalidated even once reading has finished.
+- Security of inputs and downloads: an XLSX answer file (untrusted input) now goes through the
+  archive inventory check before pandas (400 KB could become almost 1 GB in memory); importing a
+  label map with many labels asks for confirmation before allocating one mask per label; the
+  download of the learned weights immediately refuses a `Content-Length` different from the
+  expected size, as already declared in SECURITY.md (the byte counter stays).
+- Documentation of the network access of the IBSI verification (official IBSI resources
+  downloaded on request, with SHA-256 and size pinned): About (4 languages), SECURITY.md and
+  `coverage-floor.json`, where `ibsi_validation.py` becomes a trust boundary.
+- Blinded delivery: DICOM files copied without changes revealed the study arm through
+  manufacturer, reconstruction kernel, protocol, dose and descriptions. Now in the delivery these
+  attributes are blanked (the equipment and algorithm sequences removed), the pixels stay
+  unchanged; NIfTI headers are cleaned again, for packages saved by previous versions. The
+  author's package does not change.
+- The cards of the historical NSS distances (`brisque`, `niqe`) warn that with the default
+  synthetic model adding noise can reduce the distance (a test documents it): they are not noise
+  measures. Formula and direction unchanged.
+- GUI and CLI warn when the `data_range` exceeds the span of the image values by more than 8 times
+  (typical of 16-bit CT, where SSIM and PSNR hardly respond to differences). The default value
+  does not change.
+- Batch receipts: a missing input received as its "hash" the SHA-256 of the text of its path, as
+  if it had been read; now it is recorded with the `missing:` prefix. The paths (package, answers,
+  maps, projects, output folder) are under `configuration.locations`, excluded from the
+  `configuration_hash`, and the cohort's `result_hash` no longer includes the `project_path`
+  column: the same calculation run from another folder or machine has the same hashes. Existing
+  receipts remain readable and unchanged.
+- Persistent writes: temporary files had a fixed name (`.<name>.tmp`), so two windows saving the
+  same file wrote into the same temporary file (a corrupt archive reported as saved) and a
+  symbolic link planted with that name was followed. Now every write uses a unique, unpredictable
+  temporary file, the data is synced to disk before the rename and, on POSIX, so is the directory
+  (`qicom/atomic_files.py`, used by projects, evaluations, answers, evaluator identity,
+  de-blinding maps, tidy outputs, workbooks, radiomics projects, label maps and IBSI
+  verification).
+- Persistence: unreadable preferences (damaged or from a newer version) were overwritten with the
+  default values at the first change; now the file is kept aside before saving. A truncated NSS
+  cache blocked the NSS distances for good; now it is written atomically and an unreadable cache
+  is recomputed. Radiomics project tables are read back exactly (`float_precision="round_trip"`):
+  previously one value in three came back a few ULPs off and the reopened table did not match the
+  `result_hash` of its receipt.
+- The quantitative ZIP project did not keep the receipt and the metric outcomes (they travel as
+  DataFrame attributes, lost in the manifest): reopened elsewhere, it exported the numbers without
+  build revision, input hashes, configuration and outcomes. Now the manifest has the optional field
+  `calculation_records`, read with a default for previous projects (format unchanged, v1).
+- Demo bundle: `qicom_demo.json` lists in `run_specific_files` the files that record the moment
+  of their own generation; the documented comparison procedure applies to all the others.
+- Damaged files: a truncated archive or one with corrupt members raised `BadZipFile`, and a
+  manifest with fields of the wrong type `TypeError`/`AttributeError`, which the GUI did not
+  handle: opened from the launcher, they closed QICOM without any message. Now they are input
+  errors with a message, and the launcher returns to the choice of workflow if opening fails for
+  any reason. An unreadable session database is kept aside (with its `-wal`/`-shm` files) and
+  replaced by a new one, with a warning in the error log; the database now has a version
+  (`PRAGMA user_version`) and one written by a newer version is refused instead of being used
+  blindly.
+- Available RAM and CPU: on Linux the "available RAM" was `MemFree` (without the reclaimable page
+  cache: spurious memory warnings and an unwarranted `constrained` profile); on macOS it was
+  unknown, so the check before loading a volume never triggered. Now QICOM uses `MemAvailable`
+  (with the cgroup limit in containers) and `vm_stat` on macOS; the CPU count respects the
+  process affinity.
+- Every error shown by the interface starts with a translated sentence on what failed ("The
+  project could not be opened."), followed by the technical detail. The reasons for anonymisation
+  refusals, the refusals of unsafe archives and the messages about unreadable or unsupported image
+  files are translated at the source, in the four languages; the other technical details stay in
+  English, below the translated sentence.
+- Fitting a local NSS model shows per-file progress and can be cancelled.
+- Interface: the radiomics configuration panel follows language changes (its 43 texts stayed in
+  the language at opening) and no longer has fixed English labels; the file filters, the metric
+  names in heatmaps, ROIs and charts, the extraction step and other visible strings are
+  translated; the metric search also finds the translated name; the region-growing seed shows its
+  intensity; eight unused translation keys were removed.
+- The English descriptions of BRISQUE, NIQE, canonical NIQE/BRISQUE and EPI came from copies in
+  `en.json` that diverged from the YAML cards, which are the source of the English text: the
+  copies were removed.
+- Fitting a local NSS model happens off the interface thread; an invalid data range is reported
+  in the user's language and every error is shown instead of escaping the dialog.
+- A damaged evaluator identity file (or one of the wrong shape, such as `[]`) produced a new id,
+  and every answer saved on that workstation was left orphaned; `[]` raised AttributeError. Now
+  the file is set aside and, if the saved answers agree on an id, that id is taken up again.
+- A blinded delivery was written before its de-blinding map: if the map failed, a delivery
+  remained that nobody could de-blind any more. Now the map is committed first.
+- A receipt with an identifier containing spaces (`" S1 "`) changed its hash on reloading, and
+  `source_dirty: "false"` became `True`. Identifiers are now cleaned at construction and the flag
+  must be a boolean.
+- With two pairs in parallel the limit of one native thread applied to OpenBLAS but not to the
+  OpenMP pools started by the workers, which each worked at full width: now the limit is applied
+  inside every worker.
+- Radiomics preparation with normalisation "none" (the default) made two useless float64 copies of
+  the volume.
+- The radiomics window did not receive exceptions escaping a slot, which ended up only in the log:
+  now they appear in the status bar and in the bug report, together with the errors shown.
+- The manifests of quantitative projects and evaluations are valid JSON (RFC 8259): non-finite
+  numbers (a NaN standard deviation, the +inf PSNR of identical images) came out as `NaN`/`Infinity`
+  tokens, refused by strict readers. The quantitative project moves to format 2
+  (`{"$float": "Infinity"}`); format 1 remains readable.
+- The version numbers of persisted formats are accepted only as exact integers: `true`, `3.0`,
+  `"3"` or `3.7` passed the check (`qicom.schema_version`).
+- A failed batch re-run left the results of the previous run next to a new, empty receipt and log;
+  now every run removes the files written by the previous one (`qicom_batch_outputs.json`) and no
+  others.
+- A re-saved radiomics project received a new `created_at` every time.
+- The trending database checks the version before creating tables and verifies the hash of a
+  baseline on loading (additive column `canonical_json`).
+- `hash_array` copied the whole array at every block when it was not contiguous (1.3 s instead of
+  0.05 s on a transposed 5000×5000 volume); the hash is identical.
+- An image smaller than the NSS patch was recorded as a failed calculation (`failed`); now it is an
+  invalid input, like any other image too small for a metric's window.
+- `qicom.runtime` declares that with two pairs in parallel the last bits of BRISQUE, NIQE,
+  canonical NIQE and RIQE, and therefore the `result_hash`, can differ from a run with a single
+  pair: the values match at the declared precision.
+- Member names that are duplicates, or identical up to case, Unicode normalisation and trailing
+  dots or spaces, make an archive be refused: on NTFS/APFS one slice silently overwrote the other.
+  On Windows, device names (`CON`, `LPT1`…) and disallowed characters are refused too.
+- The SHA-256 verification of a learned checkpoint stayed cached for the whole session: a file
+  replaced after the first load was reloaded without a check. Now the hash is verified at every
+  load.
+- The file filter of the local NSS model dialog showed the translation key `file_filter.images`
+  instead of a filter, and selected no file. A test now checks that every literal key passed to the
+  translation exists.
+- The Log panel re-read the whole file (up to 5 MB) on the interface thread every 2 seconds, even
+  when hidden, and a UTF-8 character truncated by an unclean shutdown let an exception escape from
+  the timer. Now it reads only the added lines, only while it is visible, and tolerates truncated or
+  unreadable lines.
+- Esc or closing the learned weights download dialog blocked the application for up to 60 s with a
+  stalled connection. Now the dialog closes at once and the transfer stops at the next block,
+  without waits on the interface thread.
+- Radiomics extraction and cohort aggregation can be cancelled: the progress dialog had no Cancel
+  button and a multi-ROI extraction lasting many minutes could only be interrupted by closing
+  QICOM. Cancellation takes effect at the next boundary (between ROIs, or between reference and
+  comparison image) and leaves the previous results unchanged.
+- Memory at Calculate: some metrics reach peaks of 14-40 times an image (Wasserstein-1, NMI, 3D
+  SSIM), doubled by two pairs in parallel, and a `MemoryError` cancelled the whole calculation. Now
+  a `MemoryError` is the outcome of only the metric that caused it, QICOM warns when the estimated
+  peak exceeds the available RAM, and it computes the pairs one at a time when two in parallel
+  would not fit (`qicom.memory.estimate_calculation_peak_bytes`).
+- The reasons for an anonymisation refusal no longer quote the identifying value left behind
+  (previously "first: 'Surname^Name'"): they name only the attributes, because they end up in the
+  error log and in the reports to be sent. For the same reason the "several DICOM series found"
+  message no longer quotes the free-text description of the series (it stays visible only in the
+  series choice).
 
 - The coverage gate now computes statement coverage from line counters instead of labeling
   the combined line/branch percentage as statement coverage. Recorded floors are unchanged.
@@ -1021,70 +1012,68 @@ empty between that version and yours, re-run the analysis before comparing.
 - Hidden-repeat schedules guarantee the requested number of intervening pages or reject an
   impossible design. Tail cases no longer silently shorten the requested spacing.
 
-- **I test delle metriche learned tornano a trovare i pesi in CI.** Il profilo
-  utente usa e getta che ogni test riceve reindirizza anche `TORCH_HOME`, e da
-  quel momento nascondeva i checkpoint che il job CI scarica prima della suite
-  con `packaging/prepare_learned_weights.py`: LPIPS e DISTS rifiutano di
-  calcolare senza pesi verificati e non li scaricano mai durante un'analisi,
-  quindi fallivano a ogni push. Su una macchina senza l'extra `learned` gli
-  stessi test si saltano, perciò il guasto era invisibile in locale.
-  `tests/conftest.py` ora collega i pesi già scaricati dentro il profilo
-  temporaneo — le letture raggiungono i file reali, le scritture restano
-  confinate — e `TestPreparedLearnedCheckpointsStayReachable` presidia
-  l'invariante. Nessuna modifica al comportamento dell'applicazione né ai
-  valori delle metriche.
+- **The learned-metric tests find the weights in CI again.** The throwaway user
+  profile that every test receives also redirects `TORCH_HOME`, and from that
+  point on it hid the checkpoints that the CI job downloads before the suite
+  with `packaging/prepare_learned_weights.py`: LPIPS and DISTS refuse to
+  compute without verified weights and never download them during an analysis,
+  so they failed at every push. On a machine without the `learned` extra the
+  same tests are skipped, which is why the failure was invisible locally.
+  `tests/conftest.py` now links the already downloaded weights into the
+  temporary profile — reads reach the real files, writes stay confined — and
+  `TestPreparedLearnedCheckpointsStayReachable` guards the invariant. No change
+  to the application's behaviour or to the metric values.
 
-- **Le build desktop per macOS e Windows tornano a completarsi.** Tre difetti
-  indipendenti, tutti nel workflow di packaging e nessuno nell'applicazione:
-  `pip-audit` veniva installato *dentro* l'ambiente che PyInstaller poi
-  congelava, così le sue undici dipendenze (`requests`, `rich`, `certifi`,
-  `urllib3`, …) finivano nel bundle e la verifica dell'inventario licenze lo
-  rifiutava; l'indice CPU di PyTorch, che sostituisce PyPI anziché
-  affiancarlo, risolveva `setuptools` a 78.1.0 (PYSEC-2025-49,
-  PYSEC-2026-3447) facendo fallire l'audit su Windows e Linux; e `setuptools`,
-  che PyInstaller impacchetta davvero perché `torch.utils.cpp_extension` lo
-  importa, era escluso dall'inventario come se fosse un semplice installer.
-  L'auditor ora vive in un ambiente separato e legge quello di build con
-  `--path`, `setuptools` è inventariato con la sua licenza MIT e quelle dei
-  pacchetti che vendorizza, e il nome derivato dalla directory
-  `python3.<minor>/` non viene più scambiato per una distribuzione.
+- **The desktop builds for macOS and Windows complete again.** Three
+  independent defects, all in the packaging workflow and none in the
+  application: `pip-audit` was installed *inside* the environment that
+  PyInstaller then froze, so its eleven dependencies (`requests`, `rich`,
+  `certifi`, `urllib3`, …) ended up in the bundle and the licence inventory
+  check refused it; the PyTorch CPU index, which replaces PyPI instead of
+  sitting beside it, resolved `setuptools` to 78.1.0 (PYSEC-2025-49,
+  PYSEC-2026-3447), making the audit fail on Windows and Linux; and
+  `setuptools`, which PyInstaller really packages because
+  `torch.utils.cpp_extension` imports it, was excluded from the inventory as if
+  it were a mere installer. The auditor now lives in a separate environment and
+  reads the build one with `--path`, `setuptools` is inventoried with its MIT
+  licence and those of the packages it vendors, and the name derived from the
+  `python3.<minor>/` directory is no longer mistaken for a distribution.
 
-- **Le build con le metriche learned tornano a completarsi.** Altri due
-  difetti indipendenti, di nuovo entrambi nel packaging e nessuno
-  nell'applicazione. `torchvision` carica i suoi operatori compilati con
-  `torch.ops.load_library`, su un percorso costruito da
-  `torchvision.__file__`: un'indirezione che nessuna analisi statica può
-  seguire, e che l'hook distribuito con PyInstaller compensa nominando
-  `torchvision._C` — un nome che upstream non usa più, sostituito da
-  `_C_stable` (e da `image_stable` per `torchvision.io`). Non veniva quindi
-  raccolta alcuna libreria, e nel bundle `import torchvision` moriva con
-  `operator torchvision::nms does not exist`, perché `_meta_registrations`
-  registra incondizionatamente un kernel fake per quell'operatore: lo smoke
-  test frozen falliva su ogni build learned, macOS compreso.
-  `packaging/qicom.spec` ora raccoglie le librerie compilate che il
-  `torchvision` installato spedisce davvero — per forma e non per nome, così
-  che la prossima rinomina non possa ripetere il guasto in silenzio — e
-  rifiuta di costruire un bundle learned se non ne trova nessuna. Il secondo
-  difetto è il tetto `packaging<26` dell'extra `packaging`, che teneva quella
-  distribuzione a 25.0: `pip check` esamina l'intero ambiente e non solo ciò
-  che QICOM spedisce, e si rompeva sul `pipx` preinstallato sul runner
-  Windows, che richiede `>=26`. Il tetto sale a `<27`.
+- **The builds with the learned metrics complete again.** Two more
+  independent defects, again both in packaging and none in the application.
+  `torchvision` loads its compiled operators with `torch.ops.load_library`, on
+  a path built from `torchvision.__file__`: an indirection that no static
+  analysis can follow, and which the hook shipped with PyInstaller compensates
+  for by naming `torchvision._C` — a name upstream no longer uses, replaced by
+  `_C_stable` (and by `image_stable` for `torchvision.io`). So no library was
+  collected, and in the bundle `import torchvision` died with
+  `operator torchvision::nms does not exist`, because `_meta_registrations`
+  unconditionally registers a fake kernel for that operator: the frozen smoke
+  test failed on every learned build, macOS included.
+  `packaging/qicom.spec` now collects the compiled libraries that the
+  installed `torchvision` actually ships — by shape and not by name, so that
+  the next rename cannot silently repeat the failure — and refuses to build a
+  learned bundle if it finds none. The second defect is the `packaging<26` cap
+  of the `packaging` extra, which held that distribution at 25.0: `pip check`
+  examines the whole environment and not only what QICOM ships, and it broke
+  on the `pipx` preinstalled on the Windows runner, which requires `>=26`. The
+  cap rises to `<27`.
 
-- **LPIPS ritrova i propri pesi lineari dentro il bundle.** Superato il
-  guasto di `torchvision`, il passo che verifica la preparazione esplicita
-  dei checkpoint incontrava il difetto successivo: `lpips` individua i pesi
-  che spedisce nel proprio pacchetto con `inspect.getfile(self.__init__)`,
-  cioè dal nome di file del code object, che per un modulo servito
-  dall'archivio PYZ è il percorso relativo registrato in fase di build.
-  `os.path.abspath` lo risolveva quindi rispetto alla directory di lavoro e
-  LPIPS moriva con `FileNotFoundError` su
-  `<cwd>/lpips/weights/v0.1/alex.pth`: i pesi erano raccolti correttamente,
-  li si cercava altrove. `lpips` viene ora raccolto come sorgente su disco,
-  così l'import lo registra con un percorso assoluto. Poiché un modulo
-  raccolto in questo modo non compare in `a.pure`, l'inventario dei moduli
-  che alimenta `attribution.py check-bundle` rileggeva un pacchetto in meno e
-  avrebbe smesso di verificarne la licenza in silenzio: ora legge anche i
-  sorgenti raccolti come dati. Nessuna modifica ai valori delle metriche.
+- **LPIPS finds its own linear weights inside the bundle again.** Once the
+  `torchvision` failure was overcome, the step that checks the explicit
+  preparation of the checkpoints hit the next defect: `lpips` locates the
+  weights it ships in its own package with `inspect.getfile(self.__init__)`,
+  that is from the file name of the code object, which for a module served
+  from the PYZ archive is the relative path recorded at build time.
+  `os.path.abspath` therefore resolved it against the working directory and
+  LPIPS died with `FileNotFoundError` on
+  `<cwd>/lpips/weights/v0.1/alex.pth`: the weights were collected correctly,
+  they were being looked for elsewhere. `lpips` is now collected as source on
+  disk, so the import registers it with an absolute path. Since a module
+  collected this way does not appear in `a.pure`, the module inventory that
+  feeds `attribution.py check-bundle` read back one package fewer and would
+  have silently stopped checking its licence: now it also reads the sources
+  collected as data. No change to the metric values.
 
 - Adding the green air sample in the Background step no longer jumps the
   window to the Analyze step: creating the circle is the first of that step's
@@ -1093,212 +1082,210 @@ empty between that version and yours, re-run the analysis before comparing.
 
 #### Release readiness
 
-- **Dipendenze bloccate con hash.** Ogni bundle si installa dal lock del proprio profilo e della
-  propria piattaforma (`requirements/lock/`, 12 file generati da `packaging/generate_locks.py`), con
-  `pip --require-hashes`: due build dello stesso tag spediscono gli stessi file, e una release
-  compromessa che rientra in un intervallo di versioni non entra nel bundle. Anche il gate IBSI usa
-  il lock del bundle Linux. PyRadiomics, che pip non può verificare per hash, resta fissato al
-  commit Git. `--check` nel gate statico tiene i lock coerenti con `pyproject.toml`.
-- **Release e SBOM.** Un tag crea una GitHub Release in bozza con bundle, checksum SHA-256 e SBOM
-  CycloneDX di ogni piattaforma, e le note della sezione del CHANGELOG; la pubblicazione resta una
-  decisione del maintainer.
-- **Build e attribuzioni.** NOTICE e il dialogo About indicavano `packaging/...`, un percorso che in
-  un bundle non esiste: ora nominano i file dove si trovano davvero. Il wheel ridistribuisce il
-  modello RIQE (CC BY 4.0) insieme alla sua attribuzione (`qicom/metrics/models/RIQE-MODEL.txt`).
-  `metric_inventory.csv`, spedito nel bundle, non rimanda più a `paper/`, che non è distribuito.
-  Le build dei tag non ripristinano la cache pip e ne conservano gli artefatti 90 giorni invece
-  di 7. Una build locale avvisa che non è verificata quando usa la copia di riferimento delle
-  licenze, ed esclude MIRP e ITK, che nessun profilo del bundle include.
-- **Reference set IBSI nel bundle `full`.** `qicom/radiomics/reference_sets` era nel wheel ma non
-  nella spec PyInstaller: un'applicazione congelata non poteva eseguire nessuna verifica IBSI. Un
-  test confronta ora package-data e spec, e lo smoke frozen carica ogni manifest e il modello RIQE.
-- **Gate "numerical results" non aggirabile.** Una voce sotto un sottotitolo `####`, un elenco con
-  `*`, `+` o numerato, o il titolo in maiuscolo sfuggivano a `check_release_consistency.py`, e una
-  versione stabile poteva uscire con modifiche ai numeri non dichiarate.
-- **Ambiente di build.** setuptools, che finisce nel bundle, ha ora un tetto (`<85`) e le ricevute
-  registrano le versioni di PyRadiomics, PyWavelets e torch (campo `backend_versions`, additivo).
-  le release si installano ora da lock con hash (voce seguente).
-- **Conformità IBSI di MIRP verificata in CI.** Il test dei sei manifest MIRP (2104 righe) saltava
-  sempre: nessun job installava MIRP né preparava la cache delle risorse. Ora un job CI dedicato e
-  un gate dei tag (`ibsi-mirp`, `ibsi-mirp-gate`) li eseguono in un ambiente separato, con il proprio
-  audit delle dipendenze. Con `QICOM_RUN_IBSI_MIRP=1`, impostata solo in quei due job, un MIRP o
-  una cache mancanti sono un fallimento, non uno skip; il job di test principale, che imposta
-  `QICOM_RUN_IBSI_REFERENCE=1` per il gate PyRadiomics e non installa MIRP, lo salta con la causa
-  (prima falliva).
-- **Test che verificano davvero.** Gli stub statici di `QMessageBox` valgono ora solo per il modulo
-  indicato e un dialogo statico senza risposta fa fallire il test invece di bloccare la suite;
-  `faulthandler_timeout` indica il test bloccato. I test di pulizia dopo un archivio rifiutato
-  guardano la cartella temporanea di sistema, dove l'estrazione avviene davvero. La coverage misura
-  anche il codice eseguito nei QThread: `evaluation_export.py` risultava al 13% nella suite completa
-  e al 99% da solo.
-- `load_package_metadata_from_zip` segnalava un file che non è uno ZIP con un `BadZipFile` grezzo,
-  che il dialogo di aggregazione non intercettava; ora è un `ValueError` leggibile come negli altri
-  percorsi di apertura.
-- **Tracciamento modifiche qualitativo corretto.** Il completamento asincrono
-  dei media ripristinati da un archivio non rende più immediatamente
-  “modificata” una valutazione appena aperta; rinominare un pannello, invece,
-  incrementa ora la revisione del documento e non può più andare perso alla
-  chiusura.
-- **Packaging fail-closed.** Il confronto licenze ignora moduli della standard
-  library e dati non importabili senza nascondere estensioni di terze parti; lo
-  smoke frozen scrive il JSON su file anche con un eseguibile Windows senza
-  console; un gate IBSI annullato non autorizza il package. Sui tag, versione,
-  nome del ref, tag annotato e commit `HEAD` devono coincidere. L'inventario
-  include anche il runtime PyInstaller e il file leggibile riproduce i testi di
-  licenza/notice installati, invece di elencarne soltanto i percorsi.
-- **Limite dell'export AI effettivo anche per un singolo campo enorme.** I
-  testi controllati dal chiamante vengono troncati deterministicamente e il
-  writer non restituisce mai un documento oltre `MAX_REPORT_BYTES`.
-- **Identità sorgente sconosciuta dichiarata come tale.** Il pannello About non
-  traduce più `revision=unknown` e `source_dirty=false` nell'affermazione non
-  dimostrata “clean”.
+- **Dependencies locked with hashes.** Every bundle is installed from the lock of its own profile
+  and platform (`requirements/lock/`, 12 files generated by `packaging/generate_locks.py`), with
+  `pip --require-hashes`: two builds of the same tag ship the same files, and a compromised release
+  that falls within a version range does not enter the bundle. The IBSI gate also uses the lock of
+  the Linux bundle. PyRadiomics, which pip cannot verify by hash, stays pinned to its Git commit.
+  `--check` in the static gate keeps the locks consistent with `pyproject.toml`.
+- **Releases and SBOM.** A tag creates a draft GitHub Release with the bundles, SHA-256 checksums
+  and CycloneDX SBOM of every platform, and the notes of the CHANGELOG section; publishing remains
+  the maintainer's decision.
+- **Builds and attributions.** NOTICE and the About dialog pointed to `packaging/...`, a path that
+  does not exist in a bundle: now they name the files where they actually are. The wheel
+  redistributes the RIQE model (CC BY 4.0) together with its attribution
+  (`qicom/metrics/models/RIQE-MODEL.txt`). `metric_inventory.csv`, shipped in the bundle, no
+  longer refers to `paper/`, which is not distributed. Tag builds do not restore the pip cache and
+  keep their artifacts for 90 days instead of 7. A local build warns that it is not verified when
+  it uses the reference copy of the licences, and excludes MIRP and ITK, which no bundle profile
+  includes.
+- **IBSI reference sets in the `full` bundle.** `qicom/radiomics/reference_sets` was in the wheel
+  but not in the PyInstaller spec: a frozen application could not run any IBSI verification. A
+  test now compares package-data and spec, and the frozen smoke test loads every manifest and the
+  RIQE model.
+- **"Numerical results" gate that cannot be bypassed.** An entry under a `####` subheading, a list
+  with `*`, `+` or numbers, or the title in upper case escaped `check_release_consistency.py`, and a
+  stable version could ship with undeclared changes to the numbers.
+- **Build environment.** setuptools, which ends up in the bundle, now has a cap (`<85`) and the
+  receipts record the versions of PyRadiomics, PyWavelets and torch (field `backend_versions`,
+  additive). Releases are now installed from hashed locks (next entry).
+- **MIRP's IBSI conformance verified in CI.** The test of the six MIRP manifests (2104 rows) was
+  always skipped: no job installed MIRP or prepared the resource cache. Now a dedicated CI job and
+  a tag gate (`ibsi-mirp`, `ibsi-mirp-gate`) run them in a separate environment, with their own
+  dependency audit. With `QICOM_RUN_IBSI_MIRP=1`, set only in those two jobs, a missing MIRP or
+  cache is a failure, not a skip; the main test job, which sets `QICOM_RUN_IBSI_REFERENCE=1` for
+  the PyRadiomics gate and does not install MIRP, skips it with the reason (previously it failed).
+- **Tests that really verify.** The static stubs of `QMessageBox` now apply only to the module
+  indicated, and a static dialog without an answer fails the test instead of blocking the suite;
+  `faulthandler_timeout` points to the blocked test. The clean-up tests after a refused archive
+  look at the system temporary folder, where extraction really happens. Coverage also measures
+  the code run in QThreads: `evaluation_export.py` showed 13% in the full suite and 99% on its own.
+- `load_package_metadata_from_zip` reported a file that is not a ZIP with a raw `BadZipFile`,
+  which the aggregation dialog did not catch; now it is a readable `ValueError` as in the other
+  opening paths.
+- **Correct qualitative change tracking.** The asynchronous completion of the
+  media restored from an archive no longer immediately makes a just-opened
+  evaluation "modified"; renaming a panel, on the other hand, now increments
+  the document revision and can no longer be lost on closing.
+- **Fail-closed packaging.** The licence comparison ignores standard-library
+  modules and non-importable data without hiding third-party extensions; the
+  frozen smoke test writes its JSON to a file even with a Windows executable
+  without a console; a cancelled IBSI gate does not authorise the package. On
+  tags, version, ref name, annotated tag and `HEAD` commit must match. The
+  inventory also includes the PyInstaller runtime, and the readable file
+  reproduces the installed licence/notice texts instead of only listing their
+  paths.
+- **AI export limit effective even for a single huge field.** The texts
+  controlled by the caller are truncated deterministically and the writer
+  never returns a document beyond `MAX_REPORT_BYTES`.
+- **Unknown source identity declared as such.** The About panel no longer
+  translates `revision=unknown` and `source_dirty=false` into the unproven
+  claim "clean".
 
-- **Documentazione fuori data.** Revisione di tutti i documenti del progetto
-  contro il codice: `OPERATIONS_SCHEMAS.md` descriveva la ricevuta schema 2
-  dopo il rilascio della 3; la citazione nel README era ferma a "Version
-  1.0.0" mentre `about.citation_text()` produceva già `1.1.0.dev0`; la sezione
-  Test del README dichiarava una sola versione di Python dopo l'aggiunta della
-  matrice; `requirements/packaging-base.txt` aveva perso la dipendenza
-  `packaging` aggiunta all'extra corrispondente. `benchmarks/README.md`
-  ignorava schema, `--compare` e la separazione dei due casi di export, e
-  invocava PowerShell in un repository sviluppato su Linux.
-  `packaging/LEGGIMI-TESTER.txt`, che viaggia dentro il bundle, spiegava
-  SmartScreen e Gatekeeper ma non la terza cosa che un tester incontra: LPIPS
-  e DISTS non disponibili al primo avvio. `CITATION.cff` portava la data di
-  rilascio della 1.0.0 accanto alla versione `1.1.0.dev0`, affermando un
-  rilascio mai avvenuto. Le note storiche in `benchmarks/` sono ora dichiarate
-  tali.
-- **Nuovi test contro il ritorno della deriva**: `tests/test_documentation_currency.py`
-  (17), il mirroring `requirements/*.txt` ↔ `pyproject.toml` e la coerenza
-  README ↔ `about.py`, che il README affermava già essere verificata e non lo era.
+- **Outdated documentation.** Review of all the project documents against the
+  code: `OPERATIONS_SCHEMAS.md` described receipt schema 2 after schema 3 had
+  shipped; the citation in the README was stuck at "Version 1.0.0" while
+  `about.citation_text()` already produced `1.1.0.dev0`; the Test section of
+  the README declared a single Python version after the matrix had been added;
+  `requirements/packaging-base.txt` had lost the `packaging` dependency added
+  to the corresponding extra. `benchmarks/README.md` ignored the schema,
+  `--compare` and the separation of the two export cases, and invoked
+  PowerShell in a repository developed on Linux.
+  `packaging/LEGGIMI-TESTER.txt` (now `packaging/TESTER-GUIDE.txt`), which
+  travels inside the bundle, explained SmartScreen and Gatekeeper but not the
+  third thing a tester runs into: LPIPS and DISTS not available on first
+  launch. `CITATION.cff` carried the 1.0.0 release date next to the version
+  `1.1.0.dev0`, claiming a release that never happened. The historical notes
+  in `benchmarks/` are now declared as such.
+- **New tests against drift returning**: `tests/test_documentation_currency.py`
+  (17), the `requirements/*.txt` ↔ `pyproject.toml` mirroring and the README ↔
+  `about.py` consistency, which the README already claimed was checked and was
+  not.
 
-- **Esiti delle metriche persi attraverso la cache all-pairs.** Il valore e la
-  sua causa viaggiavano su canali diversi — il valore al chiamante, la causa in
-  un thread-local. In uno sweep N-immagini la cache calcola una metrica
-  single-image una volta e la passa a ogni coppia: chi riusava un `None`
-  cacheato non aveva nulla da riportare, e `unavailable`, `invalid` e `failed`
-  finivano tutti come "non applicabile". Ora la computazione e il suo esito sono
-  un unico oggetto immutabile. **Nessun valore numerico cambia.**
-- **Export AI troncato solo a parole.** Oltre 200 righe il writer eliminava le
-  *colonne* ed emetteva comunque ogni riga, dichiarando il report troncato: una
-  analisi da 10.000 righe produceva un file da 10.000 righe che si diceva breve.
-  Ora il limite è sulle righe, con selezione deterministica round-robin per
-  metrica, budget byte esplicito, conteggi totale/emesso/omesso, digest
-  sull'intero risultato e scrittura atomica.
-- La lista dei progetti recenti è davvero best effort: un profilo utente non
-  scrivibile costa la scorciatoia, non l'apertura del progetto.
-- `Image.fromarray(..., mode=...)`, deprecato e rimosso in Pillow 13, eliminato
-  ovunque il tipo dell'array determini già il modo. Output byte-identico.
-- Nessun temporaneo lasciato dietro da uno ZIP fallito o annullato.
+- **Metric outcomes lost through the all-pairs cache.** The value and its
+  cause travelled on different channels — the value to the caller, the cause in
+  a thread-local. In an N-image sweep the cache computes a single-image metric
+  once and passes it to every pair: whoever reused a cached `None` had nothing
+  to report, and `unavailable`, `invalid` and `failed` all ended up as "not
+  applicable". Now the computation and its outcome are a single immutable
+  object. **No numerical value changes.**
+- **AI export truncated in words only.** Beyond 200 rows the writer dropped
+  the *columns* and still emitted every row, declaring the report truncated: a
+  10,000-row analysis produced a 10,000-row file that claimed to be short. Now
+  the limit is on rows, with deterministic round-robin selection per metric,
+  an explicit byte budget, total/emitted/omitted counts, a digest over the
+  whole result and an atomic write.
+- The list of recent projects is really best effort: a user profile that
+  cannot be written costs the shortcut, not the opening of the project.
+- `Image.fromarray(..., mode=...)`, deprecated and removed in Pillow 13, dropped
+  wherever the array type already determines the mode. Byte-identical output.
+- No temporary file left behind by a failed or cancelled ZIP.
 
 ### ⚠️ Changes affecting numerical results
 
-- **Serie di file DICOM Enhanced a frame singolo** (per esempio un multi-frame diviso in file):
-  posizione, orientamento e rescale stanno nei functional group, che la lettura di una serie da
-  cartella ignorava. Le slice venivano impilate per Instance Number, senza posizioni, e il range
-  dei dati era calcolato senza il rescale per frame. Ora la lettura della serie legge anche i
-  functional group (`qicom/io/dicom_io.py`) e la cartella si carica come il multi-frame da cui
-  proviene. **Per queste serie possono cambiare l'ordine delle slice, il data range (e con esso
-  PSNR e SSIM) e la geometria.** Le serie con posizione e orientamento in testa non cambiano.
-- **Radiomica su DICOM multi-frame con i frame fuori ordine.** I pixel erano ordinati lungo la
-  normale, ma origine e spaziatura tra le slice erano lette nell'ordine del file: frame a z = 2,
-  0, 3, 1 mm davano origine 2 mm e spaziatura 0,333 mm invece di 0 e 1 mm. Ora il loader
-  consegna le posizioni nello stesso ordine dei pixel e la geometria le usa
-  (`qicom/io/dicom_io.py`, `qicom/radiomics/io.py`). **Cambiano tutte le feature dipendenti dalla
-  geometria (forma, texture dopo il ricampionamento) per i volumi multi-frame memorizzati fuori
-  ordine.** La copia NIfTI di un progetto salvato prima porta la geometria sbagliata e non può
-  essere corretta da sola: reimportare la sorgente DICOM. Un volume con slice mancanti o
-  irregolari (un passo che si discosta di oltre l'1% dalla spaziatura media) è ora rifiutato
-  invece di ricevere una spaziatura media che non descrive nessuna slice, e così una pila con le
-  slice spostate nel proprio piano (gantry inclinato, pila tagliata) oltre 0,01 mm: proiettare le
-  posizioni sulla normale nascondeva lo spostamento. Anche un multi-frame con frame in
-  orientamenti diversi è rifiutato: non è un volume.
-- **RIQE in CLI e batch su stack non assiali**: il valore non compare più (esito
-  `invalid/degenerate-input`), come già nella GUI.
-- **Hash di configurazione uguale in GUI, CLI e batch.** Lo stesso calcolo aveva un hash diverso
-  in ciascuno: la GUI registrava il modello di riferimento NSS e le unità dichiarate, il batch le
-  unità solo se HU, batch e CLI le gamme per ruolo anche senza metriche che le leggano. Ora un solo
-  costruttore (`qicom/metrics/run_configuration.py`) aggiunge ogni chiave solo per le metriche
-  che la usano; il modello NSS, letto da una cache su disco, è letto solo se BRISQUE o NIQE sono
-  richiesti, così una cache inaccessibile non blocca più un calcolo di sola MSE. I valori calcolati non cambiano; **cambia l'hash di configurazione delle ricevute
-  CLI e batch** (e di quelle GUI con `data_range` intero, ora registrato come numero decimale).
-- Il profilo quantitativo `complete` passa alla versione 1.2: include la nuova metrica `riqe`
-  (era passato alla 1.1 per includere `brisque_canonical` e `niqe_canonical`). Nessun altro
-  profilo cambia.
-- **HaarPSI su una coppia piatta.** Nel runner una coppia costante viene normalizzata a zeri e
-  piq restituiva +inf, registrato come HaarPSI valido. Ora è un input degenere
-  (`invalid/degenerate-input`) e il valore non compare.
-- **RIQE solo su slice assiali e su NIfTI che sono davvero CT.** Ogni NIfTI era considerato in HU:
-  un volume MR veniva mostrato in HU e passato a RIQE. Inoltre un NIfTI in ordine RAS veniva
-  affettato sagittalmente lungo l'asse 0 e valutato come se fosse assiale. Ora un NIfTI conta come
-  CT solo se i suoi valori arrivano all'aria (≤ −500), e RIQE rifiuta le slice che la geometria del
-  file (affine NIfTI o ImageOrientationPatient DICOM) indica come non assiali. Il nuovo campo
-  `slice_orientations` entra nella configurazione, e quindi nell'hash, delle sole analisi con RIQE.
-- **`evaluate_acceptance` giudica la coppia, non la prima ROI.** La tabella dei risultati elenca
-  le ROI prima della coppia, e la regola leggeva la prima riga del metric_id: giudicava la ROI 1
-  (SSIM 0,811) al posto dell'immagine (0,982). Con più ROI e nessun risultato sull'immagine intera
-  la regola resta non valutata e lo dice.
-- **CV e SNR su intensità con segno.** Con valori con segno (TC in HU) una ROI in grasso o aria
-  ha media negativa, e CV (`std/media`) e SNR (`media/std`) diventavano negativi: fuori dal dominio
-  dichiarato `[0, +inf)`, e un CV negativo risultava "migliore" di qualunque positivo. Ora entrambi
-  usano il valore assoluto della media. **Cambiano i valori di `cv` e `snr` solo per ROI con media
-  negativa.** Le ricevute registrano le nuove versioni di formula (`roi_cv_snr`,
+- **Series of single-frame Enhanced DICOM files** (for example a multi-frame split into files):
+  position, orientation and rescale are in the functional groups, which reading a series from a
+  folder ignored. The slices were stacked by Instance Number, without positions, and the data
+  range was computed without the per-frame rescale. Now reading the series also reads the
+  functional groups (`qicom/io/dicom_io.py`) and the folder loads like the multi-frame it comes
+  from. **For these series the slice order, the data range (and with it PSNR and SSIM) and the
+  geometry can change.** Series with position and orientation in the header do not change.
+- **Radiomics on multi-frame DICOM with frames out of order.** The pixels were sorted along the
+  normal, but origin and spacing between slices were read in file order: frames at z = 2, 0, 3,
+  1 mm gave an origin of 2 mm and a spacing of 0.333 mm instead of 0 and 1 mm. Now the loader
+  delivers the positions in the same order as the pixels and the geometry uses them
+  (`qicom/io/dicom_io.py`, `qicom/radiomics/io.py`). **All geometry-dependent features (shape,
+  texture after resampling) change for multi-frame volumes stored out of order.** The NIfTI copy
+  of a project saved earlier carries the wrong geometry and cannot be corrected on its own:
+  re-import the DICOM source. A volume with missing or irregular slices (a step deviating by more
+  than 1% from the mean spacing) is now refused instead of receiving a mean spacing that
+  describes no slice, and so is a stack with its slices shifted within their own plane (tilted
+  gantry, sheared stack) by more than 0.01 mm: projecting the positions onto the normal hid the
+  shift. A multi-frame with frames in different orientations is refused too: it is not a volume.
+- **RIQE in CLI and batch on non-axial stacks**: the value no longer appears (outcome
+  `invalid/degenerate-input`), as already in the GUI.
+- **Same configuration hash in GUI, CLI and batch.** The same calculation had a different hash in
+  each: the GUI recorded the NSS reference model and the declared units, batch recorded the units
+  only if HU, batch and CLI the per-role ranges even without metrics that read them. Now a single
+  builder (`qicom/metrics/run_configuration.py`) adds each key only for the metrics that use it;
+  the NSS model, read from an on-disk cache, is read only if BRISQUE or NIQE are requested, so an
+  inaccessible cache no longer blocks an MSE-only calculation. The computed values do not change;
+  **the configuration hash of CLI and batch receipts changes** (and of GUI receipts with an
+  integer `data_range`, now recorded as a decimal number).
+- The `complete` quantitative profile moves to version 1.2: it includes the new `riqe` metric (it
+  had moved to 1.1 to include `brisque_canonical` and `niqe_canonical`). No other profile changes.
+- **HaarPSI on a flat pair.** In the runner a constant pair is normalised to zeros and piq
+  returned +inf, recorded as a valid HaarPSI. Now it is a degenerate input
+  (`invalid/degenerate-input`) and the value does not appear.
+- **RIQE only on axial slices and on NIfTI files that really are CT.** Every NIfTI was considered
+  to be in HU: an MR volume was shown in HU and passed to RIQE. In addition, a NIfTI in RAS order
+  was sliced sagittally along axis 0 and evaluated as if it were axial. Now a NIfTI counts as CT
+  only if its values reach air (≤ −500), and RIQE refuses the slices that the file's geometry
+  (NIfTI affine or DICOM ImageOrientationPatient) indicates as not axial. The new
+  `slice_orientations` field enters the configuration, and therefore the hash, of analyses with
+  RIQE only.
+- **`evaluate_acceptance` judges the pair, not the first ROI.** The results table lists the ROIs
+  before the pair, and the rule read the first row of the metric_id: it judged ROI 1 (SSIM 0.811)
+  instead of the image (0.982). With several ROIs and no whole-image result the rule stays
+  unevaluated and says so.
+- **CV and SNR on signed intensities.** With signed values (CT in HU) an ROI in fat or air has a
+  negative mean, and CV (`std/mean`) and SNR (`mean/std`) became negative: outside the declared
+  domain `[0, +inf)`, and a negative CV came out "better" than any positive one. Now both use the
+  absolute value of the mean. **The values of `cv` and `snr` change only for ROIs with a negative
+  mean.** The receipts record the new formula versions (`roi_cv_snr`,
   `masked_spatial_support`, `stack_summary`, `canonical_no_reference_range`).
 
-- **Ordine delle slice negli stack di bitmap.** I file erano ordinati come stringhe, quindi
-  `slice10` e `slice11` finivano tra `slice1` e `slice2`: il volume risultava rimescolato e due
-  serie con convenzioni di nome diverse venivano accoppiate slice per slice in ordine diverso. Ora
-  l'ordine è naturale (i numeri nei nomi contano come numeri). **Cambiano i risultati per slice e
-  volumetrici degli stack di bitmap con numerazione senza zeri iniziali e almeno 10 slice.**
+- **Slice order in bitmap stacks.** The files were sorted as strings, so `slice10` and `slice11`
+  ended up between `slice1` and `slice2`: the volume came out shuffled, and two series with
+  different naming conventions were paired slice by slice in a different order. Now the order is
+  natural (numbers in names count as numbers). **The per-slice and volumetric results of bitmap
+  stacks numbered without leading zeros and with at least 10 slices change.**
 
-- **`data_range` predefinito di CLI e batch.** GUI, CLI e batch avevano tre copie della regola,
-  e quella di CLI e batch non aveva il minimo di 1 della GUI: due immagini float in [0, 0.5]
-  davano PSNR diversi di circa 6 dB secondo l'entry point. Ora tutte usano
-  `combined_default_data_range`. **Cambiano i valori dipendenti da `data_range` (PSNR, SSIM, ...)
-  di CLI e batch solo quando lo span congiunto delle due immagini è inferiore a 1 e non era
-  indicato `data_range`.** Le ricevute batch registrano ora anche il profilo quantitativo, come
-  quelle della GUI; l'aiuto del CLI descrive la regola reale.
+- **Default `data_range` of CLI and batch.** GUI, CLI and batch had three copies of the rule, and
+  the CLI and batch one lacked the GUI's minimum of 1: two float images in [0, 0.5] gave PSNRs
+  about 6 dB apart depending on the entry point. Now they all use `combined_default_data_range`.
+  **The `data_range`-dependent values (PSNR, SSIM, ...) of CLI and batch change only when the joint
+  span of the two images is below 1 and no `data_range` was given.** Batch receipts now also
+  record the quantitative profile, like the GUI's; the CLI help describes the actual rule.
 
-- **SSIM, EPI e HFEN con "escludi l'aria".** Senza maschera le tre metriche sono native 3D su uno
-  stack (finestra 7×7×7, filtri 3D); con la maschera diventavano in silenzio la media di valori 2D
-  per slice, una grandezza diversa sotto lo stesso ID (con una maschera che non escludeva nulla
-  HFEN raddoppiava). Ora con la maschera si calcola la stessa mappa 3D e la si restringe ai voxel di
-  tessuto la cui intera finestra cade nella maschera: una maschera che copre tutto restituisce
-  esattamente il valore senza maschera. Come senza maschera, il risultato è un valore per volume,
-  senza distribuzione per slice, e la SSIM 3D di uno stack con meno di 7 slice è non valida.
-  **Cambiano i valori di `ssim`, `epi` e `hfen` di ogni analisi con l'aria esclusa.** Le analisi
-  senza esclusione e le ROI non cambiano.
+- **SSIM, EPI and HFEN with "exclude the air".** Without a mask the three metrics are native 3D on
+  a stack (7×7×7 window, 3D filters); with the mask they silently became the mean of per-slice 2D
+  values, a different quantity under the same ID (with a mask that excluded nothing, HFEN
+  doubled). Now with the mask the same 3D map is computed and restricted to the tissue voxels
+  whose whole window falls inside the mask: a mask covering everything returns exactly the value
+  without mask. As without a mask, the result is one value per volume, without a per-slice
+  distribution, and the 3D SSIM of a stack with fewer than 7 slices is invalid. **The values of
+  `ssim`, `epi` and `hfen` of every analysis with the air excluded change.** Analyses without
+  exclusion and ROIs do not change.
 
-- **BRISQUE e NIQE canonici normalizzano ogni immagine con il proprio range.** GUI, CLI e batch
-  ricavano il `data_range` predefinito da entrambe le immagini, e la normalizzazione dei punteggi
-  canonici lo usava per tutte e due: un partner più luminoso cambiava il punteggio del
-  riferimento, contro quanto dichiarato nella metodologia. Ora ogni ruolo usa il range della
-  propria immagine (quello riportato dal suo loader), registrato nella configurazione sotto
-  `no_reference_data_range` e nella normalizzazione della ricevuta. **Cambiano i valori di
-  `brisque_canonical` e `niqe_canonical` per ogni coppia in cui il range condiviso era più ampio
-  di quello dell'immagine.** Le distanze NSS storiche (`brisque`, `niqe`), `blur` e RIQE non
-  cambiano.
+- **Canonical BRISQUE and NIQE normalise each image with its own range.** GUI, CLI and batch derive
+  the default `data_range` from both images, and the normalisation of the canonical scores used it
+  for both: a brighter partner changed the reference's score, contrary to what the methodology
+  declares. Now each role uses the range of its own image (the one reported by its loader),
+  recorded in the configuration under `no_reference_data_range` and in the receipt's
+  normalisation. **The values of `brisque_canonical` and `niqe_canonical` change for every pair in
+  which the shared range was wider than the image's.** The historical NSS distances (`brisque`,
+  `niqe`), `blur` and RIQE do not change.
 
-- **Ordine dei frame nei DICOM Enhanced multi-frame.** Le serie classiche sono ordinate per
-  posizione lungo la normale al piano, mentre i frame di un oggetto Enhanced restavano nell'ordine
-  del file (di acquisizione). Confrontando una serie classica con un Enhanced salvato nella
-  direzione opposta, la slice i veniva confrontata con la N-1-i senza alcun avviso. Ora i frame
-  sono ordinati con le posizioni dei gruppi funzionali (quando sono tutte distinte: i frame
-  multi-eco o multi-fase che ripetono una posizione restano nell'ordine del file) e l'overlay
-  riporta le posizioni per frame, così il controllo di coerenza della spaziatura vale anche per
-  gli Enhanced. **Cambiano i risultati per slice e volumetrici di ogni Enhanced i cui frame erano
-  memorizzati in ordine non crescente.**
+- **Frame order in Enhanced multi-frame DICOM.** Classic series are sorted by position along the
+  normal to the plane, while the frames of an Enhanced object stayed in file (acquisition) order.
+  Comparing a classic series with an Enhanced one saved in the opposite direction, slice i was
+  compared with slice N-1-i without any warning. Now the frames are sorted by the positions of the
+  functional groups (when they are all distinct: multi-echo or multi-phase frames that repeat a
+  position stay in file order) and the overlay reports the per-frame positions, so the spacing
+  consistency check also applies to Enhanced objects. **The per-slice and volumetric results of
+  every Enhanced object whose frames were stored in non-increasing order change.**
 
-- **Aggregazione qualitativa in cieco con più consegne.** Ogni consegna in cieco randomizza la
-  propria presentazione (il seed deriva dal suo `delivery_id`), ma l'aggregazione applicava una
-  sola mappa di de-blinding a tutte le risposte: i punteggi di ogni lettore tranne uno venivano
-  attribuiti alle immagini sbagliate, e kappa, ICC, preferenze e AUC ne risultavano alterati. Ora
-  ogni mappa si applica solo alle risposte della propria consegna (`apply_deblinding_maps`); le
-  risposte di una consegna senza mappa, o di più consegne in cieco senza mappe, vengono rifiutate.
-  Il dialogo di aggregazione accetta una mappa per consegna e il batch `aggregate-qualitative` il
-  campo `deblinding_maps`. **Cambiano i risultati di ogni aggregazione multi-consegna con pannelli,
-  pagine o domande randomizzati: va ripetuta.** Le aggregazioni di una sola consegna, o di
-  pacchetti non in cieco, non cambiano.
+- **Blinded qualitative aggregation with several deliveries.** Every blinded delivery randomises
+  its own presentation (the seed derives from its `delivery_id`), but aggregation applied a single
+  de-blinding map to all the answers: the scores of every reader but one were attributed to the
+  wrong images, and kappa, ICC, preferences and AUC were altered as a result. Now each map applies
+  only to the answers of its own delivery (`apply_deblinding_maps`); the answers of a delivery
+  without a map, or of several blinded deliveries without maps, are refused. The aggregation dialog
+  accepts one map per delivery and the `aggregate-qualitative` batch the `deblinding_maps` field.
+  **The results of every multi-delivery aggregation with randomised panels, pages or questions
+  change: it must be repeated.** Aggregations of a single delivery, or of non-blinded packages, do
+  not change.
 
 - NMI uses float64 histogram counts instead of float32 histogram densities, removing bin-width
   rounding artifacts. Its receipt identifies `nmi: count-histogram-v2`; histogram bins and the
@@ -1322,71 +1309,70 @@ empty between that version and yours, re-run the analysis before comparing.
   preserves legacy v1 numerical values and identifies their effective PW formula. Nonzero edge
   angles are rejected because no slanted-edge correction is implemented.
 
-- L'analisi qualitativa primaria passa dagli aggregati media/SD e kappa legacy a descrittive
-  ordinali e alpha di Krippendorff; i confronti usano celle valutatore×caso, bootstrap a cluster
-  e Holm. I fogli legacy restano disponibili, ma i nuovi risultati non sono numericamente
-  confrontabili con report che trattavano le slice come osservazioni indipendenti.
-- Il default della GUI quantitativa passa da tutte le metriche al profilo versionato Core rapido;
-  le formule preesistenti non cambiano, ma una nuova sessione calcola un insieme più compatto se
-  l'utente non seleziona un altro profilo.
-- Gli aggregati di stack aggiungono mediana, IQR, MAD, P5/P95 e outlier Tukey; `value`, `std` e i
-  CI legacy conservano la formula precedente.
-- Le nuove metriche di errore condividono un solo residuo definito come `comparison - reference`;
-  `residual_std` usa la deviazione standard di popolazione dopo la rimozione del bias.
-- L'Indice QICOM è ora legato al profilo/versione e viene marcato parziale quando manca una
-  componente obbligatoria; indici provenienti da profili/versioni diversi sono rifiutati come
-  non confrontabili.
-- Il profilo quantitativo Core rapido passa da 1.0 a 1.1 e include anche MSE; a parità di immagini
-  le formule esistenti non cambiano, ma una nuova analisi Core produce una riga numerica in più.
-- Il profilo radiomico predefinito passa a `qicom-ibsi-core@2.0`: il delta percentuale primario è
-  ora quello simmetrico. `delta_percent` e `delta_classic_percent` conservano la formula classica,
-  quindi gli export precedenti restano confrontabili usando quelle colonne.
-- Le nuove normalizzazioni e resegmentation modificano intensità/maschera e quindi tutte le
-  feature solo quando selezionate esplicitamente; restano disabilitate nel default. L'origine di
-  bin `resegmentation-lower` cambia la discretizzazione solo se richiesta esplicitamente.
-- L'unità esportata di `SurfaceVolumeRatio` è corretta da `mm²` a `mm⁻¹`; il valore numerico della
-  feature non cambia.
-- La regola di confronto IBSI passa da `official-rounded-difference-3-significant-digits` a
+- The primary qualitative analysis moves from the legacy mean/SD and kappa aggregates to ordinal
+  descriptives and Krippendorff's alpha; comparisons use evaluator×case cells, cluster bootstrap
+  and Holm. The legacy sheets remain available, but the new results are not numerically comparable
+  with reports that treated slices as independent observations.
+- The default of the quantitative GUI moves from all metrics to the versioned Quick core profile;
+  the pre-existing formulas do not change, but a new session computes a more compact set if the
+  user does not select another profile.
+- Stack aggregates add median, IQR, MAD, P5/P95 and Tukey outliers; `value`, `std` and the legacy
+  CIs keep the previous formula.
+- The new error metrics share a single residual defined as `comparison - reference`;
+  `residual_std` uses the population standard deviation after removing the bias.
+- The QICOM Index is now tied to the profile/version and is marked partial when a mandatory
+  component is missing; indices from different profiles/versions are refused as not comparable.
+- The Quick core quantitative profile moves from 1.0 to 1.1 and also includes MSE; for the same
+  images the existing formulas do not change, but a new Core analysis produces one more numeric
+  row.
+- The default radiomics profile moves to `qicom-ibsi-core@2.0`: the primary percentage delta is now
+  the symmetric one. `delta_percent` and `delta_classic_percent` keep the classic formula, so
+  previous exports remain comparable using those columns.
+- The new normalisations and resegmentation change intensity/mask, and therefore all features,
+  only when selected explicitly; they stay disabled in the default. The `resegmentation-lower` bin
+  origin changes the discretisation only if explicitly requested.
+- The exported unit of `SurfaceVolumeRatio` is corrected from `mm²` to `mm⁻¹`; the numerical value
+  of the feature does not change.
+- The IBSI comparison rule moves from `official-rounded-difference-3-significant-digits` to
   `official-rounded-difference-3-significant-digits+absolute-near-zero-v2`
-  (`reference_values.comparison_rule_version: 2` nel manifest del reference set). Un valore di
-  riferimento pari a zero, o entro `relative_zero_threshold`, non ha una scala a tre cifre
-  significative su cui troncare: la regola precedente ripiegava su `digits = 0` e troncava a zero
-  *qualsiasi* differenza inferiore a 1.0, per cui `reference=0`, `calculated=0.4`, `tolerance=0`
-  veniva riportato come PASS ufficiale. Ora vicino allo zero si confronta la differenza assoluta
-  non troncata, quindi lo stesso caso è FAIL. L'errore relativo resta NA, con il motivo indicato
-  esplicitamente nella riga della ricevuta. Il reference set ufficiale IBSI 1 (104 feature
-  obbligatorie) non contiene valori di riferimento nulli: nessun verdetto pubblicato cambia, ma
-  reference set con riferimenti nulli non possono più produrre un PASS silenzioso.
+  (`reference_values.comparison_rule_version: 2` in the reference set manifest). A reference value
+  equal to zero, or within `relative_zero_threshold`, has no three-significant-digit scale to
+  truncate on: the previous rule fell back to `digits = 0` and truncated to zero *any* difference
+  below 1.0, so `reference=0`, `calculated=0.4`, `tolerance=0` was reported as an official PASS.
+  Now near zero the untruncated absolute difference is compared, so the same case is a FAIL. The
+  relative error stays NA, with the reason stated explicitly in the receipt row. The official IBSI 1
+  reference set (104 mandatory features) contains no zero reference values: no published verdict
+  changes, but reference sets with zero references can no longer produce a silent PASS.
 
-- L'alpha di Krippendorff ordinale passa alla versione 2 della formula (etichetta esportata
-  `Krippendorff alpha (ordinal) v2`). La versione 1 usava una distanza quadratica fra ranghi
-  uniformi, che ignora le frequenze marginali; la definizione ordinale corretta misura la massa
-  delle categorie comprese fra le due, con metà della frequenza di ciascun estremo:
-  `delta(c,k) = (somma_{g=c..k} n_g - (n_c + n_k)/2)^2`. Inoltre la disagreement osservata è ora
-  pesata per unità con `1/(m_u - 1)` prima della media sui valori appaiabili: il conteggio
-  aggregato delle coppie sovrappesava le unità con più valutatori, cioè proprio il caso creato
-  dalle risposte mancanti. Su dati sbilanciati la differenza è ampia (esempio Likert asimmetrico:
-  0.5272 → 0.2535; matrice canonica con mancanti: 0.8515 → 0.8049). I valori v1 non sono
-  confrontabili. Gwet AC2 conserva i pesi quadratici dichiarati dal suo nome.
+- Ordinal Krippendorff's alpha moves to version 2 of the formula (exported label
+  `Krippendorff alpha (ordinal) v2`). Version 1 used a squared distance between uniform ranks,
+  which ignores the marginal frequencies; the correct ordinal definition measures the mass of the
+  categories between the two, with half the frequency of each endpoint:
+  `delta(c,k) = (sum_{g=c..k} n_g - (n_c + n_k)/2)^2`. In addition, the observed disagreement is
+  now weighted per unit with `1/(m_u - 1)` before averaging over the pairable values: the
+  aggregate count of pairs overweighted the units with more evaluators, which is exactly the case
+  created by missing answers. On unbalanced data the difference is large (asymmetric Likert
+  example: 0.5272 → 0.2535; canonical matrix with missing values: 0.8515 → 0.8049). The v1 values
+  are not comparable. Gwet's AC2 keeps the quadratic weights declared by its name.
 
-- I profili di accettazione verificano l'unità dichiarata dal risultato rispetto a quella della
-  regola. Prima l'unità della regola veniva scritta nell'esito senza alcun controllo e il confronto
-  usava il numero nudo: un risultato in `cm` poteva superare una soglia scritta in `mm`. Ora le
-  unità devono coincidere letteralmente, senza alcuna conversione implicita; se non sono
-  confrontabili la regola obbligatoria diventa `INCOMPLETE` e quella facoltativa `NOT-COMPARABLE`,
-  entrambe con motivo tecnico. La tabella degli esiti aggiunge la colonna `result_unit` accanto a
-  `unit`, così la discrepanza è visibile in GUI e negli export. Un risultato che non dichiara
-  un'unità non viene più confrontato in silenzio.
+- Acceptance profiles check the unit declared by the result against the rule's. Previously the
+  rule's unit was written into the outcome without any check and the comparison used the bare
+  number: a result in `cm` could pass a threshold written in `mm`. Now the units must match
+  literally, without any implicit conversion; if they are not comparable the mandatory rule
+  becomes `INCOMPLETE` and the optional one `NOT-COMPARABLE`, both with a technical reason. The
+  outcome table adds the `result_unit` column next to `unit`, so the discrepancy is visible in the
+  GUI and in the exports. A result that does not declare a unit is no longer compared silently.
 
-- Le percentuali delle domande a scelta multipla sono ora quote dei rispondenti e non delle
-  selezioni. Poiché un rispondente può spuntare più categorie, il totale delle selezioni supera il
-  numero di rispondenti e la vecchia normalizzazione faceva sembrare ogni categoria più rara quanto
-  più si spuntava: due rispondenti, uno con A+B e uno con A, davano A=67% e B=33% invece di A=100%
-  e B=50%. `category_distribution` esporta ora anche `denominator` e `denominator_definition`.
-  Risposte saltate, non valutabili e mancanti restano stati distinti ed escluse dal denominatore.
-- Nuova `likert_distribution`: frequenze e percentuali per ciascuna categoria delle domande di
-  rating, con denominatore dichiarato. È inclusa nell'export Excel qualitativo (foglio
-  “Likert Distributions”) e nel batch qualitativo (`qualitative_likert_distribution.csv`).
+- The percentages of multiple-choice questions are now shares of respondents and not of
+  selections. Since a respondent can tick several categories, the total of the selections exceeds
+  the number of respondents, and the old normalisation made each category look rarer the more
+  ticking there was: two respondents, one with A+B and one with A, gave A=67% and B=33% instead of
+  A=100% and B=50%. `category_distribution` now also exports `denominator` and
+  `denominator_definition`. Skipped, not assessable and missing answers stay distinct states and
+  are excluded from the denominator.
+- New `likert_distribution`: frequencies and percentages for each category of rating questions,
+  with a declared denominator. It is included in the qualitative Excel export (sheet
+  "Likert Distributions") and in the qualitative batch (`qualitative_likert_distribution.csv`).
 
 ## [1.0.0] — 2026-08-19
 

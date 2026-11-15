@@ -37,7 +37,7 @@ Conceived and developed by Fabio Mattiussi in Lugano, Switzerland. Licensed unde
 
 | For | Go to |
 | --- | --- |
-| Launching and using QICOM | [Starting the GUI](#gui), [tester guide (Italian)](packaging/LEGGIMI-TESTER.txt) |
+| Launching and using QICOM | [Starting the GUI](#gui), [tester guide](packaging/TESTER-GUIDE.txt) |
 | Understanding the analyses | [Metrics](#implemented-metrics), [qualitative methodology](QUALITATIVE_METHODOLOGY.md), [radiomics methodology](RADIOMICS_METHODOLOGY.md) |
 | Sharing results and knowing the limits | [AI export](#ai-assistant-export), [security and privacy](SECURITY.md), [intended use](#intended-use) |
 | What's new | [Changelog](CHANGELOG.md) |
